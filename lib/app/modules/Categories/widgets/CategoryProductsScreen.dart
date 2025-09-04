@@ -50,7 +50,7 @@ class CategoryProductsScreen extends StatelessWidget {
           crossAxisCount: 3, // Display 3 columns for subcategories
           crossAxisSpacing: 12.0,
           mainAxisSpacing: 16.0,
-          childAspectRatio: 0.75, // Adjust as needed for CategoryTile
+          childAspectRatio: 0.85, // Adjusted for updated CategoryTile
         ),
         itemCount: subCategories.length,
         itemBuilder: (context, index) {

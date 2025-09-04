@@ -1,78 +1,164 @@
 import 'package:flutter/material.dart';
-import 'package:mobiking/app/themes/app_theme.dart'; // Import AppTheme
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:mobiking/app/themes/app_theme.dart';
 
 class CategoryTile extends StatelessWidget {
   final String title;
-  final String? imageUrl; // Made nullable to handle absent URLs
+  final String? imageUrl;
+  final String? icon;
   final VoidCallback onTap;
+  final bool isSelected; // Optional selection state
+  final double? borderRadius;
 
   const CategoryTile({
-    Key? key,
+    super.key,
     required this.title,
-    this.imageUrl, // No longer required
+    this.imageUrl,
     required this.onTap,
-  }) : super(key: key);
+    this.isSelected = false,
+    this.borderRadius = 8.0, this.icon,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final TextTheme textTheme = Theme.of(context).textTheme;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 90, // Fixed width for each tile in the horizontal list
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10), // Slightly rounded corners
-        ),
-        child: Column(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8), // Image has slightly smaller radius
-              child: _buildImageWidget(),
+    return Semantics(
+      button: true,
+      label: 'Category: $title',
+      excludeSemantics: true,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(borderRadius!),
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(borderRadius!),
+              // Optional selection border
+              border: isSelected
+                  ? Border.all(color: AppColors.primaryPurple, width: 2)
+                  : null,
             ),
-            const SizedBox(height: 8), // Space between image and text
-            Expanded( // Use Expanded to handle potential long text
-              child: Text(
-                title,
-                textAlign: TextAlign.center,
-                maxLines: 2, // Allow up to 2 lines for category name
-                overflow: TextOverflow.ellipsis,
-                style: textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textDark,
-                  fontWeight: FontWeight.w700,
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: _buildImageSection(),
                 ),
-              ),
+                _buildTitleSection(context),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
   }
 
+  Widget _buildImageSection() {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      child: _buildImageWidget(),
+    );
+  }
+
   Widget _buildImageWidget() {
-    // Check if imageUrl is null or empty
-    if (imageUrl == null || imageUrl!.isEmpty) {
+    if (icon != null && icon!.isNotEmpty) {
+      final modifiedIcon = icon!.replaceAll('stroke-width="3"', 'stroke-width="1"');
+      return Center(
+        child: SizedBox(
+          width: 36,
+          height: 36,
+          child: SvgPicture.string(
+            modifiedIcon,
+            fit: BoxFit.contain,
+            placeholderBuilder: (context) => _buildLoadingWidget(),
+          ),
+        ),
+      );
+    }
+    // Early return for null/empty URLs
+    final url = imageUrl?.trim();
+    if (url == null || url.isEmpty) {
       return _buildFallbackWidget();
     }
 
+    if (url.toLowerCase().endsWith('.svg')) {
+      return SvgPicture.network(
+        url,
+        fit: BoxFit.contain,
+        placeholderBuilder: (context) => _buildLoadingWidget(),
+      );
+    }
+
     return Image.network(
-      imageUrl!,
-      width: 80, // Slightly smaller than container width
-      height: 80, // Fixed height for image
-      fit: BoxFit.fill,
-      errorBuilder: (context, error, stackTrace) => _buildFallbackWidget(),
+      url,
+      fit: BoxFit.cover,
+      semanticLabel: 'Image for $title category',
+      frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+        if (wasSynchronouslyLoaded || frame != null) {
+          return child;
+        }
+        return _buildLoadingWidget();
+      },
+      errorBuilder: (context, error, stackTrace) {
+        debugPrint('Failed to load image for $title: $error');
+        return _buildFallbackWidget();
+      },
+      // Improved caching
+      cacheHeight: 200,
+      cacheWidth: 200,
+    );
+  }
+
+  Widget _buildLoadingWidget() {
+    return Container(
+      color: AppColors.neutralBackground,
+      child: Center(
+        child: SizedBox(
+          width: 24,
+          height: 24,
+          child: CircularProgressIndicator(
+            strokeWidth: 2.5,
+            valueColor: AlwaysStoppedAnimation<Color>(
+              AppColors.primaryPurple.withOpacity(0.7),
+            ),
+          ),
+        ),
+      ),
     );
   }
 
   Widget _buildFallbackWidget() {
     return Container(
-      width: 80,
-      height: 80,
-      color: AppColors.neutralBackground, // Light grey placeholder
-      child: Icon(
-        Icons.category_rounded, // More appropriate icon for categories
-        color: AppColors.textLight, // Lighter icon
-        size: 30,
+      color: AppColors.neutralBackground,
+      child: Center(
+        child: Icon(
+          Icons.category_outlined,
+          color: AppColors.textLight.withOpacity(0.6),
+          size: 36,
+          semanticLabel: 'Default category icon',
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTitleSection(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
+      child: Text(
+        title,
+        textAlign: TextAlign.center,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: AppColors.textDark,
+          fontWeight: FontWeight.w600,
+          fontSize: 12.5,
+          height: 1.2, // Better line spacing
+        ),
+        semanticsLabel: title, // Explicit semantic label
       ),
     );
   }

@@ -15,6 +15,7 @@ class ProductTitleAndPrice extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint('ProductTitleAndPrice: originalPrice: \$originalPrice, discountedPrice: \$discountedPrice');
     final textTheme = Theme.of(context).textTheme;
 
     return Column(
@@ -56,7 +57,8 @@ class ProductTitleAndPrice extends StatelessWidget {
                 style: textTheme.bodySmall?.copyWith(
                   color: AppColors.textLight,
                   decoration: TextDecoration.lineThrough,
-                  fontSize: 14,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
           ],

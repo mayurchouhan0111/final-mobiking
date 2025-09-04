@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobiking/app/data/sub_category_model.dart';
 import 'package:mobiking/app/modules/home/widgets/AllProductGridCard.dart';
+import 'package:mobiking/app/modules/home/widgets/FloatingCartButton.dart';
+import 'package:mobiking/app/controllers/cart_controller.dart';
+import 'package:mobiking/app/modules/cart/cart_bottom_dialoge.dart';
 
 import '../../../data/product_model.dart';
 import '../../../themes/app_theme.dart';
@@ -31,8 +34,8 @@ class _CategoryProductsGridScreenState extends State<CategoryProductsGridScreen>
     selectedSubCategoryIndex = 0.obs;
 
     // Initialize with first subcategory's products
-    if (widget.subCategories.isNotEmpty) {
-      displayedProducts = (widget.subCategories.first.products ?? []).obs;
+    if (widget.subCategories.isNotEmpty && (widget.subCategories.first.products != null)) {
+      displayedProducts = widget.subCategories.first.products!.obs;
     } else {
       displayedProducts = <ProductModel>[].obs;
     }
@@ -67,7 +70,7 @@ class _CategoryProductsGridScreenState extends State<CategoryProductsGridScreen>
         children: [
           // Left Side - Subcategories List
           Container(
-            width: screenWidth * 0.30, // 35% of screen width
+            width: 80, // Narrowed to 80
             decoration: BoxDecoration(
               color: AppColors.neutralBackground,
               border: Border(
@@ -80,22 +83,12 @@ class _CategoryProductsGridScreenState extends State<CategoryProductsGridScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Text(
-                    'Categories',
-                    style: textTheme.titleMedium?.copyWith(
-                      color: AppColors.textDark,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
+                
 
                 // Subcategories List
                 Expanded(
                   child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 0), // Removed horizontal padding here
                     itemCount: widget.subCategories.length,
                     itemBuilder: (context, index) {
                       final subCategory = widget.subCategories[index];
@@ -117,7 +110,7 @@ class _CategoryProductsGridScreenState extends State<CategoryProductsGridScreen>
           // Right Side - Products Grid
           Expanded(
             child: Container(
-              color: AppColors.white,
+              color: AppColors.neutralBackground,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -130,7 +123,7 @@ class _CategoryProductsGridScreenState extends State<CategoryProductsGridScreen>
                     return Container(
                       padding: const EdgeInsets.all(16.0),
                       decoration: BoxDecoration(
-                        color: AppColors.white,
+                        color: AppColors.neutralBackground,
                         border: Border(
                           bottom: BorderSide(
                             color: AppColors.lightGreyBackground,
@@ -178,7 +171,7 @@ class _CategoryProductsGridScreenState extends State<CategoryProductsGridScreen>
                         padding: const EdgeInsets.all(16),
                         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
-                          childAspectRatio: 0.45,
+                          childAspectRatio: 0.48,
                           mainAxisSpacing: 8,
                         ),
                         itemCount: displayedProducts.length,
@@ -198,6 +191,46 @@ class _CategoryProductsGridScreenState extends State<CategoryProductsGridScreen>
           ),
         ],
       ),
+      floatingActionButton: Obx(() {
+        final cartController = Get.find<CartController>();
+        final totalItemsInCart = cartController.totalCartItemsCount;
+        if (totalItemsInCart == 0) {
+          return const SizedBox.shrink();
+        }
+
+        final List<String> imageUrls = cartController.cartItems.take(3).map((item) {
+          final product = item['productId'];
+          String? imageUrl;
+
+          if (product is Map) {
+            final imagesData = product['images'];
+            if (imagesData is List && imagesData.isNotEmpty) {
+              final firstImage = imagesData[0];
+              if (firstImage is String) {
+                imageUrl = firstImage;
+              } else if (firstImage is Map) {
+                imageUrl = firstImage['url'] as String?;
+              }
+            } else if (imagesData is String) {
+              imageUrl = imagesData;
+            }
+          }
+          return imageUrl ?? 'https://placehold.co/50x50/cccccc/ffffff?text=No+Img';
+        }).toList();
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          child: FloatingCartButton(
+            label: "View Cart",
+            productImageUrls: imageUrls,
+            itemCount: totalItemsInCart,
+            onTap: () {
+              Get.to(() => CartScreen());
+            },
+          ),
+        );
+      }),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 
@@ -210,68 +243,68 @@ class _CategoryProductsGridScreenState extends State<CategoryProductsGridScreen>
   }) {
     final productCount = subCategory.products?.length ?? 0;
     final hasImage = (subCategory.photos?.isNotEmpty ?? false);
-    final imageUrl = hasImage ? subCategory.photos!.first : '';
+    final imageUrl = hasImage ? subCategory.photos!.first : null;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.symmetric(vertical: 4), // Reduced vertical margin
+      decoration: BoxDecoration(
+        color: isSelected ? AppColors.white : AppColors.neutralBackground,
+        border: isSelected
+            ? Border(right: BorderSide(color: AppColors.success, width: 4))
+            : null,
+        borderRadius: isSelected
+            ? BorderRadius.horizontal(right: Radius.circular(8))
+            : null,
+      ),
       child: Material(
-        color: Colors.transparent,
+        color: Colors.transparent, // Use transparent so the container's color is visible
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
+          child: Padding(
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: isSelected ? AppColors.success.withOpacity(0.1) : AppColors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isSelected ? AppColors.success : AppColors.lightGreyBackground,
-                width: isSelected ? 2 : 1,
-              ),
-            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 // Category Image
                 Container(
-                  width: 60,
-                  height: 60,
+                  width: 64, // Slightly larger
+                  height: 64, // Slightly larger
                   decoration: BoxDecoration(
-                    color: AppColors.neutralBackground,
-                    borderRadius: BorderRadius.circular(8),
+                    color: AppColors.lightGreyBackground,
+                    borderRadius: BorderRadius.circular(10), // More rounded
                     border: Border.all(
                       color: AppColors.lightGreyBackground,
                       width: 1,
                     ),
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(7),
-                    child: hasImage
+                    borderRadius: BorderRadius.circular(9), // Slightly smaller than container
+                    child: imageUrl != null
                         ? Image.network(
                       imageUrl,
-                      fit: BoxFit.cover,
+                      fit: BoxFit.cover, // Ensure image covers the area
                       errorBuilder: (context, error, stackTrace) => Icon(
                         Icons.category_outlined,
                         color: AppColors.textLight,
-                        size: 30,
+                        size: 36, // Larger icon
                       ),
                     )
                         : Icon(
                       Icons.category_outlined,
                       color: AppColors.textLight,
-                      size: 30,
+                      size: 36, // Larger icon
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 8),
 
                 // Category Name
                 Text(
                   subCategory.name ?? 'Unknown',
-                  style: textTheme.labelMedium?.copyWith(
+                  style: textTheme.labelSmall?.copyWith(
                     color: isSelected ? AppColors.success : AppColors.textDark,
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                    fontSize: 11, // Slightly smaller for better fit
                   ),
                   textAlign: TextAlign.center,
                   maxLines: 2,
@@ -286,6 +319,7 @@ class _CategoryProductsGridScreenState extends State<CategoryProductsGridScreen>
                   style: textTheme.labelSmall?.copyWith(
                     color: isSelected ? AppColors.success.withOpacity(0.8) : AppColors.textLight,
                     fontWeight: FontWeight.w500,
+                    fontSize: 10, // Slightly smaller
                   ),
                 ),
               ],
@@ -295,6 +329,7 @@ class _CategoryProductsGridScreenState extends State<CategoryProductsGridScreen>
       ),
     );
   }
+
 
   Widget _buildEmptyProductsState(TextTheme textTheme) {
     return Center(

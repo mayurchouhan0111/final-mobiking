@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:mobiking/app/controllers/product_controller.dart';
 import '../data/Home_model.dart';
 import '../data/group_model.dart';
 import '../services/home_service.dart';
@@ -57,6 +58,16 @@ class HomeController extends GetxController {
     try {
       _isLoading.value = true;
       final result = await _service.getHomeLayout();
+      if (result != null) {
+        final productController = Get.find<ProductController>();
+        for (var group in result.groups) {
+          for (var product in group.products) {
+            if (!productController.allProducts.any((p) => p.id == product.id)) {
+              productController.allProducts.add(product);
+            }
+          }
+        }
+      }
       print("📥 Home layout fetched: $result");
       _homeData.value = result;
     } catch (e) {
@@ -88,6 +99,15 @@ class HomeController extends GetxController {
       _groupErrors[categoryId] = null; // Clear previous errors
 
       final groups = await _service.getGroupsByCategory(categoryId);
+
+      final productController = Get.find<ProductController>();
+      for (var group in groups) {
+        for (var product in group.products) {
+          if (!productController.allProducts.any((p) => p.id == product.id)) {
+            productController.allProducts.add(product);
+          }
+        }
+      }
 
       // ✅ Store the fetched groups
       _categoryGroups[categoryId] = groups;

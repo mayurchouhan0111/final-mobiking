@@ -1,7 +1,9 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:get_storage/get_storage.dart';
-import 'package:flutter/foundation.dart'; // Required for kDebugMode
+import 'package:flutter/foundation.dart';
+
+import '../data/product_model.dart'; // Required for kDebugMode
 
 class WishlistService {
   static const String baseUrl =
@@ -293,6 +295,27 @@ class WishlistService {
       }
     } catch (e) {
       _log('Error clearing local wishlist data: $e');
+    }
+  }
+
+  // Inside the WishlistService class
+
+// ✅ NEW: Method to fetch wishlist data
+  Future<List<ProductModel>> fetchWishlist() async {
+    try {
+      _log('Fetching wishlist from local storage...');
+      final List<dynamic> localWishlistData = await getLocalWishlistData();
+
+      // Convert the list of dynamic maps to a list of ProductModel
+      final List<ProductModel> wishlistProducts = localWishlistData
+          .map((item) => ProductModel.fromJson(item as Map<String, dynamic>))
+          .toList();
+
+      _log('Successfully fetched ${wishlistProducts.length} items from local wishlist.');
+      return wishlistProducts;
+    } catch (e) {
+      _log('Error fetching local wishlist: $e');
+      return [];
     }
   }
 }

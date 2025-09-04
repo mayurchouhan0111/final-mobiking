@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
+import 'package:mobiking/app/controllers/BottomNavController.dart';
 import 'package:mobiking/app/controllers/cart_controller.dart';
 import 'package:mobiking/app/modules/cart/widget/CartItemCard.dart';
 import 'package:mobiking/app/modules/checkout/CheckoutScreen.dart';
 import 'package:mobiking/app/themes/app_theme.dart';
+
+import '../../data/product_model.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({Key? key}) : super(key: key);
@@ -76,10 +79,16 @@ class _CartScreenState extends State<CartScreen> {
                           cartItem: cartItem,
                           onIncrement: cartController.isLoading.value
                               ? null
-                              : () => cartController.addToCart(
-                            productId: productId,
-                            variantName: variantName,
-                          ),
+                              : () {
+                                final cartItem = cartController.cartItems[index];
+                                final productData = cartItem['productId'];
+                                final product = ProductModel.fromJson(productData);
+                                cartController.addToCart(
+                                  productId: productId,
+                                  variantName: variantName,
+                                  product: product,
+                                );
+                              },
                           onDecrement: cartController.isLoading.value
                               ? null
                               : () => cartController.removeFromCart(
@@ -202,7 +211,8 @@ class _CartScreenState extends State<CartScreen> {
                 onPressed: cartController.isLoading.value || totalItems == 0
                     ? null
                     : () {
-                  Get.to(() => CheckoutScreen());
+                  Get.find<BottomNavController>().isFabVisible.value = false;
+                  Get.to(() => CheckoutScreen())?.whenComplete(() => Get.find<BottomNavController>().isFabVisible.value = true);
                   print("Cart Products for Checkout: ${cartController.cartItems.length}");
                 },
                 style: ElevatedButton.styleFrom(

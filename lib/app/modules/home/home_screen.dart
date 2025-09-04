@@ -9,7 +9,7 @@ import '../../controllers/cart_controller.dart' show CartController;
 import '../../controllers/category_controller.dart';
 import '../../controllers/sub_category_controller.dart';
 import '../../controllers/tab_controller_getx.dart';
-import '../../controllers/product_controller.dart'; // ✅ Add this import
+import '../../controllers/product_controller.dart';
 import '../../themes/app_theme.dart';
 import '../../widgets/CustomBottomBar.dart';
 import '../../widgets/CategoryTab.dart';
@@ -28,11 +28,10 @@ class _HomeScreenState extends State<HomeScreen> {
   final CategoryController categoryController = Get.find<CategoryController>();
   final SubCategoryController subCategoryController = Get.find<SubCategoryController>();
   final TabControllerGetX tabController = Get.find<TabControllerGetX>();
-  final ProductController productController = Get.find<ProductController>(); // ✅ Add this
+  final ProductController productController = Get.find<ProductController>();
 
   late ScrollController _scrollController;
   final RxBool _showScrollToTopButton = false.obs;
-  bool _isLoadingTriggered = false; // ✅ Add infinite scroll state
 
   @override
   void initState() {
@@ -49,36 +48,26 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _scrollListener() {
-    // ✅ Scroll to top button logic
     if (_scrollController.offset >= 200 && !_showScrollToTopButton.value) {
       _showScrollToTopButton.value = true;
     } else if (_scrollController.offset < 200 && _showScrollToTopButton.value) {
       _showScrollToTopButton.value = false;
     }
 
-    // ✅ Infinite scroll logic
     if (!_scrollController.hasClients) return;
 
     final maxScroll = _scrollController.position.maxScrollExtent;
     final currentScroll = _scrollController.position.pixels;
 
-    // Reset loading trigger when scroll position changes significantly
-    if (currentScroll < maxScroll * 0.7) {
-      _isLoadingTriggered = false;
-    }
-
-    // Trigger load more at 85% scroll
-    if (currentScroll >= maxScroll * 0.85) {
+    if (currentScroll >= maxScroll * 0.75) {
       _triggerLoadMore();
     }
   }
 
   void _triggerLoadMore() {
-    if (_isLoadingTriggered ||
-        productController.isFetchingMore.value ||
+    if (productController.isFetchingMore.value ||
         !productController.hasMoreProducts.value) return;
 
-    _isLoadingTriggered = true;
     print("🚀 Infinite scroll triggered from HomeScreen");
     productController.fetchMoreProducts();
   }
@@ -93,8 +82,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final TextTheme textTheme = Theme.of(context).textTheme;
-
     return Scaffold(
       extendBodyBehindAppBar: false,
       backgroundColor: AppColors.neutralBackground,
@@ -102,21 +89,16 @@ class _HomeScreenState extends State<HomeScreen> {
       body: Stack(
         children: [
           CustomScrollView(
-            controller: _scrollController, // ✅ This controller now handles infinite scroll
+            controller: _scrollController,
             slivers: [
-              // ✅ SearchTabSliverAppBar stays the same
               SearchTabSliverAppBar(
                 onSearchChanged: (value) {
                   print('Search query: $value');
                 },
               ),
-
-              // ✅ CustomTabBarViewSection in SliverToBoxAdapter
               SliverToBoxAdapter(
                 child: CustomTabBarViewSection(),
               ),
-
-              // ✅ Add loading indicator at the bottom when fetching more
               Obx(() {
                 if (productController.isFetchingMore.value) {
                   return const SliverToBoxAdapter(
@@ -134,14 +116,12 @@ class _HomeScreenState extends State<HomeScreen> {
               }),
             ],
           ),
-
-          // ✅ Scroll to Top Button (unchanged)
           Positioned(
-            top: MediaQuery.of(context).padding.top + 120.0,
+            top: 260.0, // Changed from bottom
             left: 0,
             right: 0,
             child: Align(
-              alignment: Alignment.topCenter,
+              alignment: Alignment.center,
               child: Obx(() => AnimatedOpacity(
                 opacity: _showScrollToTopButton.value ? 1.0 : 0.0,
                 duration: const Duration(milliseconds: 300),

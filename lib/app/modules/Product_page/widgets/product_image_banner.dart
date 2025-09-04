@@ -14,8 +14,8 @@ class ProductImageBanner extends StatefulWidget {
   final bool showZoomButton;
   final bool showShareButton;
 
-  final double productRating;
-  final int reviewCount;
+  final double? productRating; // Made nullable
+  final int? reviewCount; // Made nullable
 
   const ProductImageBanner({
     super.key,
@@ -28,8 +28,8 @@ class ProductImageBanner extends StatefulWidget {
     required this.heroTag,
     this.showZoomButton = true,
     this.showShareButton = true,
-    required this.productRating,
-    required this.reviewCount,
+    this.productRating, // No longer required
+    this.reviewCount, // No longer required
   });
 
   @override
@@ -64,7 +64,7 @@ class _ProductImageBannerState extends State<ProductImageBanner> {
                   child: imageUrl.isNotEmpty
                       ? Image.network(
                     imageUrl,
-                    fit: BoxFit.fill,
+                    fit: BoxFit.contain, // CHANGED FROM BoxFit.fill to BoxFit.contain
                     loadingBuilder: (context, child, loadingProgress) {
                       if (loadingProgress == null) return child;
                       return Center(
@@ -74,7 +74,7 @@ class _ProductImageBannerState extends State<ProductImageBanner> {
                         ),
                       );
                     },
-                    errorBuilder: (context, error, stackTrace) => Center(
+                    errorBuilder: (context, url, error) => Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -114,85 +114,58 @@ class _ProductImageBannerState extends State<ProductImageBanner> {
             ),
           ),
 
-          // Badge (top left)
-          if (widget.badgeText != null && widget.badgeText!.isNotEmpty)
+          
+
+          // ⭐ Rating + Review Count (bottom left)
+          if (widget.productRating != null && widget.reviewCount != null)
             Positioned(
-              top: 16,
-              left: 16,
-              child: SafeArea(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: AppColors.accentOrange,
-                    borderRadius: BorderRadius.circular(6),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
+              bottom: 0,
+              left: 20,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppColors.neutralBackground, // Dark background
+                  borderRadius: BorderRadius.only(topRight: Radius.circular(12),topLeft: Radius.circular(12)),
+                ),
+                child: Row(
+                  children: [
+                    // ⭐ Star icons
+                    ...List.generate(5, (index) {
+                      double filled = widget.productRating! - index;
+                      IconData iconData;
+                      if (filled >= 1) {
+                        iconData = Icons.star;
+                      } else if (filled >= 0.5) {
+                        iconData = Icons.star_half;
+                      } else {
+                        iconData = Icons.star_border;
+                      }
+                      return Icon(iconData, color: Colors.yellow, size: 16);
+                    }),
+                    const SizedBox(width: 6),
+
+                    // 📊 Rating value
+                    Text(
+                      widget.productRating!.toStringAsFixed(1),
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: AppColors.textDark,
+                        fontWeight: FontWeight.w600,
                       ),
-                    ],
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
-                  child: Text(
-                    widget.badgeText!,
-                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: AppColors.white,
-                      fontWeight: FontWeight.w700,
                     ),
-                  ),
+
+                    const SizedBox(width: 4),
+
+                    // 🗣 Review count
+                    Text(
+                      '(${widget.reviewCount!})',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: AppColors.textDark,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-
-          // ⭐ Rating + Review Count (bottom left)
-          Positioned(
-            bottom: 0,
-            left: 20,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: AppColors.neutralBackground, // Dark background
-                borderRadius: BorderRadius.only(topRight: Radius.circular(12),topLeft: Radius.circular(12)),
-              ),
-              child: Row(
-                children: [
-                  // ⭐ Star icons
-                  ...List.generate(5, (index) {
-                    double filled = widget.productRating - index;
-                    IconData iconData;
-                    if (filled >= 1) {
-                      iconData = Icons.star;
-                    } else if (filled >= 0.5) {
-                      iconData = Icons.star_half;
-                    } else {
-                      iconData = Icons.star_border;
-                    }
-                    return Icon(iconData, color: Colors.yellow, size: 16);
-                  }),
-                  const SizedBox(width: 6),
-
-                  // 📊 Rating value
-                  Text(
-                    widget.productRating.toStringAsFixed(1),
-                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: AppColors.textDark,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-
-                  const SizedBox(width: 4),
-
-                  // 🗣 Review count
-                  Text(
-                    '(${widget.reviewCount})',
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: AppColors.textDark,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
 
 
 
@@ -237,5 +210,4 @@ class _ProductImageBannerState extends State<ProductImageBanner> {
         ],
       ),
     );
-  }
-}
+  }}

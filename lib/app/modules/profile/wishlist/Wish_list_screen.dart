@@ -2,11 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobiking/app/themes/app_theme.dart'; // Your AppColors and AppTheme
 
+import '../../../controllers/cart_controller.dart';
 import '../../../controllers/wishlist_controller.dart';
 import 'Wish_list_card.dart'; // Ensure this path is correct and it's the updated version
 
 class WishlistScreen extends StatelessWidget {
-  WishlistScreen({super.key});
+  WishlistScreen({super.key}) {
+    // This will get the controller instance and immediately call the fetch method.
+    // It ensures data is fetched every time the screen is navigated to.
+    Get.find<WishlistController>().fetchWishlistOnScreenLoad();
+  }
 
   final controller = Get.find<WishlistController>();
 
@@ -110,17 +115,52 @@ class WishlistScreen extends StatelessWidget {
                     },
                   );
                 },
-                onAddToCart: () {
-                  // TODO: Implement actual add to cart logic
-                  Get.snackbar(
-                    'Added to Cart!',
-                    '${product.name} has been added to your cart.',
-                    snackPosition: SnackPosition.BOTTOM,
-                    backgroundColor: AppColors.primaryGreen,
-                    colorText: AppColors.white,
-                    margin: const EdgeInsets.all(10),
-                    borderRadius: 10,
-                  );
+                onAddToCart: () async {
+                  final cartController = Get.find<CartController>();
+                  final availableVariants = product.variants.entries.where((entry) => entry.value > 0).toList();
+
+                  if (availableVariants.isNotEmpty) {
+                    // For simplicity, add the first available variant. 
+                    // A more complex solution would involve a variant selection UI.
+                    final singleVariant = availableVariants.first;
+                    final success = await cartController.addToCart(
+                      productId: product.id,
+                      variantName: singleVariant.key,
+                      product: product, // Pass product model for potential use in CartController
+                    );
+
+                    if (success) {
+                      Get.snackbar(
+                        'Added to Cart!',
+                        '${product.name} has been added to your cart.',
+                        snackPosition: SnackPosition.BOTTOM,
+                        backgroundColor: AppColors.primaryGreen,
+                        colorText: AppColors.white,
+                        margin: const EdgeInsets.all(10),
+                        borderRadius: 10,
+                      );
+                    } else {
+                      Get.snackbar(
+                        'Error',
+                        'Failed to add ${product.name} to cart.',
+                        snackPosition: SnackPosition.BOTTOM,
+                        backgroundColor: AppColors.danger,
+                        colorText: AppColors.white,
+                        margin: const EdgeInsets.all(10),
+                        borderRadius: 10,
+                      );
+                    }
+                  } else {
+                    Get.snackbar(
+                      'Out of Stock',
+                      '${product.name} is currently out of stock or has no available variants.',
+                      snackPosition: SnackPosition.BOTTOM,
+                      backgroundColor: AppColors.danger,
+                      colorText: AppColors.white,
+                      margin: const EdgeInsets.all(10),
+                      borderRadius: 10,
+                    );
+                  }
                 },
               ),
             );

@@ -71,7 +71,7 @@ class CategoryController extends GetxController {
 
     } catch (e) {
       print('[CategoryController] Error in fetchCategoryDetails: $e');
-      Get.snackbar('Error', 'Failed to load category details: $e');
+      // Get.snackbar('Error', 'Failed to load category details: $e');
     } finally {
       isLoading.value = false;
     }

@@ -3,6 +3,7 @@
 // Assuming SellingPrice and ProductModel are defined here,
 // or defined globally if used elsewhere and not part of this file.
 // If SellingPrice is not defined, you'll need to define it as below:
+import 'package:mobiking/app/data/product_model.dart';
 import 'package:mobiking/app/data/scan_model.dart';
 
 class SellingPrice {
@@ -126,6 +127,8 @@ class OrderItemProductModel {
       v: json['__v'] as int?,
     );
   }
+
+
 
   Map<String, dynamic> toJson() {
     return {
@@ -403,6 +406,8 @@ class OrderModel {
     required this.updatedAt,
     this.v,
   }) : requests = requests ?? [];
+
+  
 
   factory OrderModel.fromJson(Map<String, dynamic> json) {
     return OrderModel(

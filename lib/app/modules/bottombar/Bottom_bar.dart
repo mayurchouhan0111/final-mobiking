@@ -75,11 +75,7 @@ class _MainContainerScreenState extends State<MainContainerScreen> with WidgetsB
         ),
         bottomNavigationBar: const CustomBottomBar(),
         floatingActionButton: Obx(() {
-          final currentTabIndex = navController.selectedIndex.value;
-          const int profileTabIndex = 3;
-
-          // Don't show FAB on the Profile tab
-          if (currentTabIndex == profileTabIndex) {
+          if (!navController.isFabVisible.value) {
             return const SizedBox.shrink();
           }
 
@@ -111,7 +107,7 @@ class _MainContainerScreenState extends State<MainContainerScreen> with WidgetsB
           }).toList();
 
           // CORRECTED: Calculate fabBottomMargin to float above the bottom bar
-          final double fabBottomMargin = 0.5 ; // 16px padding + bottom bar height
+          final double fabBottomMargin = 0.0; // 16px padding + bottom bar height
 
           return Container(
             margin: EdgeInsets.only(left: 16, right: 16, bottom: fabBottomMargin),

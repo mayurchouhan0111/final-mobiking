@@ -189,7 +189,8 @@ class _ProductGridViewSectionState extends State<ProductGridViewSection> {
                   height: 300,
                   child: Center(
                     child: Text(
-                      'We couldn\'t find any items at the moment.\nPlease check back later.',
+                      'We couldn\'t find any items at the moment.\n'
+                      'Please check back later.',
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -209,7 +210,7 @@ class _ProductGridViewSectionState extends State<ProductGridViewSection> {
                   children: [
                     // Title Section with scroll progress indicator
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 16.0),
+                      padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
                       child: Row(
                         children: [
                           Text(
@@ -281,7 +282,7 @@ class _ProductGridViewSectionState extends State<ProductGridViewSection> {
 
                     // ✅ Products Grid
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      padding: const EdgeInsets.symmetric(horizontal: 2.0),
                       child: GridView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
@@ -289,9 +290,9 @@ class _ProductGridViewSectionState extends State<ProductGridViewSection> {
                         itemCount: inStockProducts.length + (isLoadingMore ? 3 : 0),
                         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 3,
-                          mainAxisSpacing: 8,
-                          crossAxisSpacing: 8,
-                          childAspectRatio: 0.46,
+                          mainAxisSpacing: 0,
+                          crossAxisSpacing: 0,
+                          childAspectRatio: 0.5,
                         ),
                         itemBuilder: (context, index) {
                           // Show loading shimmer
@@ -327,7 +328,7 @@ class _ProductGridViewSectionState extends State<ProductGridViewSection> {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              'Loading more products...',
+                              'Loading more products...', 
                               style: textTheme.bodySmall?.copyWith(
                                 color: AppColors.textLight,
                               ),
@@ -369,6 +370,7 @@ class _ProductGridViewSectionState extends State<ProductGridViewSection> {
       ),
     );
   }
+}
 
   Widget _buildShimmerCard() {
     return Container(
@@ -465,7 +467,7 @@ class _ProductGridViewSectionState extends State<ProductGridViewSection> {
       ),
     );
   }
-}
+
 
 // ✅ Updated function to use the new integrated widget
 Widget buildSectionView({

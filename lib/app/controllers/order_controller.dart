@@ -730,7 +730,7 @@ class OrderController extends GetxController {
     String? userId = user['_id'];
     String? name = user['name'];
     String? email = user['email'];
-    String? phone = user['phoneNo'] ?? user['phone'];
+    String? phone = (user['phoneNo'] ?? user['phone'])?.toString();
 
     if (_isUserInfoIncomplete(userId, name, email, phone)) {
       debugPrint('⚠️ User info incomplete. Prompting...');
@@ -751,7 +751,7 @@ class OrderController extends GetxController {
       userId = user['_id'];
       name = user['name'];
       email = user['email'];
-      phone = user['phoneNo'] ?? user['phone'];
+      phone = (user['phoneNo'] ?? user['phone'])?.toString();
 
       if (_isUserInfoIncomplete(userId, name, email, phone)) {
         debugPrint('🛑 User info still incomplete after prompt. Aborting.');
@@ -954,6 +954,30 @@ class OrderController extends GetxController {
           backgroundColor: Colors.orange.shade600,
         );
         return;
+      }
+
+      // Show confirmation dialog for COD
+      final bool? confirmed = await Get.dialog<bool>(
+        AlertDialog(
+          title: const Text('Confirm COD Order'),
+          content: Text('You are about to place a Cash on Delivery order for ₹${orderRequest.orderAmount.toStringAsFixed(0)}. Do you want to proceed?'),
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(result: false),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Get.back(result: true),
+              child: const Text('Confirm'),
+            ),
+          ],
+        ),
+      );
+
+      if (confirmed == null || !confirmed) {
+        isLoading.value = false; // Reset loading state if cancelled
+        debugPrint('🛑 COD order cancelled by user.');
+        return; // Abort order placement
       }
 
       debugPrint('🚀 Placing COD order...');
@@ -1176,10 +1200,12 @@ class OrderController extends GetxController {
         backgroundColor: Colors.red.shade600,
       );
       rethrow;
+    } finally {
+      isLoading.value = false;
     }
   }
 
-  // FIXED: Validate online payment response - handles your API structure
+  // **FIXED METHOD**
   Map<String, dynamic>? _validateOnlinePaymentResponse(Map<String, dynamic> response) {
     debugPrint('🔍 === VALIDATING PAYMENT RESPONSE ===');
     debugPrint('🔍 Response keys: ${response.keys.toList()}');
@@ -1415,10 +1441,10 @@ class OrderController extends GetxController {
       debugPrint('🔧 Order Data Keys: ${orderData.keys.toList()}');
 
       // Extract order ID from the complete order data
-      String? orderId = orderData['orderId'] ??
+      String? orderId = (orderData['orderId'] ??
           orderData['_id'] ??
           orderData['id'] ??
-          orderData['newOrderId'];
+          orderData['newOrderId'])?.toString();
 
       if (orderId == null || orderId.isEmpty) {
         debugPrint('❌ CRITICAL ERROR: Cannot extract order ID from order data');
@@ -1457,7 +1483,7 @@ class OrderController extends GetxController {
       debugPrint('✅ Order ID for confirmation: $orderId');
 
       // Clear cart data
-      _cartController.clearCartData();
+      await _cartController.clearCartData();
 
       // Refresh order history
       fetchOrderHistory();

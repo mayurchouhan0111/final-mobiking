@@ -261,16 +261,16 @@ class OrderService extends GetxService {
     }
   }
 
-  // ENHANCED: Initiate online order with better timeout handling
+  // ENHANCED: Initiate online payment (get Razorpay order details)
   Future<Map<String, dynamic>> initiateOnlineOrder(CreateOrderRequestModel orderRequest) async {
-    final url = Uri.parse('$_baseUrl/online/new');
+    final url = Uri.parse('$_baseUrl/online/new'); // New endpoint for payment initiation
     Map<String, String> headers;
     try {
       headers = _getHeaders();
     } on OrderServiceException {
       rethrow;
     } catch (e) {
-      throw OrderServiceException('Failed to prepare headers for online order initiation: $e');
+      throw OrderServiceException('Failed to prepare headers for online payment initiation: $e');
     }
 
     try {
@@ -291,43 +291,88 @@ class OrderService extends GetxService {
         if (responseBody['success'] == true && responseBody.containsKey('data') && responseBody['data'] is Map<String, dynamic>) {
           final Map<String, dynamic> responseData = responseBody['data'] as Map<String, dynamic>;
 
+          // Store initial Razorpay response for later verification if needed
           await _box.write('razorpay_init_response', responseData);
           _log('Razorpay init response stored: $responseData');
 
-          // Store MongoDB _id if available from initiate response
-          if (responseData.containsKey('order') && responseData['order'] is Map<String, dynamic> && responseData['order'].containsKey('_id')) {
-            await _box.write(_lastOrderIdKey, responseData['order']['_id']);
-            _log('Online Order MongoDB _id stored: ${responseData['order']['_id']}');
-          } else {
-            _log('Warning: Online order initiation response did not contain expected MongoDB _id. Details fetching for this order might fail.');
-          }
+          // No success snackbar here, as payment is not yet confirmed
 
-          // Show success message to user
-          Get.snackbar('Success', 'Payment initiated successfully!',
-              snackPosition: SnackPosition.BOTTOM,
-              backgroundColor: Colors.green.shade600,
-              colorText: Colors.white);
-
-          return responseData;
+          return responseData; // This should contain Razorpay order_id, amount, key, etc.
         } else {
           throw OrderServiceException(
-            responseBody['message'] ?? 'Failed to initiate online order: Invalid success status or data format. Expected data map.',
+            responseBody['message'] ?? 'Failed to initiate online payment: Invalid success status or data format. Expected data map.',
             statusCode: response.statusCode,
           );
         }
       } else {
         throw OrderServiceException(
-          responseBody['message'] ?? 'Online order initiation failed.',
+          responseBody['message'] ?? 'Online payment initiation failed.',
           statusCode: response.statusCode,
         );
       }
     } on FormatException catch (e) {
-      _log('Server response format error during online order initiation: $e');
-      throw OrderServiceException('Server response format error during online order initiation: $e', statusCode: 0);
+      _log('Server response format error during online payment initiation: $e');
+      throw OrderServiceException('Server response format error during online payment initiation: $e', statusCode: 0);
     } catch (e) {
       if (e is OrderServiceException) rethrow;
-      _log('Unexpected error occurred during online order initiation: $e');
-      throw OrderServiceException('An unexpected error occurred during online order initiation: $e');
+      _log('Unexpected error occurred during online payment initiation: $e');
+      throw OrderServiceException('An unexpected error occurred during online payment initiation: $e');
+    }
+  }
+
+  // NEW: Finalize online order after successful payment
+  Future<OrderModel> finalizeOnlineOrder(Map<String, dynamic> orderData) async {
+    final url = Uri.parse('$_baseUrl/online/finalize'); // New endpoint for order finalization
+    Map<String, String> headers;
+    try {
+      headers = _getHeaders();
+    } on OrderServiceException {
+      rethrow;
+    } catch (e) {
+      throw OrderServiceException('Failed to prepare headers for online order finalization: $e');
+    }
+
+    try {
+      final response = await _makeRequest(
+            () => http.post(
+          url,
+          headers: headers,
+          body: jsonEncode(orderData),
+        ),
+        'finalizeOnlineOrder',
+      );
+
+      final responseBody = jsonDecode(response.body);
+      _log("finalizeOnlineOrder Status: ${response.statusCode}, Body: ${response.body}");
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        if (responseBody['success'] == true && responseBody.containsKey('data')) {
+          final OrderModel order = OrderModel.fromJson(responseBody['data'] as Map<String, dynamic>);
+          await _box.write(_lastOrderIdKey, order.id);
+          _log('Online Order finalized and MongoDB _id stored: ${order.id}');
+
+          // No success snackbar here, as it's handled by OrderController
+
+          return order;
+        } else {
+          throw OrderServiceException(
+            responseBody['message'] ?? 'Failed to finalize online order: Invalid success status or data format.',
+            statusCode: response.statusCode,
+          );
+        }
+      } else {
+        throw OrderServiceException(
+          responseBody['message'] ?? 'Online order finalization failed.',
+          statusCode: response.statusCode,
+        );
+      }
+    } on FormatException catch (e) {
+      _log('Server response format error during online order finalization: $e');
+      throw OrderServiceException('Server response format error during online order finalization: $e', statusCode: 0);
+    } catch (e) {
+      if (e is OrderServiceException) rethrow;
+      _log('Unexpected error occurred during online order finalization: $e');
+      throw OrderServiceException('An unexpected error occurred during online order finalization: $e');
     }
   }
 

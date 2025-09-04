@@ -98,33 +98,18 @@ class AddressController extends GetxController {
         print('AddressController: Location detected - City: ${locationData['city']}, State: ${locationData['state']}');
 
         // Show success message
-        _showSnackbar(
-          'Location Detected',
-          'City and state auto-filled based on PIN code',
-          Colors.green,
-          Icons.location_on,
-        );
+        
       } else {
         detectionError.value = 'Could not detect location for this PIN code';
         print('AddressController: Could not detect location for PIN code: $pincode');
 
-        _showSnackbar(
-          'Detection Failed',
-          'Could not auto-detect city and state. Please enter manually.',
-          Colors.orange,
-          Icons.location_off,
-        );
+        
       }
     } catch (e) {
       detectionError.value = 'Network error while detecting location';
       print('AddressController: Error detecting location for PIN code $pincode: $e');
 
-      _showSnackbar(
-        'Network Error',
-        'Please check your internet connection and try again',
-        Colors.red,
-        Icons.signal_wifi_off,
-      );
+      
     } finally {
       isDetectingLocation.value = false;
     }
@@ -156,11 +141,9 @@ class AddressController extends GetxController {
     try {
       final fetchedList = await _addressService.fetchUserAddresses();
       addresses.assignAll(fetchedList);
-      if (addresses.isNotEmpty) {
-        if (selectedAddress.value == null || !addresses.contains(selectedAddress.value)) {
-          selectedAddress.value = addresses.first;
-        }
-      } else {
+      if (addresses.isEmpty) {
+        selectedAddress.value = null;
+      } else if (selectedAddress.value != null && !addresses.any((a) => a.id == selectedAddress.value!.id)) {
         selectedAddress.value = null;
       }
     } on AddressServiceException catch (e) {
@@ -205,9 +188,7 @@ class AddressController extends GetxController {
       }
 
       if (finalLabel.isEmpty) {
-        _showSnackbar('Input Required', 'Please provide a label for the address.', Colors.amber, Icons.label_important_outline);
-        isLoading.value = false;
-        return false;
+        
       }
 
       if (streetController.text.trim().isEmpty ||

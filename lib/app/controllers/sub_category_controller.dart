@@ -89,7 +89,7 @@ class SubCategoryController extends GetxController {
 
     } catch (e) {
       print('[SubCategoryController] Error adding subcategory: $e');
-      Get.snackbar('Error', 'Failed to add subcategory: $e');
+      // Get.snackbar('Error', 'Failed to add subcategory: $e');
     } finally {
       isLoading.value = false;
     }

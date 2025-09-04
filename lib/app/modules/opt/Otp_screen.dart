@@ -1,11 +1,9 @@
 // lib/app/modules/opt/Otp_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:mobiking/app/themes/app_theme.dart';
-import 'dart:async'; // Required for Timer
-import 'package:mobiking/app/controllers/login_controller.dart'; // Import LoginController
+import 'package:mobiking/app/controllers/login_controller.dart';
 import '../bottombar/Bottom_bar.dart';
 
 class OtpVerificationScreen extends StatefulWidget {
@@ -27,20 +25,14 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     // No need to send OTP here since it's already sent from phone auth screen
   }
 
-  // UPDATED: Handle OTP verification using LoginController
+  // Handle OTP verification using LoginController
   void _handleVerifyOtp() async {
     String otp = otpController.text.trim();
 
     if (otp.length == 6) {
-      // Call the verifyOtp method from LoginController
       final success = await _loginController.verifyOtp(widget.phoneNumber, otp);
 
-      // Navigation is handled inside the controller's verifyOtp method
-      // If successful, user will be navigated to MainContainerScreen
-      // If failed, error snackbar will be shown
-
       if (!success) {
-        // Clear the OTP field if verification failed
         otpController.clear();
       }
     } else {
@@ -56,7 +48,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     }
   }
 
-  // UPDATED: Handle resend OTP using LoginController
+  // Handle resend OTP using LoginController
   void _resendOtp() async {
     await _loginController.resendOtp();
   }
@@ -92,16 +84,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
         child: SafeArea(
           child: Column(
             children: [
-              // Header section - 40% of screen
-              Expanded(
-                flex: 40,
-                child: _buildHeader(context, textTheme),
-              ),
-              // Main content - 60% of screen
-              Expanded(
-                flex: 60,
-                child: _buildMainContent(context, textTheme),
-              ),
+              Expanded(flex: 40, child: _buildHeader(context, textTheme)),
+              Expanded(flex: 60, child: _buildMainContent(context, textTheme)),
             ],
           ),
         ),
@@ -109,13 +93,12 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     );
   }
 
-  // 🌄 Header with back button and branding
+  // 🌄 Header
   Widget _buildHeader(BuildContext context, TextTheme textTheme) {
     return Container(
       width: double.infinity,
       child: Stack(
         children: [
-          // Back button
           Positioned(
             top: 16,
             left: 16,
@@ -134,8 +117,6 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
               ),
             ),
           ),
-
-          // Decorative elements
           Positioned(
             top: 40,
             right: -20,
@@ -160,13 +141,10 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
               ),
             ),
           ),
-
-          // Main header content
           Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // OTP Icon
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
@@ -183,22 +161,16 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                     color: AppColors.white,
                   ),
                 ),
-
                 const SizedBox(height: 20),
-
-                // Title
                 Text(
                   "Verify Account",
                   style: textTheme.headlineLarge?.copyWith(
                     color: AppColors.white,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                     fontSize: 28,
                   ),
                 ),
-
                 const SizedBox(height: 8),
-
-                // Subtitle
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 40),
                   child: RichText(
@@ -228,7 +200,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     );
   }
 
-  // 🎴 Main Content with OTP Form
+  // 🎴 Main Content
   Widget _buildMainContent(BuildContext context, TextTheme textTheme) {
     return Container(
       width: double.infinity,
@@ -243,23 +215,12 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
         child: Column(
           children: [
-            // Card Header
             _buildCardHeader(textTheme),
-
             const SizedBox(height: 32),
-
-            // OTP Input
             _buildOtpInput(context, textTheme),
-
             const SizedBox(height: 24),
-
-            // Verify Button
             _buildVerifyButton(textTheme),
-
-            // Spacer to push resend section to bottom
             const Spacer(),
-
-            // Resend Section
             _buildResendSection(textTheme),
           ],
         ),
@@ -271,23 +232,17 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   Widget _buildCardHeader(TextTheme textTheme) {
     return Column(
       children: [
-        // Decorative line
         Container(
           width: 40,
           height: 4,
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                AppColors.primaryPurple,
-                AppColors.accentNeon,
-              ],
+              colors: [AppColors.primaryPurple, AppColors.accentNeon],
             ),
             borderRadius: BorderRadius.circular(2),
           ),
         ),
-
         const SizedBox(height: 20),
-
         Text(
           "Enter Verification Code",
           style: textTheme.headlineMedium?.copyWith(
@@ -296,9 +251,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
             fontSize: 24,
           ),
         ),
-
         const SizedBox(height: 8),
-
         Text(
           "Please enter the 6-digit code",
           style: textTheme.bodyLarge?.copyWith(
@@ -350,14 +303,14 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     );
   }
 
-  // UPDATED: Verify Button using LoginController
+  // Verify Button
   Widget _buildVerifyButton(TextTheme textTheme) {
     return Obx(() => Container(
       width: double.infinity,
       height: 52,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: _loginController.isOtpLoading.value // CHANGED: Use controller's loading state
+          colors: _loginController.isOtpLoading.value
               ? [
             AppColors.textLight.withOpacity(0.5),
             AppColors.textLight.withOpacity(0.7),
@@ -418,11 +371,10 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     ));
   }
 
-  // UPDATED: Resend Section using LoginController
+  // Resend Section
   Widget _buildResendSection(TextTheme textTheme) {
     return Column(
       children: [
-        // Timer or "Didn't receive?" text
         Obx(() => _loginController.otpTimeRemaining.value > 0
             ? RichText(
           textAlign: TextAlign.center,
@@ -434,7 +386,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
             ),
             children: [
               TextSpan(
-                text: _loginController.getFormattedTimeRemaining(), // CHANGED: Use controller method
+                text: _loginController.getFormattedTimeRemaining(),
                 style: TextStyle(
                   color: AppColors.primaryPurple,
                   fontWeight: FontWeight.w600,
@@ -450,19 +402,17 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
             fontSize: 13,
           ),
         )),
-
         const SizedBox(height: 8),
-
-        // Resend Button
         Obx(() => TextButton(
-          onPressed: _loginController.canResendOtp() ? _resendOtp : null, // CHANGED: Use controller method
+          onPressed: _loginController.canResendOtp() ? _resendOtp : null,
           style: TextButton.styleFrom(
             foregroundColor: _loginController.canResendOtp()
                 ? AppColors.primaryPurple
                 : AppColors.textLight.withOpacity(0.5),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           ),
-          child: _loginController.isResendingOtp.value // CHANGED: Use controller's resend loading state
+          child: _loginController.isResendingOtp.value
               ? Row(
             mainAxisSize: MainAxisSize.min,
             children: [

@@ -57,24 +57,8 @@ class FavoriteToggleButton extends StatelessWidget {
 
           if (isLiked) {
             wishlistController.removeFromWishlist(productId);
-            Get.snackbar(
-              'Wishlist',
-              'Removed from wishlist!',
-              snackPosition: SnackPosition.BOTTOM,
-              backgroundColor: AppColors.textDark.withOpacity(0.8),
-              colorText: AppColors.white,
-              duration: const Duration(seconds: 1),
-            );
           } else {
             wishlistController.addToWishlist(productId);
-            Get.snackbar(
-              'Wishlist',
-              'Added to wishlist!',
-              snackPosition: SnackPosition.BOTTOM,
-              backgroundColor: AppColors.textDark.withOpacity(0.8),
-              colorText: AppColors.white,
-              duration: const Duration(seconds: 1),
-            );
           }
 
           onChanged?.call(!isLiked);

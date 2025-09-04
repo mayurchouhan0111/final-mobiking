@@ -23,7 +23,7 @@ class ProductCards extends StatelessWidget {
     required this.heroTag,
   }) : super(key: key);
 
-  static final Random _random = Random();
+  
 
   @override
   Widget build(BuildContext context) {
@@ -46,14 +46,11 @@ class ProductCards extends StatelessWidget {
     final int originalPrice;
     final int sellingPrice;
 
-    if (product.sellingPrice.length >= 2) {
-      originalPrice = product.regularPrice ?? product.sellingPrice[product.sellingPrice.length - 2].price.toInt();
-      sellingPrice = product.sellingPrice.last.price.toInt();
-    } else if (product.sellingPrice.length == 1) {
-      originalPrice = product.regularPrice ?? product.sellingPrice.first.price.toInt();
-      sellingPrice = product.sellingPrice.first.price.toInt();
+    if (product.sellingPrice.isNotEmpty) {
+      sellingPrice = product.sellingPrice.map((e) => e.price.toInt()).reduce(min);
+      originalPrice = product.regularPrice ?? product.sellingPrice.map((e) => e.price.toInt()).reduce(max);
     } else {
-      originalPrice = product.regularPrice ?? 0;
+      originalPrice = 0;
       sellingPrice = 0;
     }
 
@@ -62,9 +59,6 @@ class ProductCards extends StatelessWidget {
     if (originalPrice > 0 && sellingPrice < originalPrice) {
       discountPercent = (((originalPrice - sellingPrice) / originalPrice) * 100).round();
     }
-
-    final double demoRating = 3.5 + _random.nextDouble() * 1.5;
-    final int demoRatingCount = 50 + _random.nextInt(500);
 
     return Material(
       color: Colors.transparent,
@@ -238,14 +232,15 @@ class ProductCards extends StatelessWidget {
                       ),
 
                       // Rating - compact for grid
-                      SizedBox(
-                        height: isSmallScreen ? 16 : 18,
-                        child: AppStarRating(
-                          rating: demoRating,
-                          ratingCount: demoRatingCount,
-                          starSize: isSmallScreen ? 12 : 14,
+                      if (product.averageRating != null && product.reviewCount != null)
+                        SizedBox(
+                          height: isSmallScreen ? 16 : 18,
+                          child: AppStarRating(
+                            rating: product.averageRating!,
+                            ratingCount: product.reviewCount!,
+                            starSize: isSmallScreen ? 12 : 14,
+                          ),
                         ),
-                      ),
 
                       SizedBox(height: isSmallScreen ? 2 : 4),
 
@@ -273,7 +268,7 @@ class ProductCards extends StatelessWidget {
                                   style: textTheme.bodySmall?.copyWith(
                                     decoration: TextDecoration.lineThrough,
                                     color: AppColors.textLight,
-                                    fontSize: isSmallScreen ? 10 : 11,
+                                    fontSize: isSmallScreen ? 11 : 12,
                                   ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -403,8 +398,8 @@ class ProductCards extends StatelessWidget {
                 if (hasMultipleVariants) {
                   _showVariantBottomSheet(context, product.variants, product);
                 } else {
-                  final singleVariant = product.variants.entries.first;
-                  cartController.addToCart(productId: product.id, variantName: singleVariant.key);
+                  final singleVariant = product.variants.entries.firstWhere((element) => element.value > 0);
+                  cartController.addToCart(productId: product.id, variantName: singleVariant.key, product: product);
                   _showSnackBar(context, 'Added to cart', AppColors.success);
                 }
               },
@@ -461,7 +456,7 @@ class ProductCards extends StatelessWidget {
             _showVariantBottomSheet(context, product.variants, product);
           } else {
             final singleVariant = product.variants.entries.firstWhere((element) => element.value > 0);
-            cartController.addToCart(productId: product.id, variantName: singleVariant.key);
+            cartController.addToCart(productId: product.id, variantName: singleVariant.key, product: product);
             _showSnackBar(context, 'Added to cart', AppColors.success);
           }
         },
@@ -757,6 +752,7 @@ void _showVariantBottomSheet(BuildContext context, Map<String, int> variantsMap,
                                               cartController.addToCart(
                                                 productId: product.id,
                                                 variantName: variantName,
+                                                product: product,
                                               );
                                               isAddingToCart[variantName]?.value = false;
                                             },
@@ -794,6 +790,7 @@ void _showVariantBottomSheet(BuildContext context, Map<String, int> variantsMap,
                                         cartController.addToCart(
                                           productId: product.id,
                                           variantName: variantName,
+                                          product: product,
                                         );
                                         isAddingToCart[variantName]?.value = false;
                                       },

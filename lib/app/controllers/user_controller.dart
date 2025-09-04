@@ -3,7 +3,7 @@ import '../data/login_model.dart';
 import '../services/user_service.dart';
 
 class UserController extends GetxController {
-  final UserService _userService = UserService();
+  final UserService _userService = Get.find<UserService>();
   var user = UserModel().obs;
   var isLoading = false.obs;
 

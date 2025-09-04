@@ -12,8 +12,8 @@ class GroupWithProductsSection extends StatelessWidget {
 
   const GroupWithProductsSection({super.key, required this.groups});
 
-  static const double horizontalContentPadding = 16.0;
-  static const double gridCardHeight = 240.0; // Adjusted for your card design
+  static const double horizontalContentPadding = 16.0; // Increased padding for better spacing
+  static const double gridCardHeight = 240.0;
 
   @override
   Widget build(BuildContext context) {
@@ -31,16 +31,16 @@ class GroupWithProductsSection extends StatelessWidget {
 
         if (group.products.isEmpty) return const SizedBox.shrink();
 
-        // ✅ Filter out products that are out of stock
+        // Filter out products that are out of stock
         final inStockProducts = group.products.where((product) {
           // Check if product has any variant with stock > 0
           return product.variants.entries.any((variant) => variant.value > 0);
         }).toList();
 
-        // ✅ Don't show group if no products are in stock
+        // Don't show group if no products are in stock
         if (inStockProducts.isEmpty) return const SizedBox.shrink();
 
-        // ✅ Background Color Logic
+        // Background Color Logic
         Color? sectionBackgroundColor;
         if (group.isBackgroundColorVisible && group.backgroundColor != null) {
           final tempBgColorString = group.backgroundColor!.trim();
@@ -50,8 +50,7 @@ class GroupWithProductsSection extends StatelessWidget {
             try {
               final hex = tempBgColorString.replaceAll("#", "");
               if (hex.length == 6) {
-                sectionBackgroundColor =
-                    Color(int.parse("FF$hex", radix: 16));
+                sectionBackgroundColor = Color(int.parse("FF$hex", radix: 16));
               }
             } catch (e) {
               sectionBackgroundColor = null;
@@ -62,17 +61,16 @@ class GroupWithProductsSection extends StatelessWidget {
         return Container(
           color: sectionBackgroundColor,
           padding: EdgeInsets.symmetric(
-              vertical: sectionBackgroundColor != null ? 12.0 : 0.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 10),
-              // ✅ Group Banner
-              if (group.banner != null && group.banner!.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: horizontalContentPadding),
-                  child: ClipRRect(
+              vertical: sectionBackgroundColor != null ? 6.0 : 0.0),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: horizontalContentPadding),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 10),
+                // Group Banner
+                if (group.isBannerVisible && group.banner != null && group.banner!.isNotEmpty)
+                  ClipRRect(
                     borderRadius: BorderRadius.circular(10.0),
                     child: Container(
                       height: 140,
@@ -99,128 +97,121 @@ class GroupWithProductsSection extends StatelessWidget {
                       ),
                     ),
                   ),
-                ),
 
-              if (group.banner != null && group.banner!.isNotEmpty)
-                const SizedBox(height: 16),
+                if (group.isBannerVisible && group.banner != null && group.banner!.isNotEmpty)
+                  const SizedBox(height: 16),
 
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: horizontalContentPadding),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                // Group Title + See More
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // ✅ Group Title + See More
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            group.name,
-                            style: textTheme.titleLarge?.copyWith(
-                              color: AppColors.textDark,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 18,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                    Expanded(
+                      child: Text(
+                        group.name,
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: AppColors.textDark,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 18,
                         ),
-                        const SizedBox(width: 8),
-                        TextButton(
-                          onPressed: () {
-                            Get.to(() => GroupProductsScreen(group: group));
-                            print('Navigating to all products for group: ${group.name}');
-                          },
-                          style: TextButton.styleFrom(
-                            foregroundColor: AppColors.primaryPurple,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 6),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              side: const BorderSide(
-                                  color: AppColors.lightPurple, width: 1),
-                            ),
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            minimumSize: Size.zero,
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                'See More',
-                                style: textTheme.labelSmall?.copyWith(
-                                  color: AppColors.primaryPurple,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 11,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              Icon(Icons.arrow_forward_ios,
-                                  size: 12, color: AppColors.primaryPurple),
-                            ],
-                          ),
-                        ),
-                      ],
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-
-                    const SizedBox(height: 12),
-
-                    // ✅ Product Grid (3x2) - Using filtered in-stock products
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        // ✅ Show maximum 6 in-stock products (3x2 grid)
-                        final productsToShow = inStockProducts.take(6).toList();
-
-                        // Calculate the number of rows needed
-                        final rowCount = (productsToShow.length / 3).ceil().clamp(1, 2);
-
-                        // Calculate total height needed
-                        final cardHeight = gridCardHeight;
-                        final mainAxisSpacing = 14.0;
-                        final totalHeight = (cardHeight * rowCount) + (mainAxisSpacing * (rowCount - 1));
-
-                        return SizedBox(
-                          height: totalHeight,
-                          child: GridView.builder(
-                            physics: const NeverScrollableScrollPhysics(), // Remove scroll
-                            padding: EdgeInsets.zero,
-                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 3, // 3 products per row
-                              crossAxisSpacing: 8.0, // Horizontal spacing between cards
-                              mainAxisSpacing: 14.0, // Vertical spacing between rows
-                              childAspectRatio: 0.45, // Adjust based on your card design
-                            ),
-                            itemCount: productsToShow.length,
-                            itemBuilder: (context, prodIndex) {
-                              final product = productsToShow[prodIndex];
-                              final String productHeroTag =
-                                  'product_image_group_section_${group.id}_${product.id}_$prodIndex';
-
-                              return AllProductGridCard(
-                                product: product,
-                                heroTag: productHeroTag,
-                                onTap: (tappedProduct) {
-                                  Get.to(
-                                        () => ProductPage(
-                                      product: tappedProduct,
-                                      heroTag: productHeroTag,
-                                    ),
-                                    transition: Transition.fadeIn,
-                                    duration: const Duration(milliseconds: 300),
-                                  );
-                                  print('Navigating to product page for: ${tappedProduct.name}');
-                                },
-                              );
-                            },
-                          ),
-                        );
+                    const SizedBox(width: 8),
+                    TextButton(
+                      onPressed: () {
+                        Get.to(() => GroupProductsScreen(group: group));
+                        print('Navigating to all products for group: ${group.name}');
                       },
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.primaryPurple,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          side: const BorderSide(
+                              color: AppColors.success, width: 1),
+                        ),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        minimumSize: Size.zero,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'See More',
+                            style: textTheme.labelSmall?.copyWith(
+                              color: AppColors.success,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 11,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(Icons.arrow_forward_ios,
+                              size: 12, color: AppColors.success),
+                        ],
+                      ),
                     ),
                   ],
                 ),
-              ),
-            ],
+
+                const SizedBox(height: 12),
+
+                // Product Grid (3x2) - Using filtered in-stock products
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    // Show maximum 6 in-stock products (3x2 grid)
+                    final productsToShow = inStockProducts.take(6).toList();
+
+                    // Calculate the number of rows needed
+                    final rowCount = (productsToShow.length / 3).ceil().clamp(1, 2);
+
+                    // Calculate total height needed
+                    final cardHeight = gridCardHeight;
+                    final mainAxisSpacing = 14.0;
+                    final totalHeight = (cardHeight * rowCount) + (mainAxisSpacing * (rowCount - 1));
+
+                    return SizedBox(
+                      height: totalHeight,
+                      child: GridView.builder(
+                        physics: const NeverScrollableScrollPhysics(),
+                        padding: EdgeInsets.zero,
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          crossAxisSpacing: 0, // No horizontal spacing
+                          mainAxisSpacing: 0, // No vertical spacing
+                          childAspectRatio: 0.5, // Wider and shorter cards for compact look
+                        ),
+                        itemCount: productsToShow.length,
+                        itemBuilder: (context, prodIndex) {
+                          final product = productsToShow[prodIndex];
+                          final String productHeroTag =
+                              'product_image_group_section_${group.id}_${product.id}_$prodIndex';
+
+                          return AllProductGridCard(
+                            product: product,
+                            heroTag: productHeroTag,
+                            onTap: (tappedProduct) {
+                              Get.to(
+                                    () => ProductPage(
+                                  product: tappedProduct,
+                                  heroTag: productHeroTag,
+                                ),
+                                transition: Transition.fadeIn,
+                                duration: const Duration(milliseconds: 300),
+                              );
+                              print('Navigating to product page for: ${tappedProduct.name}');
+                            },
+                          );
+                        },
+                      ),
+                    );
+                  },
+                ),
+                // Corrected: The padding was moved here, but it's better to wrap the Column.
+                // const SizedBox(height: 16),
+              ],
+            ),
           ),
         );
       },

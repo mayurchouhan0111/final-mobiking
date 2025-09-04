@@ -10,35 +10,45 @@ import '../modules/login/login_screen.dart';
 import '../services/login_service.dart';
 import 'package:mobiking/app/controllers/connectivity_controller.dart';
 
+import 'package:mobiking/app/controllers/wishlist_controller.dart';
+
+import 'package:mobiking/app/data/wishlist_model.dart';
+
+import 'cart_controller.dart';
+
 class LoginController extends GetxController {
   final LoginService loginService = Get.find<LoginService>();
   final TextEditingController phoneController = TextEditingController();
   final box = GetStorage();
   RxBool isLoading = false.obs;
 
-  // ADD: OTP related observables
+  // OTP related observables
   RxBool isOtpLoading = false.obs;
   RxBool isResendingOtp = false.obs;
-  RxInt otpTimeRemaining = 0.obs;
   RxString currentOtpPhoneNumber = ''.obs;
-  Timer? _otpTimer;
+
+  // Timer for OTP resend countdown
+  Timer? _otpResendTimer;
+  RxInt otpTimeRemaining = 0.obs; // Countdown in seconds
+  static const int _otpResendCooldown = 60; // 60 seconds cooldown
 
   Rx<Map<String, dynamic>?> currentUser = Rx<Map<String, dynamic>?>(null);
 
   final ConnectivityController _connectivityController = Get.find<ConnectivityController>();
+  final CartController _cartController = Get.find<CartController>();
+  final WishlistController _wishlistController = Get.find<WishlistController>();
 
-  // ✅ Timer for automatic token refresh
+  // Timer for automatic token refresh
   Timer? _tokenRefreshTimer;
-  static const Duration _refreshInterval = Duration(hours: 20); // 20 hours
-  static const Duration _tokenValidityPeriod = Duration(hours: 24); // 24 hours
+  static const Duration _refreshInterval = Duration(hours: 20); // Refresh token after 20 hours
+  static const Duration _tokenValidityPeriod = Duration(hours: 24); // Token is valid for 24 hours
 
   @override
   void onInit() {
     super.onInit();
     _loadCurrentUserFromStorage();
     checkLoginStatus();
-    _startTokenRefreshTimer(); // ✅ Start automatic refresh timer
-    _checkOtpStatus(); // ADD: Check OTP status on init
+    _startTokenRefreshTimer(); // Start automatic refresh timer
 
     ever(_connectivityController.isConnected, (bool isConnected) {
       if (isConnected) {
@@ -50,38 +60,12 @@ class LoginController extends GetxController {
   @override
   void onClose() {
     phoneController.dispose();
-    _tokenRefreshTimer?.cancel(); // ✅ Cancel timer on controller close
-    _otpTimer?.cancel(); // ADD: Cancel OTP timer
+    _tokenRefreshTimer?.cancel(); // Cancel token refresh timer
+    _otpResendTimer?.cancel(); // Cancel OTP resend timer
     super.onClose();
   }
 
-  // ADD: Check OTP status on controller init
-  void _checkOtpStatus() {
-    final otpStatus = loginService.getOtpStatus();
-    if (otpStatus['hasOtp'] && !otpStatus['isExpired']) {
-      currentOtpPhoneNumber.value = otpStatus['phoneNumber'] ?? '';
-      otpTimeRemaining.value = otpStatus['timeRemaining'] ?? 0;
-      _startOtpTimer();
-    }
-  }
-
-  // ADD: Start OTP countdown timer
-  void _startOtpTimer() {
-    _otpTimer?.cancel();
-
-    if (otpTimeRemaining.value <= 0) return;
-
-    _otpTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (otpTimeRemaining.value > 0) {
-        otpTimeRemaining.value--;
-      } else {
-        timer.cancel();
-        _otpTimer = null;
-      }
-    });
-  }
-
-  // ADD: Send OTP method
+  // Send OTP method
   Future<bool> sendOtp(String phoneNumber) async {
     if (isOtpLoading.value) return false;
 
@@ -92,20 +76,11 @@ class LoginController extends GetxController {
       final response = await loginService.sendOtp(phoneNumber);
 
       if (response.statusCode == 200 && response.data['success'] == true) {
-        currentOtpPhoneNumber.value = phoneNumber;
-        otpTimeRemaining.value = 300; // 5 minutes in seconds
-        _startOtpTimer();
-
-        Get.snackbar(
-          'OTP Sent',
-          'Verification code sent to $phoneNumber',
-          backgroundColor: Get.theme.colorScheme.primary,
-          colorText: Colors.white,
-          icon: const Icon(Icons.check_circle_outline, color: Colors.white),
-          duration: const Duration(seconds: 3),
-        );
+        currentOtpPhoneNumber.value = phoneNumber; // Store phone number for resend
+        
 
         print('LoginController: OTP sent successfully');
+        _startOtpResendTimer(); // Start the countdown timer
         return true;
       } else {
         throw Exception(response.data?['message'] ?? 'Failed to send OTP');
@@ -113,14 +88,7 @@ class LoginController extends GetxController {
     } catch (e) {
       print('LoginController: Error sending OTP: $e');
 
-      Get.snackbar(
-        'Error',
-        'Failed to send OTP: ${e.toString()}',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-        icon: const Icon(Icons.error_outline, color: Colors.white),
-        duration: const Duration(seconds: 4),
-      );
+      
 
       return false;
     } finally {
@@ -128,9 +96,14 @@ class LoginController extends GetxController {
     }
   }
 
-  // ADD: Verify OTP method
+  // Verify OTP method
   Future<bool> verifyOtp(String phoneNumber, String otpCode) async {
     if (isOtpLoading.value) return false;
+
+    if (phoneNumber.isEmpty || otpCode.isEmpty) {
+      
+      return false;
+    }
 
     isOtpLoading.value = true;
     try {
@@ -153,6 +126,7 @@ class LoginController extends GetxController {
         await box.write('user', user);
         await box.write('cartId', cartId);
         await box.write('tokenCreationTime', DateTime.now().millisecondsSinceEpoch);
+        print('LoginController: tokenCreationTime written: ${box.read('tokenCreationTime')}');
 
         currentUser.value = user;
 
@@ -167,14 +141,7 @@ class LoginController extends GetxController {
         print('User data: ${box.read('user')}');
         print('Cart ID: ${box.read('cartId')}');
 
-        Get.snackbar(
-          'Success',
-          'Phone number verified successfully!',
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-          icon: const Icon(Icons.check_circle, color: Colors.white),
-          duration: const Duration(seconds: 2),
-        );
+        
 
         // Navigate to main app
         Get.offAll(() => MainContainerScreen());
@@ -184,53 +151,28 @@ class LoginController extends GetxController {
       }
     } catch (e) {
       print('LoginController: Error verifying OTP: $e');
-
-      String errorMessage = 'OTP verification failed';
-      if (e.toString().contains('expired')) {
-        errorMessage = 'OTP has expired. Please request a new one.';
-      } else if (e.toString().contains('Invalid OTP')) {
-        errorMessage = 'Invalid OTP. Please check and try again.';
-      }
-
-      Get.snackbar(
-        'Verification Failed',
-        errorMessage,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-        icon: const Icon(Icons.error_outline, color: Colors.white),
-        duration: const Duration(seconds: 4),
-      );
-
+      
       return false;
     } finally {
       isOtpLoading.value = false;
     }
   }
 
-  // ADD: Resend OTP method
+  // Resend OTP method
   Future<bool> resendOtp() async {
-    if (isResendingOtp.value || currentOtpPhoneNumber.value.isEmpty) return false;
+    if (!canResendOtp()) return false;
 
     isResendingOtp.value = true;
     try {
       print('LoginController: Resending OTP to ${currentOtpPhoneNumber.value}');
 
-      final response = await loginService.resendOtp(currentOtpPhoneNumber.value);
+      final response = await loginService.sendOtp(currentOtpPhoneNumber.value); // Re-use sendOtp
 
       if (response.statusCode == 200 && response.data['success'] == true) {
-        otpTimeRemaining.value = 300; // Reset to 5 minutes
-        _startOtpTimer();
-
-        Get.snackbar(
-          'OTP Resent',
-          'New verification code sent to ${currentOtpPhoneNumber.value}',
-          backgroundColor: Get.theme.colorScheme.primary,
-          colorText: Colors.white,
-          icon: const Icon(Icons.refresh, color: Colors.white),
-          duration: const Duration(seconds: 3),
-        );
+        
 
         print('LoginController: OTP resent successfully');
+        _startOtpResendTimer(); // Restart the countdown timer
         return true;
       } else {
         throw Exception(response.data?['message'] ?? 'Failed to resend OTP');
@@ -238,14 +180,7 @@ class LoginController extends GetxController {
     } catch (e) {
       print('LoginController: Error resending OTP: $e');
 
-      Get.snackbar(
-        'Error',
-        'Failed to resend OTP: ${e.toString()}',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-        icon: const Icon(Icons.error_outline, color: Colors.white),
-        duration: const Duration(seconds: 4),
-      );
+      
 
       return false;
     } finally {
@@ -253,37 +188,41 @@ class LoginController extends GetxController {
     }
   }
 
-  // ADD: Clear OTP related data
-  void _clearOtpData() {
-    _otpTimer?.cancel();
-    _otpTimer = null;
-    otpTimeRemaining.value = 0;
-    currentOtpPhoneNumber.value = '';
-    loginService.clearOtpData();
+  // Method to start the OTP resend timer
+  void _startOtpResendTimer() {
+    _otpResendTimer?.cancel(); // Cancel any existing timer
+    otpTimeRemaining.value = _otpResendCooldown;
+    _otpResendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (otpTimeRemaining.value > 0) {
+        otpTimeRemaining.value--;
+      } else {
+        timer.cancel();
+      }
+    });
   }
 
-  // ADD: Get OTP status
-  Map<String, dynamic> getOtpStatus() {
-    return loginService.getOtpStatus();
-  }
-
-  // ADD: Check if OTP can be resent
-  bool canResendOtp() {
-    return otpTimeRemaining.value == 0 && !isResendingOtp.value;
-  }
-
-  // ADD: Format time remaining for display
+  // Method to format the remaining time for the UI
   String getFormattedTimeRemaining() {
-    final minutes = (otpTimeRemaining.value / 60).floor();
-    final seconds = otpTimeRemaining.value % 60;
-    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+    int seconds = otpTimeRemaining.value;
+    return '0:${seconds.toString().padLeft(2, '0')}';
+  }
+
+  // Clear OTP related data
+  void _clearOtpData() {
+    currentOtpPhoneNumber.value = '';
+    _otpResendTimer?.cancel(); // Stop timer on clear
+    otpTimeRemaining.value = 0; // Reset timer value
+  }
+
+  // Check if OTP can be resent
+  bool canResendOtp() {
+    return !isResendingOtp.value && otpTimeRemaining.value == 0;
   }
 
   Future<void> _handleConnectionRestored() async {
     print('LoginController: Internet connection restored. Attempting to refresh user data/session...');
     if (currentUser.value != null && box.read('accessToken') != null) {
       try {
-        // Check if token needs refresh when connection is restored
         await _checkAndRefreshTokenIfNeeded();
         print('LoginController: User session or data re-validated/refreshed successfully.');
       } catch (e) {
@@ -301,7 +240,6 @@ class LoginController extends GetxController {
     }
   }
 
-  /// ✅ Enhanced: Check token validity and refresh if needed
   void checkLoginStatus() async {
     final accessToken = box.read('accessToken');
     final refreshToken = box.read('refreshToken');
@@ -309,65 +247,78 @@ class LoginController extends GetxController {
 
     if (accessToken != null && refreshToken != null && tokenCreationTime != null) {
       final now = DateTime.now().millisecondsSinceEpoch;
-      final tokenAge = now - tokenCreationTime;
-      final tokenAgeHours = tokenAge / (1000 * 60 * 60); // Convert to hours
+      // ✅ CORRECTED: Cast the value from storage to num and then convert to int.
+      final tokenAge = Duration(milliseconds: now - (tokenCreationTime as num).toInt());
 
-      if (tokenAgeHours >= 24) {
-        print('LoginController: Token expired (${tokenAgeHours.toStringAsFixed(1)} hours old). Logging out...');
+      if (tokenAge >= _tokenValidityPeriod) {
+        print('LoginController: Token expired (${tokenAge.inHours} hours old). Logging out...');
         _clearLoginData();
-      } else if (tokenAgeHours >= 20) {
-        print('LoginController: Token needs refresh (${tokenAgeHours.toStringAsFixed(1)} hours old). Refreshing...');
+      } else if (tokenAge >= _refreshInterval) {
+        print('LoginController: Token needs refresh (${tokenAge.inHours} hours old). Refreshing...');
         await _refreshToken();
       } else {
-        print('LoginController: Access token is valid (${tokenAgeHours.toStringAsFixed(1)} hours old).');
+        print('LoginController: Access token is valid (${tokenAge.inHours} hours old).');
       }
     } else {
       print('LoginController: No access token, refresh token, or creation time found.');
     }
   }
 
-  /// ✅ New: Start automatic token refresh timer
   void _startTokenRefreshTimer() {
-    _tokenRefreshTimer?.cancel(); // Cancel existing timer if any
+    _tokenRefreshTimer?.cancel();
 
     final tokenCreationTime = box.read('tokenCreationTime');
-    if (tokenCreationTime == null || box.read('accessToken') == null) {
-      return; // No token to refresh
+    final accessToken = box.read('accessToken');
+    print('LoginController: _startTokenRefreshTimer called.');
+    print('LoginController: tokenCreationTime: $tokenCreationTime');
+    print('LoginController: accessToken: $accessToken');
+
+    if (tokenCreationTime == null || accessToken == null) {
+      print('LoginController: Token creation time or access token is null. Cannot start refresh timer.');
+      return;
     }
 
     final now = DateTime.now().millisecondsSinceEpoch;
-    final tokenAge = now - tokenCreationTime;
-    final nextRefreshTime = _refreshInterval.inMilliseconds - tokenAge;
+    // ✅ CORRECTED: Cast the value from storage to num and then convert to int.
+    final tokenAge = now - (tokenCreationTime as num).toInt();
 
-    if (nextRefreshTime <= 0) {
-      // Token should be refreshed immediately
+    Duration effectiveRefreshInterval = loginService.isTestingTokenRefresh.value
+        ? const Duration(minutes: 1) // 1 minute for testing
+        : _refreshInterval; // 20 hours for normal operation
+
+    final nextRefreshTimeMs = effectiveRefreshInterval.inMilliseconds - tokenAge;
+
+    if (nextRefreshTimeMs <= 0) {
       _refreshToken();
       return;
     }
 
-    print('LoginController: Next token refresh scheduled in ${(nextRefreshTime / (1000 * 60 * 60)).toStringAsFixed(1)} hours');
+    print('LoginController: Next token refresh scheduled in ${(nextRefreshTimeMs / (1000 * 60 * 60)).toStringAsFixed(1)} hours');
 
-    _tokenRefreshTimer = Timer(Duration(milliseconds: nextRefreshTime.toInt()), () {
+    _tokenRefreshTimer = Timer(Duration(milliseconds: nextRefreshTimeMs), () {
       _refreshToken();
     });
   }
 
-  /// ✅ New: Check and refresh token if needed
   Future<void> _checkAndRefreshTokenIfNeeded() async {
     final tokenCreationTime = box.read('tokenCreationTime');
     if (tokenCreationTime == null) return;
 
     final now = DateTime.now().millisecondsSinceEpoch;
-    final tokenAge = now - tokenCreationTime;
-    final tokenAgeHours = tokenAge / (1000 * 60 * 60);
+    // ✅ CORRECTED: Cast the value from storage to num and then convert to int.
+    final tokenAge = Duration(milliseconds: now - (tokenCreationTime as num).toInt());
 
-    if (tokenAgeHours >= 20) {
+    Duration effectiveRefreshInterval = loginService.isTestingTokenRefresh.value
+        ? const Duration(minutes: 1) // 1 minute for testing
+        : _refreshInterval; // 20 hours for normal operation
+
+    if (tokenAge >= effectiveRefreshInterval) {
       await _refreshToken();
     }
   }
 
-  /// ✅ New: Refresh access token using refresh token
   Future<void> _refreshToken() async {
+    print('LoginController: _refreshToken() called at \${DateTime.now()}'); // Added print statement
     final refreshToken = box.read('refreshToken');
     if (refreshToken == null) {
       print('LoginController: No refresh token available. Logging out...');
@@ -378,16 +329,16 @@ class LoginController extends GetxController {
     try {
       print('LoginController: Refreshing access token...');
 
-      // Call your refresh token API endpoint
       dio.Response response = await loginService.refreshToken(refreshToken);
 
       if (response.statusCode == 200 && response.data['success'] == true) {
         final responseData = response.data['data'];
         final newAccessToken = responseData['accessToken'];
-        final newRefreshToken = responseData['refreshToken']; // Some APIs provide new refresh token
-        final updatedUser = responseData['user']; // Some APIs provide updated user data
+        final newRefreshToken = responseData['refreshToken'];
+        final updatedUser = responseData['user'];
+        final updatedCart = responseData['cart'];
+        final updatedWishlist = responseData['wishlist'];
 
-        // Store new tokens
         await box.write('accessToken', newAccessToken);
         await box.write('tokenCreationTime', DateTime.now().millisecondsSinceEpoch);
 
@@ -400,36 +351,40 @@ class LoginController extends GetxController {
           currentUser.value = updatedUser;
         }
 
-        print('LoginController: Token refreshed successfully');
+        if (updatedCart != null) {
+          _cartController.updateCartFromLogin(updatedCart as Map<String, dynamic>);
+          await box.write('cartId', updatedCart['_id']);
+        }
 
-        // Restart the timer for next refresh
+        if (updatedWishlist != null) {
+          _wishlistController.updateWishlistFromLogin(updatedWishlist as List<dynamic>);
+        }
+
+        print('LoginController: Token refreshed successfully');
         _startTokenRefreshTimer();
 
       } else {
-        print('LoginController: Token refresh failed. Response: ${response.data}');
+        print('LoginController: Token refresh failed. Response: \${response.data}');
         _clearLoginData();
         Get.offAll(() => PhoneAuthScreen());
       }
     } catch (e) {
-      print('LoginController: Token refresh error: $e');
+      print('LoginController: Token refresh error: \$e');
 
-      // If refresh fails, try one more time after a delay
-      if (e is dio.DioException && e.response?.statusCode == 401) {
-        print('LoginController: Refresh token expired. Logging out...');
+      if (e is dio.DioException && (e.response?.statusCode == 401 || e.response?.statusCode == 403)) {
+        print('LoginController: Refresh token expired or invalid. Logging out...');
         _clearLoginData();
         Get.offAll(() => PhoneAuthScreen());
       } else {
-        // Network error - retry after 5 minutes
         print('LoginController: Network error during refresh. Retrying in 5 minutes...');
         Timer(const Duration(minutes: 5), () => _refreshToken());
       }
     }
   }
 
-  /// ✅ Enhanced: Clear login data and cancel timers
   void _clearLoginData() {
     _tokenRefreshTimer?.cancel();
-    _clearOtpData(); // ADD: Clear OTP data as well
+    _clearOtpData();
     box.remove('accessToken');
     box.remove('refreshToken');
     box.remove('user');
@@ -439,38 +394,26 @@ class LoginController extends GetxController {
   }
 
   dynamic getUserData(String key) {
-    if (currentUser.value != null && currentUser.value!.containsKey(key)) {
-      return currentUser.value![key];
-    }
-    return null;
+    return currentUser.value?[key];
   }
 
-  /// UPDATED: Login method now just sends OTP instead of direct login
   Future<void> login() async {
     String phone = phoneController.text.trim();
     if (phone.isEmpty) {
-      Get.snackbar(
-        'Invalid Input',
-        'Please enter a valid phone number',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      
       return;
     }
 
-    // Validate phone number format
     if (phone.length != 10 || !RegExp(r'^[0-9]+$').hasMatch(phone)) {
-      Get.snackbar(
-        'Invalid Phone Number',
-        'Please enter a valid 10-digit phone number',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      
       return;
     }
 
-    // Send OTP instead of direct login
-    await sendOtp(phone);
+    bool otpSent = await sendOtp(phone);
+    if (otpSent) {
+      // You would typically navigate to the OTP screen here
+      // Get.to(() => OtpVerificationScreen(phoneNumber: phone));
+    }
   }
 
   Future<void> logout() async {
@@ -479,38 +422,27 @@ class LoginController extends GetxController {
       dio.Response response = await loginService.logout();
 
       if (response.statusCode == 200 && response.data['success'] == true) {
-        _clearLoginData(); // This will also cancel the timers and clear OTP data
-        Get.snackbar(
-          'Logged Out',
-          'You have been logged out successfully',
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
+        _clearLoginData();
+        
         Get.offAll(() => PhoneAuthScreen());
       } else {
-        Get.snackbar(
-          'Logout Failed',
-          'Failed to logout. Please try again.',
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
+        
       }
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Logout failed: ${e.toString()}',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      // Get.snackbar(
+      //   'Error',
+      //   'Logout failed: ${e.toString()}',
+      //   backgroundColor: Colors.red,
+      //   colorText: Colors.white,
+      // );
       print('Logout Error: $e');
     } finally {
       isLoading.value = false;
     }
   }
 
-  /// ✅ New: Manual token refresh method (if needed)
   Future<void> manualRefreshToken() async {
-    if (isLoading.value) return; // Prevent multiple simultaneous refresh attempts
+    if (isLoading.value) return;
 
     isLoading.value = true;
     try {
@@ -520,7 +452,6 @@ class LoginController extends GetxController {
     }
   }
 
-  /// ✅ New: Get token status information
   Map<String, dynamic> getTokenStatus() {
     final tokenCreationTime = box.read('tokenCreationTime');
     final accessToken = box.read('accessToken');
@@ -528,21 +459,22 @@ class LoginController extends GetxController {
     if (tokenCreationTime == null || accessToken == null) {
       return {
         'hasToken': false,
-        'ageHours': 0,
+        'ageHours': 0.0,
         'needsRefresh': false,
         'isExpired': true,
       };
     }
 
     final now = DateTime.now().millisecondsSinceEpoch;
-    final tokenAge = now - tokenCreationTime;
-    final tokenAgeHours = tokenAge / (1000 * 60 * 60);
+    // ✅ CORRECTED: Cast the value from storage to num and then convert to int.
+    final tokenAge = Duration(milliseconds: now - (tokenCreationTime as num).toInt());
+    final tokenAgeHours = tokenAge.inMilliseconds / (1000 * 60 * 60);
 
     return {
       'hasToken': true,
       'ageHours': tokenAgeHours,
-      'needsRefresh': tokenAgeHours >= 20,
-      'isExpired': tokenAgeHours >= 24,
+      'needsRefresh': tokenAge >= _refreshInterval,
+      'isExpired': tokenAge >= _tokenValidityPeriod,
     };
   }
 }

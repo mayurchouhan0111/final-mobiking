@@ -34,13 +34,14 @@ class SubCategoryAdapter extends TypeAdapter<SubCategory> {
       deliveryCharge: fields[14] as double?,
       minFreeDeliveryOrderAmount: fields[15] as int?,
       minOrderAmount: fields[16] as int?,
+      icon: fields[17] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, SubCategory obj) {
     writer
-      ..writeByte(17)
+      ..writeByte(18)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -74,7 +75,9 @@ class SubCategoryAdapter extends TypeAdapter<SubCategory> {
       ..writeByte(15)
       ..write(obj.minFreeDeliveryOrderAmount)
       ..writeByte(16)
-      ..write(obj.minOrderAmount);
+      ..write(obj.minOrderAmount)
+      ..writeByte(17)
+      ..write(obj.icon);
   }
 
   @override

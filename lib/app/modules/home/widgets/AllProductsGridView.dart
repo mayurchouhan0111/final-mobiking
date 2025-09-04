@@ -17,7 +17,7 @@ class AllProductsGridView extends StatefulWidget {
   const AllProductsGridView({
     super.key,
     required this.products,
-    this.horizontalPadding = 2.0,
+    this.horizontalPadding = 0.0,
     this.title = "All Products",
     this.showTitle = true,
     this.onLoadMore,
@@ -132,7 +132,7 @@ class _AllProductsGridViewState extends State<AllProductsGridView> {
                 children: [
                   Text(
                     widget.title,
-                    style: textTheme.titleLarge?.copyWith(
+                    style: textTheme.bodyMedium?.copyWith(
                       color: AppColors.textDark,
                       fontWeight: FontWeight.w700,
                       fontSize: 18,
@@ -163,13 +163,13 @@ class _AllProductsGridViewState extends State<AllProductsGridView> {
             child: GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(8.0),
+              padding: const EdgeInsets.all(2.0),
               itemCount: productsToShow.length + (widget.isLoadingMore ? 3 : 0),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 3,
-                mainAxisSpacing: 8,
-                crossAxisSpacing: 8,
-                childAspectRatio: 0.46,
+                crossAxisSpacing: 4.0, // Reduced horizontal spacing
+                mainAxisSpacing: 4.0, // Reduced vertical spacing
+                childAspectRatio: 0.52,
               ),
               itemBuilder: (context, index) {
                 // Show loading shimmer
@@ -331,7 +331,7 @@ class _AllProductsGridViewState extends State<AllProductsGridView> {
   Widget _buildEmptyState(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     return Container(
-      height: 300, // Reduced height
+      height: 300,
       child: Center(
         child: Padding(
           padding: const EdgeInsets.all(24.0),

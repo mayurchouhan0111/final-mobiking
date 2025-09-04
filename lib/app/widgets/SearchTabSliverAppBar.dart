@@ -97,15 +97,14 @@ class _StickySearchAndTabBarDelegate extends SliverPersistentHeaderDelegate {
   });
 
   @override
-  double get maxExtent => 200;
+  double get maxExtent => 240;
 
   @override
-  double get minExtent => 156;
+  double get minExtent => 220;
 
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    final collapsePercent = (shrinkOffset / (maxExtent - minExtent)).clamp(0.0, 1.0);
-    final bool isCollapsed = collapsePercent >= 1.0;
+    final bool isCollapsed = shrinkOffset > 0;
     final TextStyle? appThemeHintStyle = Theme.of(context).inputDecorationTheme.hintStyle;
 
     String? backgroundImage;
@@ -120,7 +119,7 @@ class _StickySearchAndTabBarDelegate extends SliverPersistentHeaderDelegate {
     }
 
     return Container(
-      padding: const EdgeInsets.only(top: 18),
+      padding: const EdgeInsets.only(top: 4),
       decoration: BoxDecoration(
         color: isCollapsed ? Colors.black45 : null,
         image: backgroundImage != null
@@ -136,31 +135,26 @@ class _StickySearchAndTabBarDelegate extends SliverPersistentHeaderDelegate {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (!isCollapsed)
-            SizedBox(
-              height: (1 - collapsePercent) * 60,
-              child: Opacity(
-                opacity: (1 - collapsePercent),
-                child: const Padding(
-                  padding: EdgeInsets.fromLTRB(16, 20, 16, 0),
-                  child: Text(
-                    'Mobiking Wholesale',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+          SafeArea(
+            child: const Padding(
+              padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
+              child: Text(
+                'Mobiking Wholesale',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
+          ),
 
           // --- Search Bar ---
           Padding(
             padding: EdgeInsets.only(
               left: 16,
               right: 16,
-              top: isCollapsed ? 16.0 : 4.0,
+              top: 10.0,
             ),
             child: InkWell(
               borderRadius: BorderRadius.circular(10),
@@ -178,44 +172,41 @@ class _StickySearchAndTabBarDelegate extends SliverPersistentHeaderDelegate {
                       Icons.search,
                       color: isCollapsed ? Colors.black : AppColors.textMedium,
                     ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Obx(() {
-                        return AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 500),
-                          transitionBuilder: (child, animation) {
-                            final offsetAnimation = Tween<Offset>(
-                              begin: const Offset(0, 1),
-                              end: Offset.zero,
-                            ).animate(animation);
-                            return ClipRect(
-                              child: SlideTransition(
-                                position: offsetAnimation,
-                                child: FadeTransition(
-                                  opacity: animation,
-                                  child: child,
-                                ),
+                    SizedBox(width: 8), // Adjust this value to control the spacing
+                    Obx(() {
+                      return AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 500),
+                        transitionBuilder: (child, animation) {
+                          final offsetAnimation = Tween<Offset>(
+                            begin: const Offset(0, 1),
+                            end: Offset.zero,
+                          ).animate(animation);
+                          return ClipRect(
+                            child: SlideTransition(
+                              position: offsetAnimation,
+                              child: FadeTransition(
+                                opacity: animation,
+                                child: child,
                               ),
-                            );
-                          },
-                          child: Text(
-                            hintTexts[currentHintIndex.value],
-                            key: ValueKey<int>(currentHintIndex.value),
-                            style: appThemeHintStyle,
-                          ),
-                        );
-                      }),
-                    ),
+                            ),
+                          );
+                        },
+                        child: Text(
+                          hintTexts[currentHintIndex.value],
+                          key: ValueKey<int>(currentHintIndex.value),
+                          style: appThemeHintStyle,
+                        ),
+                      );
+                    }),
                     /*Icon(
-                      Icons.mic_none,
-                      color: isCollapsed ? Colors.black : AppColors.textMedium,
-                    ),*/
+            Icons.mic_none,
+            color: isCollapsed ? Colors.black : AppColors.textMedium,
+          ),*/
                   ],
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: 7),
+          ),          const SizedBox(height: 7),
           // 🟢 Category Tab Section
           CustomTabBarSection(),
         ],

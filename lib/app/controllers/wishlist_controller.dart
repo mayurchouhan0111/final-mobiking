@@ -3,27 +3,20 @@ import 'package:get/get.dart';
 
 import '../data/product_model.dart';
 import '../services/wishlist_service.dart';
-import 'package:mobiking/app/controllers/connectivity_controller.dart'; // NEW: Import ConnectivityController
-
+import 'package:mobiking/app/controllers/connectivity_controller.dart';
 
 class WishlistController extends GetxController {
   final WishlistService _service = WishlistService();
 
-
   var wishlist = <ProductModel>[].obs;
   var isLoading = false.obs;
 
-  // NEW: Get the ConnectivityController instance
   final ConnectivityController _connectivityController = Get.find<ConnectivityController>();
-
 
   @override
   void onInit() {
     super.onInit();
-
-    loadWishlistFromLocal(); // Initial load
-
-    // NEW: Listen for connectivity changes
+    loadWishlistFromLocal();
     ever(_connectivityController.isConnected, (bool isConnected) {
       if (isConnected) {
         _handleConnectionRestored();
@@ -31,26 +24,27 @@ class WishlistController extends GetxController {
     });
   }
 
-  // NEW: Method to handle actions when connection is restored
-  Future<void> _handleConnectionRestored() async {
-    print('WishlistController: Internet connection restored. Re-loading wishlist from local storage.');
-    // If your backend maintains the authoritative wishlist, you would
-    // ideally call a service method here to fetch the latest wishlist from the server
-    // and then update local storage and the 'wishlist' observable.
-    // For now, we'll re-load from local storage, assuming service methods
-    // keep it updated on successful API calls.
-    loadWishlistFromLocal();
-    // Example if you had a service method:
-    // try {
-    //   await _service.fetchWishlistFromServerAndStoreLocally(); // This method would fetch and update GetStorage
-    //   loadWishlistFromLocal(); // Then load the freshly updated local data
-    // } catch (e) {
-    //   print('WishlistController: Failed to fetch latest wishlist from server on reconnect: $e');
-    //   // Handle error, maybe show a snackbar
-    // }
+  Future<void> fetchWishlistOnScreenLoad() async {
+    await _fetchWishlistInternal();
   }
 
+  Future<void> _handleConnectionRestored() async {
+    print('WishlistController: Internet connection restored. Re-loading wishlist from local storage.');
+    loadWishlistFromLocal();
+  }
 
+  Future<void> _fetchWishlistInternal() async {
+    if (isLoading.value) return;
+    isLoading.value = true;
+    try {
+      final fetchedWishlist = await _service.fetchWishlist();
+      wishlist.assignAll(fetchedWishlist);
+    } catch (e) {
+      print('WishlistController: Failed to fetch wishlist: $e');
+    } finally {
+      isLoading.value = false;
+    }
+  }
 
   void loadWishlistFromLocal() {
     final box = _service.box;
@@ -74,7 +68,6 @@ class WishlistController extends GetxController {
     }
   }
 
-
   bool isProductInWishlist(String productId) {
     return wishlist.any((p) => p.id == productId);
   }
@@ -84,34 +77,15 @@ class WishlistController extends GetxController {
     isLoading.value = true;
 
     if (isProductInWishlist(productId)) {
-      // _showSnackbar( // Commented out
-      //   'Already in Wishlist',
-      //   'This product is already in your wishlist.',
-      //   Colors.amber,
-      //   Icons.info_outline,
-      // );
       isLoading.value = false;
       return;
     }
 
     final success = await _service.addToWishlist(productId);
     if (success) {
-      loadWishlistFromLocal();
-      // _showSnackbar( // Commented out
-      //   'Added to Wishlist',
-      //   'Product has been added to your wishlist!',
-      //   Colors.green,
-      //   Icons.favorite,
-      // );
+      wishlist.assignAll(await _service.fetchWishlist());
     } else {
-      // _showSnackbar( // Commented out
-      //   'Error',
-      //   'Failed to add product to wishlist. Please try again.',
-      //   Colors.red,
-      //   Icons.error,
-      //   duration: 3,
-      // );
-      loadWishlistFromLocal(); // Re-load even on failure to ensure consistency with current local state
+      loadWishlistFromLocal();
     }
     isLoading.value = false;
   }
@@ -122,44 +96,16 @@ class WishlistController extends GetxController {
 
     final success = await _service.removeFromWishlist(productId);
     if (success) {
-      loadWishlistFromLocal();
-      // _showSnackbar( // Commented out
-      //   'Removed from Wishlist',
-      //   'Product has been removed from your wishlist.',
-      //   Colors.blueGrey,
-      //   Icons.favorite_border,
-      // );
+      wishlist.assignAll(await _service.fetchWishlist());
     } else {
-      // _showSnackbar( // Commented out
-      //   'Error',
-      //   'Failed to remove product from wishlist. Please try again.',
-      //   Colors.red,
-      //   Icons.error,
-      //   duration: 3,
-      // );
-      loadWishlistFromLocal(); // Re-load even on failure to ensure consistency with current local state
+      loadWishlistFromLocal();
     }
     isLoading.value = false;
   }
 
-  void _showSnackbar(
-      String title,
-      String message,
-      Color backgroundColor,
-      IconData iconData, {
-        int duration = 2,
-      }) {
-    Get.snackbar(
-      title,
-      message,
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: backgroundColor.withOpacity(0.8),
-      colorText: Colors.white,
-      icon: Icon(iconData, color: Colors.white),
-      margin: const EdgeInsets.all(10),
-      borderRadius: 10,
-      animationDuration: const Duration(milliseconds: 300),
-      duration: Duration(seconds: duration),
-    );
+  void updateWishlistFromLogin(List<dynamic> newWishlistData) {
+    wishlist.value = newWishlistData
+        .map((e) => ProductModel.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 }

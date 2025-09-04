@@ -12,6 +12,7 @@ import '../modules/search/SearchPage.dart';
 
 class BottomNavController extends GetxController {
   var selectedIndex = 0.obs;
+  var isFabVisible = true.obs;
 
   // Remove OrdersScreen from this list
   final List<Widget> pages = [
@@ -24,6 +25,8 @@ class BottomNavController extends GetxController {
   void changeTabIndex(int index) {
     // Update index mapping since we removed orders tab
     selectedIndex.value = index;
+
+    isFabVisible.value = (index != 2); // Profile tab is at index 2
 
     // Update your SystemUI logic if needed
     final SystemUIController systemUiController = Get.find<SystemUIController>();

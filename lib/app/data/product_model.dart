@@ -4,7 +4,7 @@ import 'order_model.dart' hide SellingPrice;
 import 'selling_price.dart';
 
 
-part 'product_model.g.dart';
+part 'product_model.g.dart'; // ADDED: Part directive for code generation
 
 @HiveType(typeId: 2)
 class ProductModel extends HiveObject {
@@ -69,6 +69,10 @@ class ProductModel extends HiveObject {
   final List<KeyInformation> keyInformation;
 
   @HiveField(20)
+  final double? averageRating;
+  @HiveField(21)
+  final int? reviewCount;
+
   final int? regularPrice;
 
   ProductModel({
@@ -92,6 +96,8 @@ class ProductModel extends HiveObject {
     required this.images,
     required this.descriptionPoints,
     required this.keyInformation,
+    this.averageRating,
+    this.reviewCount,
     this.regularPrice,
   });
 
@@ -133,6 +139,8 @@ class ProductModel extends HiveObject {
       keyInformation: (json['keyInformation'] as List<dynamic>? ?? [])
           .map((e) => KeyInformation.fromJson(e))
           .toList(),
+      averageRating: (json['rating'] as num?)?.toDouble(), // Corrected field name
+      reviewCount: (json['reviewCount'] as num?)?.toInt(),
       regularPrice: (json['regularPrice'] as num?)?.toInt(),
     );
   }
@@ -163,3 +171,4 @@ class ProductModel extends HiveObject {
     };
   }
 }
+

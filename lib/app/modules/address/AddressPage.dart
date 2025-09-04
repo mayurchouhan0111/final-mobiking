@@ -9,6 +9,7 @@ import 'package:mobiking/app/themes/app_theme.dart';
 import '../../controllers/address_controller.dart';
 import '../../data/AddressModel.dart';
 import 'address_card_painter.dart';
+import 'package:mobiking/app/modules/checkout/CheckoutScreen.dart';
 
 class AddressPage extends StatefulWidget {
   final Map<String, dynamic>? initialUser;
@@ -53,6 +54,7 @@ class _AddressPageState extends State<AddressPage> {
     super.initState();
     _initializeUserControllers();
     _setupUserChangeListener();
+    controller.fetchAddresses(); // Fetch addresses when the page initializes
   }
 
   @override
@@ -295,27 +297,7 @@ class _AddressPageState extends State<AddressPage> {
         backgroundColor: AppColors.white,
         elevation: 0.5,
         actions: [
-          Obx(() => _hasUserChanges.value && _showUserSection.value
-              ? TextButton(
-            onPressed: _isUserLoading.value ? null : _saveUserInfoQuick,
-            child: _isUserLoading.value
-                ? const SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: AppColors.primaryGreen,
-              ),
-            )
-                : Text(
-              'Save',
-              style: textTheme.labelLarge?.copyWith(
-                color: AppColors.primaryGreen,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          )
-              : const SizedBox.shrink()),
+          const SizedBox.shrink()
         ],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
@@ -1230,27 +1212,23 @@ class _AddressPageState extends State<AddressPage> {
 
       Get.snackbar(
         'Profile Updated',
-        'Returning to checkout...',
+        'User information saved successfully.',
         backgroundColor: AppColors.success,
         colorText: AppColors.white,
         icon: Icon(Icons.check_circle, color: AppColors.white),
-        duration: const Duration(seconds: 1),
+        duration: const Duration(seconds: 2),
       );
 
-      await Future.delayed(const Duration(milliseconds: 300));
-      if (mounted) {
-        Get.back(result: true);
+      if (controller.selectedAddress.value == null) {
+        _showUserSection.value = false;
+      } else {
+        await Future.delayed(const Duration(milliseconds: 300));
+        if (mounted) {
+          Get.offAll(() => CheckoutScreen());
+        }
       }
-
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to update user information. Please try again.',
-        backgroundColor: AppColors.danger,
-        colorText: AppColors.white,
-        icon: Icon(Icons.error, color: AppColors.white),
-        duration: const Duration(seconds: 3),
-      );
+      // Error snackbar is already shown in _saveUserInfo
     } finally {
       _isUserLoading.value = false;
     }

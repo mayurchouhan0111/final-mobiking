@@ -1,10 +1,12 @@
 // lib/screens/product_page.dart
 
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:html/parser.dart' as html_parser; // ADD THIS IMPORT
+import 'package:html/parser.dart' as html_parser;
 import 'package:mobiking/app/controllers/product_controller.dart';
 import 'package:mobiking/app/modules/home/widgets/AllProductGridCard.dart';
 import 'package:mobiking/app/modules/home/widgets/ProductCard.dart';
@@ -18,8 +20,9 @@ import 'widgets/product_title_price.dart';
 import 'widgets/featured_product_banner.dart';
 import 'widgets/collapsible_section.dart';
 import 'widgets/animated_cart_button.dart';
+import 'package:mobiking/app/modules/home/widgets/FloatingCartButton.dart';
+import 'package:mobiking/app/modules/cart/cart_bottom_dialoge.dart';
 
-// Add SingleTickerProviderStateMixin for animation controller
 class ProductPage extends StatefulWidget {
   final ProductModel product;
   final String heroTag;
@@ -46,41 +49,546 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
   final RxInt _currentVariantStock = 0.obs;
   final RxString _currentSelectedVariantName = ''.obs;
 
-  // Controller for scroll events to hide/show bottom bar
   final ScrollController _scrollController = ScrollController();
-
-  // Animation controller for sliding the bottom bar
   late AnimationController _slideAnimationController;
   late Animation<Offset> _slideAnimation;
-
-  // State variable to control the visibility of product details
-  final RxBool _productDetailsVisible = false.obs; // Initially hidden
-
-  // Define a consistent horizontal padding for the main content
+  final RxBool _productDetailsVisible = false.obs;
   static const double _horizontalPagePadding = 16.0;
 
-  // ADD THIS METHOD - HTML to plain text conversion
-  String _convertHtmlToPlainText(String htmlText) {
-    if (htmlText.isEmpty) return htmlText;
+  // DECODE HTML ENTITIES
+  String _decodeHtmlEntities(String text) {
+    return text
+        .replaceAll('&lt;', '<')
+        .replaceAll('&gt;', '>')
+        .replaceAll('&amp;', '&')
+        .replaceAll('&quot;', '"')
+        .replaceAll('&#39;', "'")
+        .replaceAll('&nbsp;', ' ');
+  }
+
+  // PARSE MARKDOWN IMAGES
+  List<String> _extractMarkdownImages(String content) {
+    final imageRegex = RegExp(r'!\[.*?\]\((.*?)\)');
+    final matches = imageRegex.allMatches(content);
+    return matches.map((match) => match.group(1)!).toList();
+  }
+
+  // PARSE MARKDOWN TABLE
+  Map<String, dynamic>? _parseMarkdownTable(String content) {
+    final lines = content.split('\n').where((line) => line.trim().isNotEmpty).toList();
+
+    // Find table lines (contain |)
+    final tableLines = lines.where((line) => line.contains('|')).toList();
+    if (tableLines.length < 2) return null;
+
+    // Parse headers
+    final headerLine = tableLines.first.trim();
+    final headers = headerLine.split('|')
+        .map((h) => h.trim())
+        .where((h) => h.isNotEmpty)
+        .toList();
+
+    if (headers.isEmpty) return null;
+
+    // Skip separator line and parse data rows
+    final dataRows = <List<String>>[];
+    for (int i = 2; i < tableLines.length; i++) {
+      final row = tableLines[i].trim();
+      final cells = row.split('|')
+          .map((c) => c.trim())
+          .where((c) => c.isNotEmpty)
+          .toList();
+
+      if (cells.isNotEmpty) {
+        dataRows.add(cells);
+      }
+    }
+
+    return {
+      'headers': headers,
+      'rows': dataRows,
+    };
+  }
+
+  // ENHANCED CONTENT PARSER FOR BOTH HTML AND MARKDOWN
+  Widget _buildHtmlDescription(String content, BuildContext context) {
+    if (content.isEmpty) {
+      return Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        child: Text(
+          'No detailed description is available for this product.',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: AppColors.textMedium,
+            height: 1.5,
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: _parseContentToWidgets(content, context),
+      ),
+    );
+  }
+
+  // PARSE BOTH HTML AND MARKDOWN CONTENT
+  List<Widget> _parseContentToWidgets(String content, BuildContext context) {
+    List<Widget> widgets = [];
 
     try {
-      // Parse the HTML
-      final document = html_parser.parse(htmlText);
+      final decodedContent = _decodeHtmlEntities(content);
 
-      // Extract plain text
+      // Check if it's HTML or Markdown
+      if (decodedContent.contains('<') && decodedContent.contains('>')) {
+        // Parse as HTML
+        widgets.addAll(_parseHtmlContent(decodedContent, context));
+      } else {
+        // Parse as Markdown/Plain text
+        widgets.addAll(_parseMarkdownContent(decodedContent, context));
+      }
+
+      // If no widgets were created, show plain text
+      if (widgets.isEmpty) {
+        widgets.add(Text(
+          decodedContent,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: AppColors.textMedium,
+            height: 1.5,
+          ),
+        ));
+      }
+    } catch (e) {
+      debugPrint('Error parsing content: $e');
+      widgets.add(Text(
+        content.replaceAll(RegExp(r'[<>]'), ''),
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: AppColors.textMedium,
+          height: 1.5,
+        ),
+      ));
+    }
+
+    return widgets;
+  }
+
+  // PARSE HTML CONTENT
+  List<Widget> _parseHtmlContent(String htmlContent, BuildContext context) {
+    List<Widget> widgets = [];
+
+    try {
+      final document = html_parser.parse(htmlContent);
+      final body = document.body;
+
+      if (body != null) {
+        for (var element in body.children) {
+          widgets.addAll(_processHtmlElement(element, context));
+        }
+      }
+    } catch (e) {
+      debugPrint('Error parsing HTML: $e');
+    }
+
+    return widgets;
+  }
+
+  // PARSE MARKDOWN CONTENT
+  List<Widget> _parseMarkdownContent(String markdownContent, BuildContext context) {
+    List<Widget> widgets = [];
+
+    final lines = markdownContent.split('\n');
+    String currentContent = '';
+    bool inTable = false;
+    List<String> tableLines = [];
+
+    for (int i = 0; i < lines.length; i++) {
+      final line = lines[i].trim();
+
+      // Check for markdown images
+      if (line.contains('![') && line.contains('](')) {
+        // Add any accumulated text first
+        if (currentContent.trim().isNotEmpty) {
+          widgets.add(Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(
+              currentContent.trim(),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppColors.textMedium,
+                height: 1.5,
+              ),
+            ),
+          ));
+          currentContent = '';
+        }
+
+        // Extract and add images
+        final images = _extractMarkdownImages(line);
+        for (final imageUrl in images) {
+          widgets.add(_buildImageWidget(imageUrl, context));
+        }
+        continue;
+      }
+
+      // Check for table start/continuation
+      if (line.contains('|')) {
+        if (!inTable) {
+          // Add any accumulated text first
+          if (currentContent.trim().isNotEmpty) {
+            widgets.add(Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(
+                currentContent.trim(),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColors.textMedium,
+                  height: 1.5,
+                ),
+              ),
+            ));
+            currentContent = '';
+          }
+          inTable = true;
+        }
+        tableLines.add(line);
+        continue;
+      } else if (inTable) {
+        // End of table, process it
+        if (tableLines.isNotEmpty) {
+          final tableData = _parseMarkdownTable(tableLines.join('\n'));
+          if (tableData != null) {
+            widgets.add(_buildMarkdownTable(tableData, context));
+          }
+        }
+        tableLines.clear();
+        inTable = false;
+      }
+
+      // Regular text line
+      if (line.isNotEmpty) {
+        currentContent += line + '\n';
+      } else if (currentContent.trim().isNotEmpty) {
+        // Empty line, add accumulated content as paragraph
+        widgets.add(Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Text(
+            currentContent.trim(),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: AppColors.textMedium,
+              height: 1.5,
+            ),
+          ),
+        ));
+        currentContent = '';
+      }
+    }
+
+    // Handle remaining table at end
+    if (inTable && tableLines.isNotEmpty) {
+      final tableData = _parseMarkdownTable(tableLines.join('\n'));
+      if (tableData != null) {
+        widgets.add(_buildMarkdownTable(tableData, context));
+      }
+    }
+
+    // Add any remaining content
+    if (currentContent.trim().isNotEmpty) {
+      widgets.add(Text(
+        currentContent.trim(),
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: AppColors.textMedium,
+          height: 1.5,
+        ),
+      ));
+    }
+
+    return widgets;
+  }
+
+  // BUILD IMAGE WIDGET
+  Widget _buildImageWidget(String imageUrl, BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.grey.shade300),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.network(
+            imageUrl,
+            width: double.infinity,
+            fit: BoxFit.cover,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return Container(
+                height: 200,
+                child: Center(
+                  child: CircularProgressIndicator(
+                    value: loadingProgress.expectedTotalBytes != null
+                        ? loadingProgress.cumulativeBytesLoaded /
+                        loadingProgress.expectedTotalBytes!
+                        : null,
+                  ),
+                ),
+              );
+            },
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                height: 200,
+                color: Colors.grey.shade200,
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.broken_image,
+                          size: 48, color: Colors.grey.shade400),
+                      const SizedBox(height: 8),
+                      Text('Image failed to load',
+                          style: TextStyle(color: Colors.grey.shade600)),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  // BUILD MARKDOWN TABLE
+  Widget _buildMarkdownTable(Map<String, dynamic> tableData, BuildContext context) {
+    final List<String> headers = tableData['headers'];
+    final List<List<String>> rows = tableData['rows'];
+
+    if (headers.isEmpty || rows.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade300, width: 1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Table(
+          border: TableBorder.all(
+            color: Colors.grey.shade300,
+            width: 1,
+          ),
+          columnWidths: const {
+            0: FlexColumnWidth(1),
+            1: FlexColumnWidth(2),
+          },
+          children: [
+            // Header row
+            TableRow(
+              decoration: BoxDecoration(color: Colors.grey.shade100),
+              children: headers.map((header) =>
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    child: Text(
+                      header,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textDark,
+                      ),
+                    ),
+                  ),
+              ).toList(),
+            ),
+            // Data rows
+            ...rows.map((row) =>
+                TableRow(
+                  children: row.map((cell) =>
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                        ),
+                        child: Text(
+                          cell,
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: AppColors.textMedium,
+                          ),
+                        ),
+                      ),
+                  ).toList(),
+                ),
+            ).toList(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // PROCESS HTML ELEMENTS (keep existing method)
+  List<Widget> _processHtmlElement(dynamic element, BuildContext context) {
+    List<Widget> widgets = [];
+
+    if (element.localName == 'h1' || element.localName == 'h2' || element.localName == 'h3') {
+      widgets.add(Padding(
+        padding: const EdgeInsets.only(top: 16, bottom: 8),
+        child: Text(
+          element.text.trim(),
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: AppColors.textDark,
+          ),
+        ),
+      ));
+    } else if (element.localName == 'p') {
+      if (element.text.trim().isNotEmpty) {
+        widgets.add(Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Text(
+            element.text.trim(),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: AppColors.textMedium,
+              height: 1.5,
+            ),
+          ),
+        ));
+      }
+    } else if (element.localName == 'ul') {
+      for (var li in element.children) {
+        if (li.localName == 'li') {
+          widgets.add(Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  margin: const EdgeInsets.only(top: 8, right: 8),
+                  width: 4,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.textDark,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    li.text.trim(),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.textMedium,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ));
+        }
+      }
+    } else if (element.localName == 'img') {
+      final String? src = element.attributes['src'];
+      if (src != null && src.isNotEmpty) {
+        widgets.add(_buildImageWidget(src, context));
+      }
+    } else if (element.localName == 'table') {
+      widgets.add(_buildCustomTable(element, context));
+    }
+
+    return widgets;
+  }
+
+  // BUILD CUSTOM HTML TABLE (keep existing method)
+  Widget _buildCustomTable(dynamic tableElement, BuildContext context) {
+    List<TableRow> rows = [];
+
+    try {
+      var tableBody = tableElement.querySelector('tbody');
+      var tableRows = tableBody?.children ?? tableElement.children.where((e) => e.localName == 'tr').toList();
+
+      for (var row in tableRows) {
+        if (row.localName == 'tr') {
+          List<Widget> cells = [];
+          var cellElements = row.children.where((e) => e.localName == 'td' || e.localName == 'th').toList();
+
+          for (var cell in cellElements) {
+            bool isHeader = cell.localName == 'th';
+            cells.add(
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isHeader ? Colors.grey.shade100 : Colors.white,
+                  border: Border.all(color: Colors.grey.shade300, width: 1),
+                ),
+                child: Text(
+                  cell.text.trim(),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: isHeader ? FontWeight.bold : FontWeight.normal,
+                    color: isHeader ? AppColors.textDark : AppColors.textMedium,
+                  ),
+                ),
+              ),
+            );
+          }
+
+          if (cells.isNotEmpty) {
+            rows.add(TableRow(children: cells));
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Error parsing table: $e');
+    }
+
+    if (rows.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade300, width: 1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Table(
+          border: TableBorder.all(
+            color: Colors.grey.shade300,
+            width: 1,
+          ),
+          columnWidths: const {
+            0: FlexColumnWidth(1),
+            1: FlexColumnWidth(2),
+          },
+          children: rows,
+        ),
+      ),
+    );
+  }
+
+  String _convertHtmlToPlainText(String htmlText) {
+    if (htmlText.isEmpty) return htmlText;
+    try {
+      final decodedHtml = _decodeHtmlEntities(htmlText);
+      final document = html_parser.parse(decodedHtml);
       String plainText = document.body?.text ?? htmlText;
-
-      // Clean up extra whitespace
       plainText = plainText.replaceAll(RegExp(r'\s+'), ' ').trim();
-
       return plainText;
     } catch (e) {
-      // If parsing fails, return the original text
       debugPrint('Error parsing HTML: $e');
       return htmlText;
     }
   }
 
+  // Keep all your existing methods for initState, dispose, build, etc. - they remain exactly the same
   @override
   void initState() {
     super.initState();
@@ -107,25 +615,20 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
     _pincodeController.addListener(_resetDeliveryStatus);
     _syncVariantData();
 
-    // Initialize animation controller
     _slideAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
     );
 
-    // Define the slide animation: from no offset (visible) to slide down (100% of its height)
     _slideAnimation = Tween<Offset>(
-      begin: Offset.zero, // Visible position
-      end: const Offset(0, 1), // Hidden position (slides down by its full height)
+      begin: Offset.zero,
+      end: const Offset(0, 1),
     ).animate(CurvedAnimation(
       parent: _slideAnimationController,
       curve: Curves.easeInOut,
     ));
 
-    // Initially show the bar
     _slideAnimationController.forward();
-
-    // Add scroll listener for the bottom bar animation
     _scrollController.addListener(_scrollListener);
   }
 
@@ -133,10 +636,9 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
   void dispose() {
     _pincodeController.removeListener(_resetDeliveryStatus);
     _pincodeController.dispose();
-    // Dispose scroll controller and animation controller
     _scrollController.removeListener(_scrollListener);
     _scrollController.dispose();
-    _slideAnimationController.dispose(); // Dispose animation controller
+    _slideAnimationController.dispose();
     super.dispose();
   }
 
@@ -149,25 +651,25 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
 
   void _scrollListener() {
     if (_scrollController.position.userScrollDirection == ScrollDirection.reverse) {
-      // User is scrolling down, hide the bar
       if (_slideAnimationController.status != AnimationStatus.forward) {
         _slideAnimationController.forward();
       }
     } else if (_scrollController.position.userScrollDirection == ScrollDirection.forward) {
-      // User is scrolling up, show the bar
       if (_slideAnimationController.status != AnimationStatus.reverse) {
         _slideAnimationController.reverse();
       }
     }
   }
 
-  void onVariantSelected(int index) {
-    final variantKey = widget.product.variants.keys.elementAt(index);
-    final isVariantOutOfStock = (widget.product.variants[variantKey] ?? 0) <= 0;
+  void onVariantSelected(String selectedVariantName) {
+    final variantStockValue = widget.product.variants[selectedVariantName] ?? 0;
+    final isVariantOutOfStock = variantStockValue <= 0;
+
     if (!isVariantOutOfStock) {
       setState(() {
-        selectedVariantIndex = index;
-        _currentSelectedVariantName.value = variantKey;
+        // Find the index of the selected variant in the original product.variants.keys list
+        selectedVariantIndex = widget.product.variants.keys.toList().indexOf(selectedVariantName);
+        _currentSelectedVariantName.value = selectedVariantName;
         _syncVariantData();
       });
     } else {
@@ -191,8 +693,11 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
         selectedVariantIndex >= 0 &&
         selectedVariantIndex < widget.product.variants.length) {
       final variantKey = widget.product.variants.keys.elementAt(selectedVariantIndex);
-      _currentVariantStock.value = widget.product.variants[variantKey] ?? 0;
+      final variantStockValue = widget.product.variants[variantKey] ?? 0;
+      debugPrint('ProductPage: _syncVariantData - Variant: $variantKey, Stock: $variantStockValue'); // ADDED DEBUG PRINT
+      _currentVariantStock.value = variantStockValue;
     } else {
+      debugPrint('ProductPage: _syncVariantData - Using totalStock: ${widget.product.totalStock}'); // ADDED DEBUG PRINT
       _currentVariantStock.value = widget.product.totalStock;
     }
   }
@@ -206,33 +711,33 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
     );
     if (cartController.isLoading.value || _currentVariantStock.value <= 0 ||
         _currentVariantStock.value <= quantityInCart) {
-      if (_currentVariantStock.value <= 0) {
-        Get.snackbar(
-          'Out of Stock',
-          'The selected variant is currently out of stock.',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: AppColors.danger.withOpacity(0.8),
-          colorText: Colors.white,
-          icon: const Icon(Icons.info_outline, color: Colors.white),
-          margin: const EdgeInsets.all(10),
-          borderRadius: 10,
-          animationDuration: const Duration(milliseconds: 300),
-          duration: const Duration(seconds: 3),
-        );
-      } else if (_currentVariantStock.value <= quantityInCart) {
-        Get.snackbar(
-          'Limit Reached',
-          'You have reached the maximum available quantity for this variant.',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: AppColors.danger.withOpacity(0.8),
-          colorText: Colors.white,
-          icon: const Icon(Icons.info_outline, color: Colors.white),
-          margin: const EdgeInsets.all(10),
-          borderRadius: 10,
-          animationDuration: const Duration(milliseconds: 300),
-          duration: const Duration(seconds: 3),
-        );
-      }
+      // if (_currentVariantStock.value <= 0) {
+      //   Get.snackbar(
+      //     'Out of Stock',
+      //     'The selected variant is currently out of stock.',
+      //     snackPosition: SnackPosition.BOTTOM,
+      //     backgroundColor: AppColors.danger.withOpacity(0.8),
+      //     colorText: Colors.white,
+      //     icon: const Icon(Icons.info_outline, color: Colors.white),
+      //     margin: const EdgeInsets.all(10),
+      //     borderRadius: 10,
+      //     animationDuration: const Duration(milliseconds: 300),
+      //     duration: const Duration(seconds: 3),
+      //   );
+      // } else if (_currentVariantStock.value <= quantityInCart) {
+      //   Get.snackbar(
+      //     'Limit Reached',
+      //     'You have reached the maximum available quantity for this variant.',
+      //     snackPosition: SnackPosition.BOTTOM,
+      //     backgroundColor: AppColors.danger.withOpacity(0.8),
+      //     colorText: Colors.white,
+      //     icon: const Icon(Icons.info_outline, color: Colors.white),
+      //     margin: const EdgeInsets.all(10),
+      //     borderRadius: 10,
+      //     animationDuration: const Duration(milliseconds: 300),
+      //     duration: const Duration(seconds: 3),
+      //   );
+      // }
       return;
     }
 
@@ -264,25 +769,27 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
   Widget build(BuildContext context) {
     final product = widget.product;
     final TextTheme textTheme = Theme.of(context).textTheme;
-    final originalPrice =
-    product.sellingPrice.isNotEmpty ? product.sellingPrice.first.price : 0;
-    final discountedPrice = product.sellingPrice.length > 1
-        ? product.sellingPrice[1].price
-        : originalPrice;
+    final double sellingPrice;
+    final double? originalPrice = product.regularPrice?.toDouble();
 
-    // Calculate discount percentage
-    final double discountPercentage = originalPrice > 0
-        ? ((originalPrice - discountedPrice) / originalPrice * 100)
+    if (product.sellingPrice.isNotEmpty) {
+      sellingPrice = product.sellingPrice.last.price.toDouble();
+    } else {
+      sellingPrice = 0.0;
+    }
+
+    final double discountPercentage = (originalPrice != null && originalPrice > sellingPrice)
+        ? ((originalPrice - sellingPrice) / originalPrice * 100)
         : 0;
     final String discountBadgeText =
     discountPercentage > 0 ? '${discountPercentage.toStringAsFixed(0)}% OFF' : '';
 
-    // Dummy data for price per unit, rating, reviews
-    final double pricePer100ml = (discountedPrice / 20).toPrecision(2); // Example for 2L (2000ml), so per 100ml is /20
-    const double productRating = 4.5; // Example rating
-    const int reviewCount = 881; // Example review count
-
     final variantNames = product.variants.keys.toList();
+    final inStockVariantNames = variantNames.where((name) {
+      final variantStockValue = product.variants[name] ?? 0;
+      return variantStockValue > 0;
+    }).toList();
+
 
     return Scaffold(
       backgroundColor: AppColors.white,
@@ -295,12 +802,12 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Product Image Banner (full width, with zoom/share)
+                  // Product Image Banner
                   Obx(() {
                     final isFavorite = wishlistController.wishlist.any((p) => p.id == product.id);
                     return ProductImageBanner(
-                      productRating: 4.5,
-                      reviewCount: 450,
+                      productRating: product.averageRating,
+                      reviewCount: product.reviewCount,
                       productId: product.id.toString(),
                       imageUrls: product.images,
                       badgeText: discountBadgeText.isNotEmpty ? discountBadgeText : null,
@@ -319,7 +826,7 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
 
                   // Product Title & Price Card with Toggle Button
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20), // Outer padding
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Container(
                       decoration: BoxDecoration(
                         color: AppColors.neutralBackground,
@@ -328,18 +835,16 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
                           bottomRight: Radius.circular(12),
                         ),
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0), // Only horizontal padding
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Product Title & Price
                           ProductTitleAndPrice(
                             title: product.fullName,
-                            originalPrice: originalPrice.toDouble(),
-                            discountedPrice: discountedPrice.toDouble(),
+                            originalPrice: originalPrice ?? sellingPrice,
+                            discountedPrice: sellingPrice,
                           ),
                           const SizedBox(height: 8),
-                          // View/Hide Product Details Button
                           SizedBox(
                             width: double.maxFinite,
                             height: 36,
@@ -379,14 +884,14 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
                               ),
                             )),
                           ),
-                          const SizedBox(height: 8), // Space after the button (optional)
+                          const SizedBox(height: 8),
                           Obx(
                                 () => AnimatedCrossFade(
-                              firstChild: const SizedBox.shrink(), // Hidden state: shows nothing
+                              firstChild: const SizedBox.shrink(),
                               secondChild: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // --- Product Description Section ---
+                                  // ENHANCED PRODUCT DESCRIPTION WITH MARKDOWN SUPPORT
                                   Padding(
                                     padding: const EdgeInsets.symmetric(vertical: 8.0),
                                     child: Column(
@@ -394,32 +899,19 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
                                       children: [
                                         Text(
                                           'Product Description',
-                                          style: textTheme.titleMedium?.copyWith(color: AppColors.textDark, fontWeight: FontWeight.w600),
+                                          style: textTheme.titleMedium?.copyWith(
+                                              color: AppColors.textDark,
+                                              fontWeight: FontWeight.w600
+                                          ),
                                         ),
                                         const SizedBox(height: 8),
-                                        Container(
-                                          width: double.infinity,
-                                          decoration: BoxDecoration(
-                                            color: Colors.grey.shade50,
-                                            borderRadius: BorderRadius.circular(8),
-                                            border: Border.all(color: Colors.grey.shade200),
-                                          ),
-                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                                          child: Text(
-                                            product.description.isNotEmpty
-                                                ? _convertHtmlToPlainText(product.description) // CHANGE: Use HTML conversion
-                                                : 'No detailed description is available for this product. This product offers cutting-edge technology and superior performance, designed to meet your everyday needs with efficiency and style. Enjoy seamless integration and robust features that enhance your overall user experience.',
-                                            style: textTheme.bodyMedium?.copyWith(
-                                              color: AppColors.textMedium,
-                                              height: 1.5, // improves readability
-                                            ),
-                                          ),
-                                        ),
+                                        // USE THE ENHANCED PARSING METHOD
+                                        _buildHtmlDescription(product.description, context),
                                       ],
                                     ),
                                   ),
 
-                                  // --- Product Description Points Section (NEW) ---
+                                  // Keep existing description points and key information sections
                                   if (product.descriptionPoints.isNotEmpty)
                                     Padding(
                                       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -441,7 +933,7 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
                                               borderRadius: BorderRadius.circular(8),
                                               border: Border.all(color: Colors.grey.shade200),
                                             ),
-                                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
                                             child: Column(
                                               crossAxisAlignment: CrossAxisAlignment.start,
                                               children: product.descriptionPoints.map((point) {
@@ -459,7 +951,7 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
                                                       ),
                                                       Expanded(
                                                         child: Text(
-                                                          _convertHtmlToPlainText(point), // CHANGE: Use HTML conversion
+                                                          _convertHtmlToPlainText(point),
                                                           style: textTheme.bodyMedium?.copyWith(
                                                             color: AppColors.textMedium,
                                                           ),
@@ -475,7 +967,6 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
                                       ),
                                     ),
 
-                                  // --- Key Information Section (Styled like a table) ---
                                   if (product.keyInformation.isNotEmpty)
                                     Padding(
                                       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -506,23 +997,21 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
                                                   child: Row(
                                                     crossAxisAlignment: CrossAxisAlignment.start,
                                                     children: [
-                                                      // Left title column (black or dark text)
                                                       SizedBox(
                                                         width: 110,
                                                         child: Text(
                                                           info.title,
                                                           style: textTheme.bodyMedium?.copyWith(
-                                                            color: Colors.black, // Bold black for left side
+                                                            color: Colors.black,
                                                             fontWeight: FontWeight.w600,
                                                           ),
                                                         ),
                                                       ),
-                                                      // Right content column (light grey)
                                                       Expanded(
                                                         child: Text(
-                                                          _convertHtmlToPlainText(info.content), // CHANGE: Use HTML conversion
+                                                          _convertHtmlToPlainText(info.content),
                                                           style: textTheme.bodyMedium?.copyWith(
-                                                            color: Colors.grey.shade700, // Subtle grey for right side
+                                                            color: Colors.grey.shade700,
                                                           ),
                                                         ),
                                                       ),
@@ -549,7 +1038,9 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
                     ),
                   ),
 
-                  if (variantNames.isNotEmpty)
+                  // Keep all your existing sections for variants, related products, etc.
+                  // Now, use the filtered list to generate the ChoiceChips
+                  if (inStockVariantNames.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: _horizontalPagePadding),
                       child: CollapsibleSection(
@@ -558,39 +1049,33 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
                         content: Wrap(
                           spacing: 8.0,
                           runSpacing: 8.0,
-                          children: List.generate(variantNames.length, (index) {
+                          children: List.generate(inStockVariantNames.length, (index) {
                             final isSelected = selectedVariantIndex == index;
-                            final variantStockValue = product.variants[variantNames[index]] ?? 0;
-                            final isVariantOutOfStock = variantStockValue <= 0;
+                            final variantName = inStockVariantNames[index];
+
                             return ChoiceChip(
-                              label: Text(
-                                variantNames[index] + (isVariantOutOfStock ? ' (Out of Stock)' : ''),
-                              ),
+                              // Set showCheckmark to false to remove the check icon
+                              showCheckmark: false,
+                              label: Text(variantName),
                               selected: isSelected,
                               onSelected: (selected) {
-                                if (selected && !isVariantOutOfStock) {
-                                  onVariantSelected(index);
+                                if (selected) {
+                                  // Pass the variantName directly
+                                  onVariantSelected(variantName);
                                 }
                               },
-                              // White background in all states
-                              selectedColor: Colors.white,
+                              selectedColor: AppColors.success.withOpacity(0.1),
                               backgroundColor: Colors.white,
                               labelStyle: textTheme.labelMedium?.copyWith(
-                                color: isSelected
-                                    ? AppColors.success // Green text when selected
-                                    : (isVariantOutOfStock
-                                    ? AppColors.danger.withOpacity(0.7) // Red-ish for out of stock
-                                    : AppColors.textDark.withOpacity(0.8)),
+                                // Make the text green when selected
+                                color: isSelected ? AppColors.success : AppColors.textDark.withOpacity(0.8),
                                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                               ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                                 side: BorderSide(
-                                  color: isSelected
-                                      ? AppColors.success // Green border when selected
-                                      : (isVariantOutOfStock
-                                      ? AppColors.danger.withOpacity(0.4)
-                                      : Colors.grey.shade300), // Default grey border
+                                  // Make the border green when selected
+                                  color: isSelected ? AppColors.success : Colors.grey.shade300,
                                   width: 1,
                                 ),
                               ),
@@ -600,9 +1085,9 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
                       ),
                     ),
 
-                  const SizedBox(height: 24), // Keep larger spacing for major sections
+                  const SizedBox(height: 24),
 
-                  // Complete "You might also like" section with working navigation
+                  // Related products section
                   Obx(() {
                     if (productController.allProducts.isEmpty) {
                       return const SizedBox.shrink();
@@ -635,27 +1120,23 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
                         ),
                         const SizedBox(height: 16),
                         SizedBox(
-                          height: 280,
+                          height: 240,
                           child: ListView.builder(
                             padding: const EdgeInsets.symmetric(horizontal: _horizontalPagePadding),
                             scrollDirection: Axis.horizontal,
                             itemCount: relatedProducts.length,
                             itemBuilder: (context, index) {
                               final relatedProduct = relatedProducts[index];
+                              final String productHeroTag = 'product_image_related_${relatedProduct.id}_$index';
                               return Container(
-                                width: 160,
+                                width: 110,
                                 margin: const EdgeInsets.only(right: 12),
-                                child: Material(
-                                  color: Colors.transparent,
-                                  child: AllProductGridCard(
-                                      product: relatedProduct,
-                                      heroTag: 'product_image_${product.id}_${product.name}_all_view_$index',
-                                      onTap: (product) {
-                                        Get.to(ProductPage(
-                                          product: product,
-                                          heroTag: 'product_image_${product.id}_${product.name}_all_view_$index',
-                                        ));
-                                      }),
+                                child: AllProductGridCard(
+                                  product: relatedProduct,
+                                  heroTag: productHeroTag,
+                                  onTap: (tappedProduct) {
+                                    _navigateToRelatedProduct(tappedProduct, productHeroTag);
+                                  },
                                 ),
                               );
                             },
@@ -665,23 +1146,61 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
                     );
                   }),
 
-                  const SizedBox(height: 70), // Height of the bottom bar
+                  const SizedBox(height: 70),
                 ],
               ),
             ),
           ),
-          // Bottom bar
           _buildBottomCartBar(context)
         ],
       ),
+      floatingActionButton: Obx(() {
+        final totalItemsInCart = cartController.totalCartItemsCount;
+        if (totalItemsInCart == 0) {
+          return const SizedBox.shrink();
+        }
+
+        final List<String> imageUrls = cartController.cartItems.take(3).map((item) {
+          final product = item['productId'];
+          String? imageUrl;
+
+          if (product is Map) {
+            final imagesData = product['images'];
+            if (imagesData is List && imagesData.isNotEmpty) {
+              final firstImage = imagesData[0];
+              if (firstImage is String) {
+                imageUrl = firstImage;
+              } else if (firstImage is Map) {
+                imageUrl = firstImage['url'] as String?;
+              }
+            } else if (imagesData is String) {
+              imageUrl = imagesData;
+            }
+          }
+          return imageUrl ?? 'https://placehold.co/50x50/cccccc/ffffff?text=No+Img';
+        }).toList();
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 70), // Adjust this value to position the FAB above the bottom bar
+          child: FloatingCartButton(
+            label: "View Cart",
+            productImageUrls: imageUrls,
+            itemCount: totalItemsInCart,
+            onTap: () {
+              Get.to(() => CartScreen());
+            },
+          ),
+        );
+      }),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 
+  // Keep all your existing helper methods...
   void _navigateToRelatedProduct(ProductModel product, String heroTag) {
     try {
       HapticFeedback.lightImpact();
       debugPrint('🚀 Navigating to related product: ${product.name} with heroTag: $heroTag');
-      // Clear any existing routes to prevent conflicts
       if (Get.isDialogOpen == true) {
         Get.back();
       }
@@ -694,7 +1213,7 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
         transition: Transition.rightToLeft,
         duration: const Duration(milliseconds: 400),
         curve: Curves.easeInOut,
-        preventDuplicates: true,
+        preventDuplicates: false,
         popGesture: true,
       )?.then((_) {
         debugPrint('✅ Successfully navigated back from ${product.name}');
@@ -703,12 +1222,10 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
       });
     } catch (e) {
       debugPrint('❌ Exception during navigation: $e');
-      // Fallback navigation without hero animation
       _fallbackNavigation(product);
     }
   }
 
-  // Fallback navigation method
   void _fallbackNavigation(ProductModel product) {
     Navigator.push(
       context,
@@ -765,7 +1282,7 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
 
   Widget _buildBottomCartBar(BuildContext context) {
     final TextTheme textTheme = Theme.of(context).textTheme;
-    final product = widget.product; // Assuming 'widget' context is available
+    final product = widget.product;
     final double displayPrice = product.sellingPrice.length > 1
         ? product.sellingPrice.last.price.toDouble()
         : product.sellingPrice.isNotEmpty
@@ -784,14 +1301,14 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
           quantityInCartForSelectedVariant < _currentVariantStock.value && !isBusy;
       final bool canDecrement = quantityInCartForSelectedVariant > 0 && !isBusy;
 
-      return SafeArea( // WRAP WITH SafeArea
-        bottom: true, // Ensure it applies padding to the bottom
-        top: false, // We only care about the bottom for a bottom bar
+      return SafeArea(
+        bottom: true,
+        top: false,
         child: Container(
-          height: 70, // Fixed height for the bar
+          height: 70,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: BoxDecoration(
-            color: AppColors.white, // Background of the entire bar
+            color: AppColors.white,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
             boxShadow: [
               BoxShadow(

@@ -8,7 +8,7 @@ import '../../controllers/query_getx_controller.dart';
 import '../../data/order_model.dart';
 import '../../themes/app_theme.dart';
 
-import '../home/home_screen.dart';
+import '../home/home_screen.dart' hide SizedBox;
 import '../profile/query/Query_Detail_Screen.dart';
 import 'shipping_details_screen.dart';
 import 'package:mobiking/app/modules/profile/query/Raise_query.dart';
@@ -62,7 +62,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      backgroundColor: AppColors.neutralBackground,
+      backgroundColor: AppColors.lightGreyBackground,
       appBar: AppBar(
         title: Text(
           'My Orders',
@@ -74,7 +74,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
         elevation: 0.5,
         centerTitle: false,
         iconTheme: const IconThemeData(color: AppColors.textDark),
-        actions: const [SizedBox(width: 8)],
+        actions: [SizedBox(width: 8)],
       ),
       body: GetX<OrderController>(
         builder: (_) {
@@ -94,7 +94,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
               child: RefreshIndicator(
                 onRefresh: () => controller.fetchOrderHistory(),
                 color: AppColors.success,
-                backgroundColor: AppColors.neutralBackground,
+                backgroundColor: AppColors.lightGreyBackground,
                 child: ListView.builder(
                   controller: _scrollController,
                   padding: const EdgeInsets.all(16.0),
@@ -271,13 +271,7 @@ class _OrderCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.textDark.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        border: Border.all(color: Colors.grey.withOpacity(0.3), width: 1.0),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -290,7 +284,7 @@ class _OrderCard extends StatelessWidget {
               children: [
                 Flexible(
                   child: Text('Order ID: #${order.orderId}',
-                    style: textTheme.titleMedium?.copyWith(
+                    style: textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.w700,
                       color: AppColors.textDark,
                     ),
@@ -314,7 +308,7 @@ class _OrderCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 4),
-            Text('Placed: $orderDate', style: textTheme.bodySmall?.copyWith(color: AppColors.textMedium)),
+            Text('Placed: $orderDate', style: textTheme.labelSmall?.copyWith(color: AppColors.textMedium)),
             const Divider(height: 24, thickness: 1, color: AppColors.neutralBackground),
 
             // --- PRODUCT LIST ---
@@ -352,7 +346,7 @@ class _OrderCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(productName,
-                            style: textTheme.bodyLarge?.copyWith(
+                            style: textTheme.bodyMedium?.copyWith(
                               fontWeight: FontWeight.w600,
                               color: AppColors.textDark,
                             ),
@@ -360,12 +354,12 @@ class _OrderCard extends StatelessWidget {
                           ),
                           if (variantText.isNotEmpty)
                             Text(variantText,
-                              style: textTheme.bodyMedium?.copyWith(color: AppColors.textMedium),
+                              style: textTheme.bodySmall?.copyWith(color: AppColors.textMedium),
                               maxLines: 1, overflow: TextOverflow.ellipsis,
                             ),
                           const SizedBox(height: 4),
                           Text('Qty: ${item.quantity}',
-                            style: textTheme.bodySmall?.copyWith(
+                            style: textTheme.labelSmall?.copyWith(
                               fontWeight: FontWeight.w500,
                               color: AppColors.textLight,
                             ),
@@ -377,7 +371,7 @@ class _OrderCard extends StatelessWidget {
                       alignment: Alignment.centerRight,
                       child: Text(
                         '₹${item.price.toStringAsFixed(0)}',
-                        style: textTheme.bodyLarge?.copyWith(
+                        style: textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.w700,
                           color: AppColors.textDark,
                         ),
@@ -400,12 +394,12 @@ class _OrderCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text('Grand Total',
-                    style: textTheme.titleMedium?.copyWith(
+                    style: textTheme.bodyLarge?.copyWith(
                         fontWeight: FontWeight.w700, color: AppColors.textDark
                     ),
                   ),
                   Text('₹${order.orderAmount.toStringAsFixed(0)}',
-                    style: textTheme.headlineSmall?.copyWith(
+                    style: textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w800, color: AppColors.success,
                     ),
                   ),
@@ -416,7 +410,7 @@ class _OrderCard extends StatelessWidget {
 
             // --- SHIPPING/DELIVERY ---
             Text('Shipping & Delivery Details',
-                style: textTheme.titleMedium?.copyWith(
+                style: textTheme.bodyLarge?.copyWith(
                     fontWeight: FontWeight.bold, color: AppColors.textDark)),
             const SizedBox(height: 8),
             buildDetailRow(context, 'Shipping Status', order.shippingStatus.capitalizeFirst ?? 'N/A'),
@@ -544,13 +538,11 @@ class _OrderCard extends StatelessWidget {
                       // THE MAIN QUERY BUTTON!
                       if (order.id != null)
                         Obx(() {
-                          // This line guarantees always correct state:
-                          final String orderIdStr = order.id.toString();
+                          final int? orderId = int.tryParse(order.id.toString());
                           final bool hasQueryForThisOrder = queryController.myQueries.any(
-                                  (query) => (query.orderId?.toString() ?? '') == orderIdStr
+                                  (query) => query.orderId == orderId
                           );
-                          // Debug print for your inspection
-                          print('DEBUG: order.id=$orderIdStr, myQueries.orderId=${queryController.myQueries.map((q) => q.orderId).toList()}');
+
                           if (hasQueryForThisOrder) {
                             return Padding(
                               padding: const EdgeInsets.symmetric(vertical: 6.0),
@@ -637,8 +629,8 @@ class _OrderCard extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: textTheme.bodyMedium?.copyWith(color: AppColors.textMedium)),
-          Text(value, style: textTheme.bodyMedium?.copyWith(
+          Text(label, style: textTheme.bodySmall?.copyWith(color: AppColors.textMedium)),
+          Text(value, style: textTheme.bodySmall?.copyWith(
             fontWeight: FontWeight.w600,
             color: AppColors.textDark,
           )),
@@ -658,7 +650,7 @@ class _OrderCard extends StatelessWidget {
             width: 120,
             child: Text(
               '$label:',
-              style: textTheme.bodySmall?.copyWith(
+              style: textTheme.labelSmall?.copyWith(
                 fontWeight: FontWeight.w500,
                 color: AppColors.textMedium,
               ),
@@ -667,7 +659,7 @@ class _OrderCard extends StatelessWidget {
           Expanded(
             child: Text(
               value,
-              style: textTheme.bodySmall?.copyWith(
+              style: textTheme.labelSmall?.copyWith(
                 color: AppColors.textDark,
                 fontWeight: FontWeight.w600,
               ),

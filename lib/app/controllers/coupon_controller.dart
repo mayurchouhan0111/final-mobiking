@@ -217,7 +217,7 @@ class CouponController extends GetxController {
 
       if (response.success) {
         // Filter only valid coupons
-        final validCoupons = response.data.where((coupon) => coupon.isValid).toList();
+        final validCoupons = response.data.where((coupon) => (coupon as CouponModel).isValid).toList();
         availableCoupons.value = validCoupons;
       }
     } catch (e) {

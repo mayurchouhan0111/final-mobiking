@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'dart:math';
 
+import '../../../controllers/BottomNavController.dart';
 
 
 import '../../../controllers/cart_controller.dart';
@@ -26,9 +27,8 @@ class AllProductGridCard extends StatelessWidget {
     required this.heroTag,
   }) : super(key: key);
 
-  static final Random _random = Random();
 
-  // Reusing the quantity selector logic for consistency
+
   Widget _buildQuantitySelectorButton(
       int totalQuantity,
       ProductModel product,
@@ -38,65 +38,85 @@ class AllProductGridCard extends StatelessWidget {
     final TextTheme textTheme = Theme.of(context).textTheme;
     final bool hasMultipleVariants = product.variants.length > 1;
 
-    return Container(
-      height: 28,
-      decoration: BoxDecoration(
-        color: AppColors.success,
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          InkWell(
-            onTap: () async {
-              HapticFeedback.lightImpact();
-              if (hasMultipleVariants || totalQuantity > 1) {
-                _showVariantBottomSheet(context, product);
-              } else {
-                final cartItemsForProduct = cartController.getCartItemsForProduct(productId: product.id);
-                if (cartItemsForProduct.isNotEmpty) {
-                  final singleVariantName = cartItemsForProduct.keys.first;
-                  await cartController.removeFromCart(productId: product.id, variantName: singleVariantName);
+    return Obx(() {
+      final isProcessing = cartController.processingProductId.value.startsWith(product.id);
+
+      return Container(
+        height: 24, // Reduced height
+        decoration: BoxDecoration(
+          color: AppColors.success,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            InkWell(
+              onTap: isProcessing
+                  ? null
+                  : () async {
+                HapticFeedback.lightImpact();
+                if (hasMultipleVariants || totalQuantity > 1) {
+                  _showVariantBottomSheet(context, product);
+                } else {
+                  final cartItemsForProduct =
+                  cartController.getCartItemsForProduct(productId: product.id);
+                  if (cartItemsForProduct.isNotEmpty) {
+                    final singleVariantName = cartItemsForProduct.keys.first;
+                    await cartController.removeFromCart(
+                        productId: product.id, variantName: singleVariantName);
+                  }
                 }
-              }
-            },
-            child: const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 4),
-              child: Icon(Icons.remove, color: AppColors.white, size: 16),
-            ),
-          ),
-          Flexible(
-            child: _AnimatedQuantityText(
-              quantity: totalQuantity,
-              textStyle: textTheme.labelSmall?.copyWith(
-                color: AppColors.white,
-                fontWeight: FontWeight.w700,
-                fontSize: 12,
+              },
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 2), // Reduced horizontal padding
+                child: Icon(Icons.remove, color: AppColors.white, size: 14), // Smaller icon
               ),
             ),
-          ),
-          InkWell(
-            onTap: () async {
-              HapticFeedback.lightImpact();
-              if (hasMultipleVariants) {
-                _showVariantBottomSheet(context, product);
-              } else {
-                final singleVariant = product.variants.entries.first;
-                await cartController.addToCart(productId: product.id, variantName: singleVariant.key);
-              }
-            },
-            child: const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 4),
-              child: Icon(Icons.add, color: AppColors.white, size: 16),
+            Flexible(
+              child: isProcessing
+                  ? const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: AppColors.white,
+                ),
+              )
+                  : _AnimatedQuantityText(
+                quantity: totalQuantity,
+                textStyle: textTheme.labelSmall?.copyWith(
+                  color: AppColors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 10, // Smaller font size
+                ),
+              ),
             ),
-          ),
-        ],
-      ),
-    );
+            InkWell(
+              onTap: isProcessing
+                  ? null
+                  : () async {
+                HapticFeedback.lightImpact();
+                if (hasMultipleVariants) {
+                  _showVariantBottomSheet(context, product);
+                } else {
+                  final singleVariant = product.variants.entries
+                      .firstWhere((element) => element.value > 0);
+                  await cartController.addToCart(
+                      productId: product.id, variantName: singleVariant.key);
+                }
+              },
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 2), // Reduced horizontal padding
+                child: Icon(Icons.add, color: AppColors.white, size: 14), // Smaller icon
+              ),
+            ),
+          ],
+        ),
+      );
+    });
   }
 
-  // Build ADD button with variant indicator inside the button
   Widget _buildAddButtonWithVariantCount(
       BuildContext context,
       int availableVariantCount,
@@ -104,80 +124,91 @@ class AllProductGridCard extends StatelessWidget {
       CartController cartController,
       ) {
     final TextTheme textTheme = Theme.of(context).textTheme;
-    const double addBtnFixedWidth = 60.0;
-    const double buttonHeight = 28.0;
+    const double addBtnFixedWidth = 50.0; // Reduced width
+    const double buttonHeight = 24.0; // Reduced height
 
-    return SizedBox(
-      width: addBtnFixedWidth,
-      height: buttonHeight,
-      child: ElevatedButton(
-        onPressed: () async {
-          HapticFeedback.lightImpact();
-          if (availableVariantCount > 1) {
-            _showVariantBottomSheet(context, product);
-          } else {
-            final singleVariant = product.variants.entries
-                .firstWhere((element) => element.value > 0);
-            await cartController.addToCart(
-              productId: product.id,
-              variantName: singleVariant.key,
-            );
-          }
-        },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.white,
-          foregroundColor: AppColors.success,
-          padding: EdgeInsets.zero,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(6),
-            side: BorderSide(color: AppColors.success, width: 1.5),
-          ),
-          elevation: 0,
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          minimumSize: Size.zero,
-        ),
-        child: Stack(
-          children: [
-            Center(
-              child: Text(
-                'ADD',
-                style: textTheme.labelSmall?.copyWith(
-                  color: AppColors.success,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 12,
-                ),
-              ),
+    return Obx(() {
+      final isProcessing = cartController.processingProductId.value ==
+          '${product.id}_${product.variants.entries.firstWhere((element) => element.value > 0).key}';
+
+      return SizedBox(
+        width: addBtnFixedWidth,
+        height: buttonHeight,
+        child: ElevatedButton(
+          onPressed: isProcessing
+              ? null
+              : () async {
+            HapticFeedback.lightImpact();
+            if (availableVariantCount > 1) {
+              _showVariantBottomSheet(context, product);
+            } else {
+              final singleVariant = product.variants.entries
+                  .firstWhere((element) => element.value > 0);
+              await cartController.addToCart(
+                productId: product.id,
+                variantName: singleVariant.key,
+              );
+            }
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.white,
+            foregroundColor: AppColors.success,
+            padding: EdgeInsets.zero,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(6),
+              side: BorderSide(color: AppColors.success, width: 1.5),
             ),
-            if (availableVariantCount > 1)
-              Positioned(
-                bottom: 0,
-                right: 1,
-                child: Container(
-                  width: 60,
-                  height: 10,
-                  decoration: BoxDecoration(
-                    color: AppColors.success.withOpacity(0.5),
-                    borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.circular(8),
-                      bottomRight: Radius.circular(6),
-                    ),
+            elevation: 0,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            minimumSize: Size.zero,
+          ),
+          child: isProcessing
+              ? const SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: AppColors.success,
+            ),
+          )
+              : FittedBox( // Wrap with FittedBox
+            fit: BoxFit.scaleDown, // Add this
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min, // Corrected: Use min to size column to its children
+              children: [
+                Text(
+                  'ADD',
+                  style: textTheme.labelSmall?.copyWith(
+                    color: AppColors.success,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 10,
                   ),
-                  child: Center(
+                ),
+                if (availableVariantCount > 1) ...[
+                  // Corrected: Adjusted padding and font size to prevent overflow
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0.5),
+                    decoration: BoxDecoration(
+                      color: AppColors.success.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
                     child: Text(
-                      '$availableVariantCount Options',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 6,
-                        fontWeight: FontWeight.w500,
+                      '$availableVariantCount options',
+                      style: textTheme.labelSmall?.copyWith(
+                        color: AppColors.success,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 7, // Corrected: Smaller font size
                       ),
                     ),
                   ),
-                ),
-              ),
-          ],
+                ]
+              ],
+            ),
+          ),
         ),
-      ),
-    );
+      );
+    });
   }
 
   @override
@@ -192,30 +223,24 @@ class AllProductGridCard extends StatelessWidget {
     String discountPercentage = '';
 
     if (product.sellingPrice.isNotEmpty) {
-      sellingPrice = product.sellingPrice.last.price.toInt();
-      if (product.sellingPrice.isNotEmpty) {
-        actualPrice = product.sellingPrice.last.price.toInt();
-        if (actualPrice > 0 && sellingPrice < actualPrice) {
-          double discount = ((actualPrice - sellingPrice) / actualPrice) * 100;
-          discountPercentage = '${discount.round()}% off';
-        }
-      } else {
-        actualPrice = sellingPrice;
+      sellingPrice = product.sellingPrice.map((e) => e.price.toInt()).reduce(min);
+      actualPrice = product.regularPrice ?? product.sellingPrice.map((e) => e.price.toInt()).reduce(max);
+      if (actualPrice > 0 && sellingPrice < actualPrice) {
+        double discount = ((actualPrice - sellingPrice) / actualPrice) * 100;
+        discountPercentage = '${discount.round()}%';
       }
     } else {
       sellingPrice = 0;
       actualPrice = 0;
     }
 
-    final double demoRating = 3.0 + _random.nextDouble() * 2.0;
-    final int demoRatingCount = 10 + _random.nextInt(1000);
-
-    const double addBtnFixedWidth = 60.0;
-    const double buttonHeight = 28.0;
+    const double addBtnFixedWidth = 50.0;
+    const double buttonHeight = 24.0;
 
     return Card(
       elevation: 0,
       color: Colors.transparent,
+      margin: EdgeInsets.all(4.0), // Reduced margin
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
@@ -232,6 +257,7 @@ class AllProductGridCard extends StatelessWidget {
             if (onTap != null) {
               onTap!.call(product);
             } else {
+              Get.find<BottomNavController>().isFabVisible.value = true;
               Get.to(
                     () => ProductPage(
                   product: product,
@@ -288,7 +314,7 @@ class AllProductGridCard extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                           decoration: BoxDecoration(
-                            color: AppColors.primaryPurple,
+                            color: AppColors.success,
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
@@ -341,6 +367,11 @@ class AllProductGridCard extends StatelessWidget {
                             .where((entry) => entry.value > 0)
                             .length;
 
+                        print('AllProductGridCard: Product ID: ${product.id}');
+                        print('AllProductGridCard: totalProductQuantityInCart: $totalProductQuantityInCart');
+                        print('AllProductGridCard: product.variants.entries: ${product.variants.entries}');
+                        print('AllProductGridCard: productVariantQuantities: $variantQuantities');
+
                         if (totalProductQuantityInCart > 0) {
                           return _buildQuantitySelectorButton(
                             totalProductQuantityInCart,
@@ -384,27 +415,29 @@ class AllProductGridCard extends StatelessWidget {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(10.0, 4.0, 10.0, 2.0),
+                padding: const EdgeInsets.fromLTRB(8.0, 4.0, 8.0, 2.0), // Reduced padding
                 child: Text(
                   product.name,
                   style: textTheme.bodyMedium?.copyWith(
                     color: AppColors.textDark,
                     fontWeight: FontWeight.w700,
+                    fontSize: 10, // Smaller font size
                   ),
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(10.0, 2.0, 10.0, 8.0),
+                padding: const EdgeInsets.fromLTRB(8.0, 2.0, 8.0, 8.0), // Reduced padding
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    AppStarRating(
-                      rating: demoRating,
-                      ratingCount: demoRatingCount,
-                      starSize: 12,
-                    ),
+                    if (product.averageRating != null && product.reviewCount != null)
+                      AppStarRating(
+                        rating: product.averageRating!,
+                        ratingCount: product.reviewCount!,
+                        starSize: 10, // Smaller star size
+                      ),
                     const SizedBox(height: 2),
                     Row(
                       children: [
@@ -413,19 +446,19 @@ class AllProductGridCard extends StatelessWidget {
                           style: textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.w800,
                             color: AppColors.textDark,
-                            fontSize: 14,
+                            fontSize: 12, // Smaller font size
                           ),
                         ),
                         if (actualPrice > sellingPrice)
                           Padding(
-                            padding: const EdgeInsets.only(left: 6.0),
+                            padding: const EdgeInsets.only(left: 4.0), // Reduced padding
                             child: Text(
                               "₹$actualPrice",
                               style: textTheme.labelSmall?.copyWith(
                                 decoration: TextDecoration.lineThrough,
                                 color: AppColors.textLight,
-                                fontWeight: FontWeight.w500,
-                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 10, // Smaller font size
                               ),
                             ),
                           ),
@@ -585,7 +618,7 @@ void _showVariantBottomSheet(BuildContext context, ProductModel product) {
                               ),
                               Obx(() {
                                 final currentVariantQuantity = cartController.productVariantQuantities['${product.id}_$variantName'] ?? 0;
-                                final bool isProcessing = cartController.isLoading.value;
+                                final bool isProcessing = cartController.processingProductId.value == '${product.id}_$variantName';
 
                                 if (currentVariantQuantity > 0) {
                                   return Container(
@@ -602,22 +635,22 @@ void _showVariantBottomSheet(BuildContext context, ProductModel product) {
                                             HapticFeedback.lightImpact();
                                             await cartController.removeFromCart(productId: product.id, variantName: variantName);
                                           },
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(4.0),
-                                            child: isProcessing
-                                                ? SizedBox(
-                                              width: 16,
-                                              height: 16,
-                                              child: CircularProgressIndicator(
-                                                strokeWidth: 2,
-                                                color: AppColors.white,
-                                              ),
-                                            )
-                                                : Icon(Icons.remove, color: AppColors.white, size: 16),
+                                          child: const Padding(
+                                            padding: EdgeInsets.all(4.0),
+                                            child: Icon(Icons.remove, color: AppColors.white, size: 16),
                                           ),
                                         ),
                                         const SizedBox(width: 4),
-                                        Text(
+                                        isProcessing
+                                            ? const SizedBox(
+                                          width: 12,
+                                          height: 12,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: AppColors.white,
+                                          ),
+                                        )
+                                            : Text(
                                           '$currentVariantQuantity',
                                           style: textTheme.labelSmall?.copyWith(
                                             color: AppColors.white,
@@ -629,20 +662,11 @@ void _showVariantBottomSheet(BuildContext context, ProductModel product) {
                                         InkWell(
                                           onTap: isProcessing ? null : () async {
                                             HapticFeedback.lightImpact();
-                                            await cartController.addToCart(productId: product.id, variantName: variantName);
+                                            await cartController.addToCart(productId: product.id, variantName: variantName, product: product);
                                           },
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(4.0),
-                                            child: isProcessing
-                                                ? SizedBox(
-                                              width: 16,
-                                              height: 16,
-                                              child: CircularProgressIndicator(
-                                                strokeWidth: 2,
-                                                color: AppColors.white,
-                                              ),
-                                            )
-                                                : Icon(Icons.add, color: AppColors.white, size: 16),
+                                          child: const Padding(
+                                            padding: EdgeInsets.all(4.0),
+                                            child: Icon(Icons.add, color: AppColors.white, size: 16),
                                           ),
                                         ),
                                       ],
@@ -655,7 +679,7 @@ void _showVariantBottomSheet(BuildContext context, ProductModel product) {
                                     child: ElevatedButton(
                                       onPressed: isProcessing ? null : () async {
                                         HapticFeedback.lightImpact();
-                                        await cartController.addToCart(productId: product.id, variantName: variantName);
+                                        await cartController.addToCart(productId: product.id, variantName: variantName, product: product);
                                       },
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: AppColors.white,
@@ -707,3 +731,5 @@ void _showVariantBottomSheet(BuildContext context, ProductModel product) {
     },
   );
 }
+
+

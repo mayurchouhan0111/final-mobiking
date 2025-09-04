@@ -89,8 +89,8 @@ class WishlistCard extends StatelessWidget {
                       product.name,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: textTheme.titleMedium?.copyWith( // Using titleMedium for product name
-                        fontWeight: FontWeight.w600,
+                      style: textTheme.titleSmall?.copyWith( // Using titleSmall for product name
+                        fontWeight: FontWeight.w500,
                         color: AppColors.textDark,
                         height: 1.3, // Adjust line height for readability
                       ),
@@ -103,8 +103,8 @@ class WishlistCard extends StatelessWidget {
                         // Display the actual selling price (discounted or regular)
                         Text(
                           '₹${displayPrice.toStringAsFixed(2)}',
-                          style: textTheme.titleLarge?.copyWith( // Larger and bolder for main price
-                            fontWeight: FontWeight.w700,
+                          style: textTheme.titleMedium?.copyWith( // Larger and bolder for main price
+                            fontWeight: FontWeight.w600,
                             color: AppColors.primaryGreen, // Discounted/Current price in Blinkit green
                           ),
                         ),
@@ -135,9 +135,9 @@ class WishlistCard extends StatelessWidget {
                           icon: Icon(Icons.close_rounded, color: AppColors.textMedium, size: 20), // Clear 'X' icon for remove
                           label: Text(
                             'Remove',
-                            style: textTheme.labelMedium?.copyWith(
+                            style: textTheme.labelSmall?.copyWith(
                               color: AppColors.textMedium,
-                              fontWeight: FontWeight.w500,
+                              fontWeight: FontWeight.w400,
                             ),
                           ),
                           style: TextButton.styleFrom(
@@ -164,8 +164,8 @@ class WishlistCard extends StatelessWidget {
                               ),
                               child: Text(
                                 'Add', // Simple "Add" text
-                                style: textTheme.labelLarge?.copyWith( // labelLarge for button text
-                                  fontWeight: FontWeight.w600,
+                                style: textTheme.labelMedium?.copyWith( // labelLarge for button text
+                                  fontWeight: FontWeight.w500,
                                   color: AppColors.white,
                                 ),
                               ),

@@ -103,9 +103,10 @@ class _CategorySectionScreenState extends State<CategorySectionScreen> {
       backgroundColor: AppColors.neutralBackground,
       appBar: AppBar(
         title: Text("Categories",
-          style: textTheme.titleLarge?.copyWith(
+          style: textTheme.bodyMedium?.copyWith(
             color: AppColors.textDark,
             fontWeight: FontWeight.w700,
+            fontSize: 18,
           ),
         ),
         backgroundColor: AppColors.white,
@@ -191,9 +192,10 @@ class _CategorySectionScreenState extends State<CategorySectionScreen> {
                           children: [
                             Expanded(
                               child: Text(title,
-                                style: textTheme.titleLarge?.copyWith(
+                                style: textTheme.bodyMedium?.copyWith(
                                   color: AppColors.textDark,
                                   fontWeight: FontWeight.w700,
+                                  fontSize: 18,
                                 ),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
@@ -205,22 +207,31 @@ class _CategorySectionScreenState extends State<CategorySectionScreen> {
                                 subCategories: matchingSubs,
                               )),
                               style: TextButton.styleFrom(
-                                foregroundColor: AppColors.success,
-                                textStyle: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                minimumSize: Size.zero,
+                                foregroundColor: AppColors.primaryPurple,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 6),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  side: const BorderSide(
+                                      color: AppColors.success, width: 1),
+                                ),
                                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                minimumSize: Size.zero,
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Text("See More", style: TextStyle(color: AppColors.success)),
-                                  const SizedBox(width: 4),
-                                  Icon(
-                                    Icons.arrow_forward_ios,
-                                    size: 12,
-                                    color: AppColors.success,
+                                  Text(
+                                    'See More',
+                                    style: textTheme.labelSmall?.copyWith(
+                                      color: AppColors.success,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 11,
+                                    ),
                                   ),
+                                  const SizedBox(width: 4),
+                                  Icon(Icons.arrow_forward_ios,
+                                      size: 12, color: AppColors.primaryPurple),
                                 ],
                               ),
                             ),
@@ -239,7 +250,7 @@ class _CategorySectionScreenState extends State<CategorySectionScreen> {
                             crossAxisCount: 3,
                             mainAxisSpacing: 12,
                             crossAxisSpacing: 12,
-                            childAspectRatio: 0.75,
+                            childAspectRatio: 0.85, // Adjusted aspect ratio
                           ),
                           itemBuilder: (context, i) {
                             final sub = matchingSubs[i];
@@ -250,6 +261,7 @@ class _CategorySectionScreenState extends State<CategorySectionScreen> {
                             return CategoryTile(
                               title: sub.name ?? 'Unknown',
                               imageUrl: image,
+                              icon: sub.icon, // new
                               onTap: () {
                                 Get.to(() => CategoryProductsGridScreen(
                                   categoryName: title,

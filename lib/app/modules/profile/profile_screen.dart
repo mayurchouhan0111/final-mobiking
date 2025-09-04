@@ -33,9 +33,10 @@ class ProfileScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text(
           "My Profile",
-          style: textTheme.titleLarge?.copyWith(
+          style: textTheme.bodyMedium?.copyWith(
             color: AppColors.textDark,
             fontWeight: FontWeight.w700,
+            fontSize: 18,
           ),
         ),
         centerTitle: false,
@@ -79,9 +80,10 @@ class ProfileScreen extends StatelessWidget {
                   children: [
                     Text(
                       userName,
-                      style: textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
+                      style: textTheme.bodyMedium?.copyWith(
                         color: AppColors.textDark,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 18,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -107,7 +109,7 @@ class ProfileScreen extends StatelessWidget {
                       },
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  /*const SizedBox(width: 12),
                   Expanded(
                     child: InfoBox(
                       icon: Icons.headset_mic_outlined,
@@ -116,7 +118,7 @@ class ProfileScreen extends StatelessWidget {
                         Get.to(() => const QueriesScreen());
                       },
                     ),
-                  ),
+                  ),*/
                   const SizedBox(width: 12),
                   Expanded(
                     child: InfoBox(

@@ -207,13 +207,7 @@ class _BillSectionState extends State<BillSection> {
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.textDark.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        border: Border.all(color: AppColors.neutralBackground, width: 1), // REPLACED SHADOW WITH BORDER
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

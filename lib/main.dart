@@ -18,6 +18,8 @@ import 'package:mobiking/app/data/product_model.dart';
 
 import 'package:mobiking/app/data/category_model.dart';
 
+import 'package:mobiking/app/modules/splash_screen.dart';
+
 // Correct import paths for new screens/controllers/services
 // Ensure these paths are correct in your project structure
 import 'package:mobiking/app/controllers/BottomNavController.dart';
@@ -31,6 +33,7 @@ import 'package:mobiking/app/controllers/wishlist_controller.dart';
 import 'package:mobiking/app/controllers/login_controller.dart';
 import 'package:mobiking/app/services/AddressService.dart';
 import 'package:mobiking/app/services/login_service.dart';
+import 'package:mobiking/app/services/user_service.dart';
 import 'package:mobiking/app/services/order_service.dart';
 import 'package:mobiking/app/services/query_service.dart';
 import 'package:mobiking/app/controllers/Home_controller.dart';
@@ -104,7 +107,8 @@ Future<void> main() async {
   Get.put(FirebaseMessagingService()).init(); // Call .init() immediately after putting
 
   // ✅ SERVICES: Put services into GetX dependency injection (ORDER MATTERS)
-  Get.put(LoginService(dioInstance, getStorageBox));
+  Get.put(UserService(dioInstance)); // Put UserService first
+  Get.put(LoginService(dioInstance, getStorageBox, Get.find<UserService>()));
   Get.put(OrderService());
   Get.put(AddressService(dioInstance, getStorageBox));
   Get.put(ConnectivityService());
@@ -119,6 +123,7 @@ Future<void> main() async {
   Get.put(ConnectivityController());
   Get.put(FcmController());
   Get.put(AddressController());
+  Get.put(ProductController());
   Get.put(CartController());
   Get.put(HomeController());
 
@@ -131,7 +136,6 @@ Future<void> main() async {
   Get.put(TabControllerGetX());
   Get.put(SystemUIController());
   Get.put(QueryGetXController());
-  Get.put(ProductController());
 
   // OrderController (depends on OrderService, CartController, AddressController)
   Get.put(OrderController());
@@ -224,34 +228,7 @@ class MyApp extends StatelessWidget {
       title: 'Mobiking',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: Obx(() {
-        final isConnected = connectivityController.isConnected.value;
-        final user = loginController.currentUser.value;
-
-        Widget content;
-
-        if (isConnected) {
-          if (user != null) {
-            // ✅ User is logged in and connected
-            content = MainContainerScreen();
-          } else {
-            // ✅ Not logged in, show PhoneAuth
-            content = PhoneAuthScreen();
-          }
-        } else {
-          // ❌ No internet, show retry UI
-          content = NoNetworkScreen(
-            onRetry: () {
-              connectivityController.retryConnection();
-            },
-          );
-        }
-
-        return Padding(
-          padding: globalPadding,
-          child: content,
-        );
-      }),
+      home: SplashScreen(),
 
       // If you decide to use GetX routing (recommended), remove 'home:' and use 'initialRoute' and 'getPages'.
       // For example:

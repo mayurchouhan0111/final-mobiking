@@ -1,25 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-// Removed as AppTheme provides comprehensive text styles
-// import 'package:google_fonts/google_fonts.dart';
 import 'package:mobiking/app/themes/app_theme.dart'; // Import your AppTheme
 import '../../../controllers/cart_controller.dart';
 import '../../../data/product_model.dart';
-import 'package:collection/collection.dart'; // Make sure this is imported for firstWhereOrNull
+import 'package:collection/collection.dart';
 
 class CartItemTile extends StatelessWidget {
   final ProductModel product;
   final int quantity;
   final String variantName;
-  // If you need to pass an onTap for product details from this tile, add it here
-  // final VoidCallback? onProductTap;
 
   const CartItemTile({
     Key? key,
     required this.product,
     required this.quantity,
     required this.variantName,
-    // this.onProductTap,
   }) : super(key: key);
 
   @override
@@ -27,132 +22,129 @@ class CartItemTile extends StatelessWidget {
     final TextTheme textTheme = Theme.of(context).textTheme;
     final CartController cartController = Get.find<CartController>();
 
-    // Determine the price and stock for the specific variant
     double displayPrice = 0.0;
+    double? originalPrice = product.regularPrice?.toDouble();
     int? variantStock;
 
-    // Logic to find price and stock for the given variantName
-    final productVariant = product.variants[variantName];
+    // ✅ CHANGED: Using .last to get the most recent price instead of the first one.
+    if (product.sellingPrice.isNotEmpty && product.sellingPrice.last.price != null) {
+      displayPrice = product.sellingPrice.last.price!.toDouble();
+    }
 
-    displayPrice = product.sellingPrice[0].price!.toDouble();
-    variantStock = product.totalStock; // Fallback to total stock if variant stock not specific
+    variantStock = product.variants[variantName] ?? product.totalStock;
 
 
-    // Determine the primary image URL
-    String imageUrl = 'https://via.placeholder.com/100'; // Default placeholder
+    String imageUrl = 'https://via.placeholder.com/100';
     if (product.images.isNotEmpty) {
-      // Assuming product.images[0] is the primary URL string
       imageUrl = product.images[0];
     }
 
 
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16), // Padding inside the card
-      margin: const EdgeInsets.symmetric(vertical: 0, horizontal: 0), // No external margin, controlled by parent
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      margin: const EdgeInsets.symmetric(vertical: 0, horizontal: 0),
       decoration: BoxDecoration(
-        color: AppColors.white, // White background for the card
-        borderRadius: BorderRadius.circular(8), // Slightly rounded corners, less than main checkout container
-        border: Border.all(color: AppColors.neutralBackground, width: 1), // Subtle border
-        // No explicit shadow here, let the parent container (in CheckoutScreen) handle it.
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.neutralBackground, width: 1),
       ),
       child: Column(
         children: [
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Product Image
               ClipRRect(
-                borderRadius: BorderRadius.circular(8), // Rounded image corners
+                borderRadius: BorderRadius.circular(8),
                 child: Image.network(
                   imageUrl,
-                  width: 80, // Larger image size for prominence
+                  width: 80,
                   height: 80,
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) => Container(
                     width: 80,
                     height: 80,
-                    color: AppColors.neutralBackground, // Light grey for error background
+                    color: AppColors.neutralBackground,
                     child: Icon(
                       Icons.image_not_supported,
-                      color: AppColors.textLight, // Lighter icon for error
+                      color: AppColors.textLight,
                       size: 30,
                     ),
                   ),
                 ),
               ),
-              const SizedBox(width: 16), // Spacing between image and text
+              const SizedBox(width: 16),
 
-              // Product Details (Name, Variant, Price)
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      product.name ?? 'Unnamed Product',
-                      maxLines: 1,
+                      product.fullName ?? 'Unnamed Product',
+                      maxLines: 3,
                       overflow: TextOverflow.ellipsis,
-                      style: textTheme.titleSmall?.copyWith( // titleSmall for product name
+                      style: textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w600,
                         color: AppColors.textDark,
+                        fontSize: 11,
                       ),
                     ),
-                    const SizedBox(height: 4), // Small space after product name
+                    const SizedBox(height: 4),
                     Text(
-                      variantName, // Only show variant, as price is separate
-                      style: textTheme.bodyMedium?.copyWith( // bodyMedium for variant
+                      variantName,
+                      style: textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w500,
-                        color: AppColors.textMedium, // Subtler color
+                        color: AppColors.textMedium,
                       ),
-                      maxLines: 1, // Usually 1 line for variant
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 8), // Space before price
-                    Text(
-                      '₹${displayPrice.toStringAsFixed(0)}', // Price, bold and dark
-                      style: textTheme.titleSmall?.copyWith( // titleSmall for price
-                        fontWeight: FontWeight.w700, // Very bold
-                        color: AppColors.textDark,
-                      ),
-                    ),
-                    if (variantStock != null) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        'Stock: ${variantStock! > 0 ? variantStock : 'Out of Stock'}',
-                        style: textTheme.bodySmall?.copyWith( // bodySmall for stock
-                          fontSize: 11, // Slightly smaller
-                          fontWeight: FontWeight.w500,
-                          color: variantStock! > 0 ? AppColors.success : AppColors.danger, // Green for in stock, red for out
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Text(
+                          '₹${displayPrice.toStringAsFixed(0)}',
+                          style: textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textDark,
+                          ),
                         ),
-                      ),
-                    ],
+                        if (originalPrice != null && originalPrice > displayPrice)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 8.0),
+                            child: Text(
+                              '₹${originalPrice.toStringAsFixed(0)}',
+                              style: textTheme.bodySmall?.copyWith(
+                                decoration: TextDecoration.lineThrough,
+                                color: AppColors.textLight,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                   ],
                 ),
               ),
 
-              // Quantity Selector
               Align(
-                alignment: Alignment.bottomRight, // Align to bottom right of the row
+                alignment: Alignment.bottomRight,
                 child: Obx(
                       () {
-                    final bool isLoading = cartController.isLoading.value;
-                    // --- THE ONLY CHANGE IS HERE ---
-                    // Allow decrement when quantity is 1 (to trigger removal)
-                    final bool isDecrementDisabled = isLoading || quantity < 1;
-                    // --- END OF CHANGE ---
-                    final bool isIncrementDisabled = isLoading || (variantStock != null && quantity >= variantStock!);
+                    final String itemKey = '${product.id}_$variantName';
+                    final bool isThisItemLoading = cartController.processingProductId.value == itemKey;
+                    final bool isDecrementDisabled = isThisItemLoading || quantity < 1;
+                    final bool isIncrementDisabled = isThisItemLoading || (variantStock != null && quantity >= variantStock!); 
 
                     return Container(
-                      margin: EdgeInsets.symmetric(vertical: 20),
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4), // Padding around buttons
+                      margin: const EdgeInsets.symmetric(vertical: 20),
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppColors.success, // Light green background for quantity selector bar
-                        borderRadius: BorderRadius.circular(10), // Highly rounded corners
-                        border: Border.all(color: AppColors.success, width: 0.5), // Subtle green border
+                        color: AppColors.success,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: AppColors.success, width: 0.5),
                       ),
                       child: Row(
-                        mainAxisSize: MainAxisSize.min, // Wrap content tightly
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          // Decrement Button
                           _buildQuantityButton(
                             context: context,
                             icon: Icons.remove,
@@ -165,35 +157,39 @@ class CartItemTile extends StatelessWidget {
                               );
                             },
                             isDisabled: isDecrementDisabled,
-                            // This part of isLoading logic remains as per your original code
-                            isLoading: isLoading && quantity <= 1,
-                          ),
-                          const SizedBox(width: 8), // Smaller space between buttons and quantity
-                          // Quantity Text
-                          Text(
-                            '$quantity',
-                            style: textTheme.labelLarge?.copyWith( // labelLarge for quantity
-                              fontWeight: FontWeight.w700, // Bold
-                              color: AppColors.white,
-                            ),
+                            isLoading: false,
                           ),
                           const SizedBox(width: 8),
-                          // Increment Button
+                          isThisItemLoading
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: AppColors.white,
+                                  ),
+                                )
+                              : Text(
+                                  '$quantity',
+                                  style: textTheme.labelLarge?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.white,
+                                  ),
+                                ),
+                          const SizedBox(width: 8),
                           _buildQuantityButton(
                             context: context,
                             icon: Icons.add,
                             onTap: isIncrementDisabled
                                 ? null
                                 : () {
-                              // Removed Get.snackbar from here as requested
                               cartController.addToCart(
                                 productId: product.id!,
                                 variantName: variantName,
                               );
                             },
                             isDisabled: isIncrementDisabled,
-                            // This part of isLoading logic remains as per your original code
-                            isLoading: isLoading && (variantStock == null || quantity < variantStock!),
+                            isLoading: false,
                           ),
                         ],
                       ),
@@ -208,38 +204,36 @@ class CartItemTile extends StatelessWidget {
     );
   }
 
-  // Helper method for quantity buttons
   Widget _buildQuantityButton({
     required BuildContext context,
     required IconData icon,
     VoidCallback? onTap,
     required bool isDisabled,
-    required bool isLoading, // Added isLoading flag for individual button state
+    required bool isLoading,
   }) {
-    // Determine button color based on disabled state and theme
     final Color buttonColor = isDisabled ? AppColors.success.withOpacity(0.5) : AppColors.success;
-    final Color iconColor = isDisabled ? AppColors.textLight.withOpacity(0.7) : AppColors.white; // White icon on active, light grey on disabled
+    final Color iconColor = isDisabled ? AppColors.textLight.withOpacity(0.7) : AppColors.white;
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(6), // Consistent padding for circular buttons
+        padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
           color: buttonColor,
-          shape: BoxShape.circle, // Circular shape
+          shape: BoxShape.circle,
         ),
-        child: isLoading // Show loading indicator only if this specific button action is loading
+        child: isLoading
             ? SizedBox(
           height: 18,
           width: 18,
           child: CircularProgressIndicator(
             strokeWidth: 2,
-            valueColor: AlwaysStoppedAnimation<Color>(iconColor), // Loading indicator matches icon color
+            valueColor: AlwaysStoppedAnimation<Color>(iconColor),
           ),
         )
             : Icon(
           icon,
-          size: 18, // Icon size
+          size: 18,
           color: iconColor,
         ),
       ),

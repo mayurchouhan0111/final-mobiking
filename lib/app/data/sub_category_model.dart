@@ -57,6 +57,9 @@ class SubCategory extends HiveObject {
   @HiveField(16)
   final int? minOrderAmount;
 
+  @HiveField(17)
+  final String? icon;
+
   SubCategory({
     required this.id,
     required this.name,
@@ -75,6 +78,7 @@ class SubCategory extends HiveObject {
     this.deliveryCharge,
     this.minFreeDeliveryOrderAmount,
     this.minOrderAmount,
+    this.icon,
   });
 
   // Helper function to safely parse numbers into an int
@@ -126,6 +130,7 @@ class SubCategory extends HiveObject {
       deliveryCharge: _safeParseDouble(json['deliveryCharge']),
       minFreeDeliveryOrderAmount: _safeParseInt(json['minFreeDeliveryOrderAmount']),
       minOrderAmount: _safeParseInt(json['minOrderAmount']),
+      icon: json['icon'] as String?,
     );
   }
 
@@ -148,6 +153,7 @@ class SubCategory extends HiveObject {
       'deliveryCharge': deliveryCharge,
       'minFreeDeliveryOrderAmount': minFreeDeliveryOrderAmount,
       'minOrderAmount': minOrderAmount,
+      'icon': icon,
     };
   }
 }

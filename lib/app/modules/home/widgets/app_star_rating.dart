@@ -22,9 +22,11 @@ class AppStarRating extends StatelessWidget {
       return const SizedBox.shrink(); // Don't show anything if no ratings
     }
 
+    final clampedRating = rating.clamp(4.7, 5.0);
+
     List<Widget> stars = [];
-    int fullStars = rating.floor();
-    bool hasHalfStar = (rating - fullStars) >= 0.5;
+    int fullStars = clampedRating.floor();
+    bool hasHalfStar = (clampedRating - fullStars) >= 0.5;
 
     for (int i = 0; i < 5; i++) {
       if (i < fullStars) {
@@ -45,7 +47,7 @@ class AppStarRating extends StatelessWidget {
             ...stars,
             const SizedBox(width: 4),
             Text(
-              rating.toStringAsFixed(1),
+              clampedRating.toStringAsFixed(1),
               style: textTheme.labelSmall?.copyWith(
                 color: AppColors.textDark,
                 fontWeight: FontWeight.w600,

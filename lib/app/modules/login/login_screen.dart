@@ -39,16 +39,8 @@ class PhoneAuthScreen extends StatelessWidget {
           child: SafeArea(
             child: Column(
               children: [
-                // Header section - 35% of screen
-                Expanded(
-                  flex: 35,
-                  child: _buildHeader(context, textTheme),
-                ),
-                // Main content - 65% of screen
-                Expanded(
-                  flex: 65,
-                  child: _buildMainContent(context, textTheme),
-                ),
+                Expanded(flex: 35, child: _buildHeader(context, textTheme)),
+                Expanded(flex: 65, child: _buildMainContent(context, textTheme)),
               ],
             ),
           ),
@@ -57,13 +49,12 @@ class PhoneAuthScreen extends StatelessWidget {
     );
   }
 
-  // 🌄 Compact Header
+  // 🌄 Header
   Widget _buildHeader(BuildContext context, TextTheme textTheme) {
     return Container(
       width: double.infinity,
       child: Stack(
         children: [
-          // Subtle decorative elements
           Positioned(
             top: 20,
             right: -20,
@@ -88,13 +79,10 @@ class PhoneAuthScreen extends StatelessWidget {
               ),
             ),
           ),
-
-          // Main header content
           Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // App Icon
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -111,25 +99,21 @@ class PhoneAuthScreen extends StatelessWidget {
                     color: AppColors.white,
                   ),
                 ),
-
                 const SizedBox(height: 16),
-
-                // App name
                 Text(
                   "Mobiking",
                   style: textTheme.headlineLarge?.copyWith(
                     color: AppColors.white,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                     fontSize: 32,
                     letterSpacing: 1.0,
                   ),
                 ),
-
                 Text(
                   "Wholesale",
                   style: textTheme.titleLarge?.copyWith(
                     color: AppColors.white.withOpacity(0.85),
-                    fontWeight: FontWeight.w300,
+                    fontWeight: FontWeight.w200,
                     fontSize: 18,
                     letterSpacing: 1.5,
                   ),
@@ -142,7 +126,7 @@ class PhoneAuthScreen extends StatelessWidget {
     );
   }
 
-  // 🎴 Main Content with Sign Up Card
+  // 🎴 Main Content
   Widget _buildMainContent(BuildContext context, TextTheme textTheme) {
     return Container(
       width: double.infinity,
@@ -157,23 +141,12 @@ class PhoneAuthScreen extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
         child: Column(
           children: [
-            // Card Header - Fixed spacing
             _buildCardHeader(textTheme),
-
             const SizedBox(height: 32),
-
-            // Phone Input - Fixed spacing
             _buildPhoneInput(context, textTheme),
-
             const SizedBox(height: 24),
-
-            // OTP Button - Fixed spacing
             _buildOtpButton(textTheme),
-
-            // Spacer to push footer to bottom
             const Spacer(),
-
-            // Footer text - Always at bottom
             _buildFooter(textTheme),
           ],
         ),
@@ -185,34 +158,26 @@ class PhoneAuthScreen extends StatelessWidget {
   Widget _buildCardHeader(TextTheme textTheme) {
     return Column(
       children: [
-        // Decorative line
         Container(
           width: 40,
           height: 4,
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                AppColors.primaryPurple,
-                AppColors.accentNeon,
-              ],
+              colors: [AppColors.primaryPurple, AppColors.accentNeon],
             ),
             borderRadius: BorderRadius.circular(2),
           ),
         ),
-
         const SizedBox(height: 20),
-
         Text(
           "Welcome Back",
           style: textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w500,
             color: AppColors.textDark,
             fontSize: 26,
           ),
         ),
-
         const SizedBox(height: 8),
-
         Text(
           "Enter your phone number to continue",
           style: textTheme.bodyLarge?.copyWith(
@@ -224,7 +189,7 @@ class PhoneAuthScreen extends StatelessWidget {
     );
   }
 
-  // 📱 Phone input field
+  // 📱 Phone Input
   Widget _buildPhoneInput(BuildContext context, TextTheme textTheme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -232,14 +197,12 @@ class PhoneAuthScreen extends StatelessWidget {
         Text(
           "Mobile Number",
           style: textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w400,
             color: AppColors.textDark,
             fontSize: 15,
           ),
         ),
-
         const SizedBox(height: 10),
-
         Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
@@ -256,81 +219,44 @@ class PhoneAuthScreen extends StatelessWidget {
             keyboardType: TextInputType.phone,
             maxLength: 10,
             style: textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w400,
               color: AppColors.textDark,
               fontSize: 16,
             ),
             decoration: InputDecoration(
+              counterText: "",
               filled: true,
               fillColor: AppColors.neutralBackground,
-              hintText: "Enter 10-digit mobile number",
-              prefixIcon: Container(
-                margin: const EdgeInsets.all(10),
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryPurple.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Icon(
-                  Icons.phone_android_rounded,
-                  color: AppColors.primaryPurple,
-                  size: 18,
-                ),
+              hintText: "Enter 10-digit number",
+              hintStyle: TextStyle(
+                color: AppColors.textLight.withOpacity(0.6),
+                fontSize: 15,
               ),
-              hintStyle: textTheme.bodyMedium?.copyWith(
-                color: AppColors.textLight.withOpacity(0.7),
-                fontWeight: FontWeight.w400,
-              ),
-              counterText: "",
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-              border: OutlineInputBorder(
+              contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide.none,
+                borderSide: BorderSide(color: AppColors.lightGreyBackground),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(
-                  color: AppColors.primaryPurple,
-                  width: 2,
-                ),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(
-                  color: AppColors.lightGreyBackground,
-                  width: 1,
-                ),
-              ),
-              errorBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(color: AppColors.danger, width: 2),
-              ),
-              focusedErrorBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(color: AppColors.danger, width: 2),
+                borderSide: BorderSide(color: AppColors.primaryPurple, width: 1.5),
               ),
             ),
-            validator: (value) {
-              if (value == null || value.isEmpty || value.length != 10 || !GetUtils.isNumericOnly(value)) {
-                return 'Enter a valid 10-digit mobile number';
-              }
-              return null;
-            },
-            autovalidateMode: AutovalidateMode.onUserInteraction,
           ),
         ),
       ],
     );
   }
 
-  // 🔐 OTP Button - UPDATED to call sendOtp and navigate
+  // 🔐 OTP Button
   Widget _buildOtpButton(TextTheme textTheme) {
     return Obx(() => Container(
       width: double.infinity,
       height: 52,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: loginController.isOtpLoading.value // CHANGED: Use isOtpLoading instead
+          colors: loginController.isOtpLoading.value
               ? [
             AppColors.textLight.withOpacity(0.5),
             AppColors.textLight.withOpacity(0.7),
@@ -357,7 +283,7 @@ class PhoneAuthScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           onTap: loginController.isOtpLoading.value
               ? null
-              : () async { // CHANGED: Make async
+              : () async {
             final phone = loginController.phoneController.text.trim();
 
             // Validate phone number
@@ -374,10 +300,8 @@ class PhoneAuthScreen extends StatelessWidget {
               return;
             }
 
-            // CHANGED: Call sendOtp method instead of direct navigation
             final otpSent = await loginController.sendOtp(phone);
 
-            // Navigate to OTP screen only if OTP was sent successfully
             if (otpSent) {
               Get.to(() => OtpVerificationScreen(phoneNumber: phone));
             }
@@ -396,16 +320,16 @@ class PhoneAuthScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'Get OTP', // CHANGED: Better text
+                  'Get OTP',
                   style: textTheme.titleLarge?.copyWith(
                     color: AppColors.white,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w500,
                     fontSize: 16,
                   ),
                 ),
                 const SizedBox(width: 8),
                 Icon(
-                  Icons.sms_outlined, // CHANGED: More appropriate icon
+                  Icons.sms_outlined,
                   color: AppColors.white,
                   size: 18,
                 ),

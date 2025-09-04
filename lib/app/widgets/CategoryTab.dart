@@ -11,24 +11,6 @@ import '../data/Home_model.dart';
 import '../modules/home/widgets/_buildSectionView.dart';
 import '../themes/app_theme.dart';
 
-import 'dart:async';
-import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:get/get.dart';
-import '../controllers/Home_controller.dart';
-import '../controllers/sub_category_controller.dart';
-import '../controllers/tab_controller_getx.dart';
-import '../data/Home_model.dart';
-import '../modules/home/widgets/_buildSectionView.dart';
-import '../themes/app_theme.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:get/get.dart';
-import '../controllers/Home_controller.dart';
-import '../controllers/tab_controller_getx.dart';
-import '../data/Home_model.dart';
-import '../themes/app_theme.dart';
-
 class CustomTabBarSection extends StatelessWidget {
   final HomeController homeController = Get.find<HomeController>();
   final TabControllerGetX tabControllerGetX = Get.find<TabControllerGetX>();

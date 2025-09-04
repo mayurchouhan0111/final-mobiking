@@ -63,9 +63,12 @@ class GroupProductsScreen extends StatelessWidget {
         )
             : GridView.builder(
           physics: const BouncingScrollPhysics(),
+          padding: EdgeInsets.zero, // No padding
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 3,
-            childAspectRatio: 0.45,  // Lower ratio = taller cards; tweak this
+            childAspectRatio: 0.5,  // Wider and shorter cards
+            mainAxisSpacing: 0, // No spacing
+            crossAxisSpacing: 0, // No spacing
           ),
           itemCount: group.products.length,
           itemBuilder: (context, index) {
