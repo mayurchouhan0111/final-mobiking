@@ -67,17 +67,26 @@ class LoginService extends GetxService {
 
       _log('Send OTP response: Status ${response.statusCode}, Data: ${response.data}');
 
-      if (response.statusCode == 200 && response.data['success'] == true) {
+      // Safely cast response.data to a Map
+      final Map<String, dynamic>? responseData = response.data is Map
+          ? response.data as Map<String, dynamic>
+          : null;
+
+      if (response.statusCode == 200 && responseData != null && responseData['success'] == true) {
         _log('OTP sent successfully by backend.');
         return response;
       } else {
-        final errorMessage = response.data?['message'] ?? 'Failed to send OTP from backend.';
+        final errorMessage = responseData?['message'] ?? 'Failed to send OTP from backend.';
         throw LoginServiceException(errorMessage, statusCode: response.statusCode);
       }
     } on dio.DioException catch (e) {
       _log('Error in sendOtp: ${e.response?.statusCode} - ${e.response?.data}');
       if (e.response != null) {
-        final errorMessage = e.response?.data?['message'] ?? 'Server error occurred.';
+        // Safely cast e.response?.data to a Map
+        final Map<String, dynamic>? errorData = e.response?.data is Map
+            ? e.response?.data as Map<String, dynamic>
+            : null;
+        final errorMessage = errorData?['message'] ?? 'Server error occurred.';
         throw LoginServiceException(errorMessage, statusCode: e.response?.statusCode);
       } else {
         throw LoginServiceException('Network error: ${e.message}');

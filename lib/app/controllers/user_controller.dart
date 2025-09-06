@@ -1,33 +1,27 @@
 import 'package:get/get.dart';
-import '../data/login_model.dart';
-import '../services/user_service.dart';
+import 'package:get_storage/get_storage.dart';
 
 class UserController extends GetxController {
-  final UserService _userService = Get.find<UserService>();
-  var user = UserModel().obs;
-  var isLoading = false.obs;
+  final _storage = GetStorage();
+  RxString userName = ''.obs;
 
-  Future<void> createUser(UserModel newUser) async {
-    try {
-      isLoading.value = true;
-      final createdUser = await _userService.createUser(newUser);
-      user.value = createdUser;
-    } catch (e) {
-      // Get.snackbar('Error', e.toString());
-    } finally {
-      isLoading.value = false;
+  @override
+  void onInit() {
+    super.onInit();
+    loadUserName();
+  }
+
+  void loadUserName() {
+    final user = _storage.read('user');
+    if (user != null && user['name'] != null) {
+      userName.value = user['name'];
     }
   }
 
-  Future<void> fetchUser(String id) async {
-    try {
-      isLoading.value = true;
-      final fetchedUser = await _userService.getUserById(id);
-      user.value = fetchedUser;
-    } catch (e) {
-      // Get.snackbar('Error', e.toString());
-    } finally {
-      isLoading.value = false;
-    }
+  void saveUserName(String name) {
+    final user = _storage.read('user') ?? {};
+    user['name'] = name;
+    _storage.write('user', user);
+    userName.value = name;
   }
 }

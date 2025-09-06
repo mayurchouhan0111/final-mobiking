@@ -283,6 +283,7 @@ class _BillSectionState extends State<BillSection> {
               widget.couponDiscount.toDouble(),
               textTheme,
               isDiscount: true,
+              itemTotal: widget.itemTotal,
             ),
 
           // GST Section (only show if has GST)
@@ -311,6 +312,14 @@ class _BillSectionState extends State<BillSection> {
                 border: Border.all(
                   color: AppColors.success.withOpacity(0.2),
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.success.withOpacity(0.1),
+                    spreadRadius: 1,
+                    blurRadius: 10,
+                    offset: Offset(0, 5),
+                  ),
+                ],
               ),
               child: Row(
                 children: [
@@ -332,10 +341,17 @@ class _BillSectionState extends State<BillSection> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "You're saving ₹${widget.couponDiscount}",
+                          "You're saving ₹${widget.couponDiscount} (${((widget.couponDiscount / widget.itemTotal) * 100).toStringAsFixed(0)}%)",
                           style: textTheme.labelMedium?.copyWith(
                             color: AppColors.success,
                             fontWeight: FontWeight.w700,
+                            shadows: [
+                              Shadow(
+                                color: AppColors.success.withOpacity(0.25),
+                                offset: Offset(0, 2),
+                                blurRadius: 4,
+                              ),
+                            ],
                           ),
                         ),
                         Text(
@@ -351,11 +367,18 @@ class _BillSectionState extends State<BillSection> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppColors.success,
+                      gradient: LinearGradient(
+                        colors: [
+                          AppColors.success,
+                          AppColors.success.withOpacity(0.7),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      "SAVED",
+                      "SAVED ${((widget.couponDiscount / widget.itemTotal) * 100).toStringAsFixed(0)}%",
                       style: TextStyle(
                         color: AppColors.white,
                         fontSize: 10,
@@ -427,6 +450,7 @@ class _BillSectionState extends State<BillSection> {
       TextTheme textTheme, {
         bool isBold = false,
         bool isDiscount = false, // ✅ NEW: Add discount parameter
+        int? itemTotal,
       }) {
     final TextStyle labelStyle = textTheme.bodyLarge?.copyWith(
       fontWeight: isBold ? FontWeight.w700 : FontWeight.w500,
@@ -441,6 +465,12 @@ class _BillSectionState extends State<BillSection> {
           : (isBold ? AppColors.textDark : AppColors.textMedium),
       fontSize: isBold ? 16 : 14,
     ) ?? const TextStyle();
+
+    String percentageSaved = '';
+    if (isDiscount && itemTotal != null && itemTotal > 0) {
+      final percentage = (value / itemTotal) * 100;
+      percentageSaved = ' (${percentage.toStringAsFixed(0)}%)';
+    }
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -463,7 +493,7 @@ class _BillSectionState extends State<BillSection> {
           ),
           Text(
             isDiscount
-                ? "-₹${value.toStringAsFixed(0)}" // ✅ Show minus for discount
+                ? "-₹${value.toStringAsFixed(0)}$percentageSaved" // ✅ Show minus for discount
                 : "₹${value.toStringAsFixed(2)}",
             style: valueStyle,
           ),

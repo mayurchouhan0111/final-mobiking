@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart' as dio;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // Import for SystemChrome and DeviceOrientation
+import 'package:mobiking/app/controllers/user_controller.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:hive_flutter/hive_flutter.dart'; // Add Hive import
@@ -123,6 +124,7 @@ Future<void> main() async {
   Get.put(ConnectivityController());
   Get.put(FcmController());
   Get.put(AddressController());
+  Get.put(UserController());
   Get.put(ProductController());
   Get.put(CartController());
   Get.put(HomeController());

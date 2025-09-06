@@ -50,19 +50,20 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyBSI5_Dgey1uPHcwBYFx7ubrsnWb8-Pu3k',
-    appId: '1:959874165382:android:0fed79f57dc483d9aaff07',
-    messagingSenderId: '959874165382',
-    projectId: 'aaaa-769c6',
-    storageBucket: 'aaaa-769c6.firebasestorage.app',
+    apiKey: 'AIzaSyA-hY1C6U4onfqy73j5HglwtN5BtqQNoFw',
+    appId: '1:397433355252:android:91f28235af6af4650857a1',
+    messagingSenderId: '397433355252',
+    projectId: 'mobiking-25fc3',
+    storageBucket: 'mobiking-25fc3.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyADC1mQNtgArguQYMlj21tz77sv700WGQc',
-    appId: '1:959874165382:ios:f38c70055abfc5d8aaff07',
-    messagingSenderId: '959874165382',
-    projectId: 'aaaa-769c6',
-    storageBucket: 'aaaa-769c6.firebasestorage.app',
+    apiKey: 'AIzaSyCLfnDnqJ3LDp9NgMA0VqJ2yE-AFm9tgdE',
+    appId: '1:397433355252:ios:d22edbf2a925e6ac0857a1',
+    messagingSenderId: '397433355252',
+    projectId: 'mobiking-25fc3',
+    storageBucket: 'mobiking-25fc3.firebasestorage.app',
     iosBundleId: 'com.example.mobiking',
   );
+
 }

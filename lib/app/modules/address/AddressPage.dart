@@ -1,3 +1,4 @@
+import 'package:mobiking/app/controllers/user_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -26,6 +27,7 @@ class AddressPage extends StatefulWidget {
 
 class _AddressPageState extends State<AddressPage> {
   final AddressController controller = Get.find<AddressController>();
+  final UserController userController = Get.find<UserController>();
   final _formKey = GlobalKey<FormState>();
   final _userFormKey = GlobalKey<FormState>();
   final _storage = GetStorage();
@@ -611,6 +613,7 @@ class _AddressPageState extends State<AddressPage> {
           return InkWell(
             onTap: () {
               controller.selectAddress(addr);
+              _storage.write('default_address', addr.toJson());
               Get.back(result: true);
             },
             borderRadius: BorderRadius.circular(16),
@@ -1235,11 +1238,11 @@ class _AddressPageState extends State<AddressPage> {
   }
 
   Future<void> _saveUserDataToStorage() async {
+    userController.saveUserName(_nameController.text.trim());
     final existingUser = widget.initialUser ?? _storage.read('user') ?? {};
 
     final userInfo = {
       '_id': _safeStringExtract(existingUser['_id']),
-      'name': _nameController.text.trim(),
       'email': _emailController.text.trim(),
       'phoneNo': _phoneController.text.trim(),
       'address': _safeStringExtract(existingUser['address']),

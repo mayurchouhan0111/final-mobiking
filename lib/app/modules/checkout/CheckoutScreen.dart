@@ -1,7 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:mobiking/app/controllers/user_controller.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:mobiking/app/controllers/login_controller.dart';
 import 'package:mobiking/app/modules/Product_page/product_page.dart';
 import 'package:mobiking/app/modules/address/AddressPage.dart';
 import 'package:mobiking/app/modules/checkout/widget/bill_section.dart';
@@ -20,6 +23,7 @@ import '../../data/product_model.dart';
 import '../../themes/app_theme.dart';
 import '../home/widgets/AllProductGridCard.dart';
 import '../home/widgets/ProductCard.dart';
+import '../bottombar/Bottom_bar.dart';
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({Key? key}) : super(key: key);
@@ -34,13 +38,41 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final orderController = Get.find<OrderController>();
   final productController = Get.find<ProductController>();
   final couponController = Get.find<CouponController>();
+  final loginController = Get.find<LoginController>();
+  final userController = Get.find<UserController>();
+  final _storage = GetStorage();
 
   final RxString _selectedPaymentMethod = ''.obs;
+  String _userName = '';
 
   @override
   void initState() {
     super.initState();
-    addressController.fetchAddresses();
+    _loadInitialData();
+    userController.userName.listen((name) {
+      setState(() {
+        _userName = name;
+      });
+    });
+  }
+
+  Future<void> _loadInitialData() async {
+    // Fetch user name
+    _userName = userController.userName.value;
+
+    // Fetch addresses
+    await addressController.fetchAddresses();
+
+    // Check for a default address in storage
+    final defaultAddressData = _storage.read('default_address');
+    if (defaultAddressData != null) {
+      final defaultAddress = AddressModel.fromJson(defaultAddressData);
+      addressController.selectAddress(defaultAddress);
+    } else if (addressController.addresses.length == 1) {
+      addressController.selectAddress(addressController.addresses.first);
+    }
+
+    // Fetch coupons
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final cartTotal = _calculateCartTotal();
       couponController.setSubtotal(cartTotal);
@@ -586,6 +618,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   void _handlePlaceOrder(BuildContext context) async {
+    if (_userName.isEmpty) {
+      Get.to(() => AddressPage());
+      return;
+    }
+
     final isAddressSelected = addressController.selectedAddress.value != null;
     final isCartEmpty = cartController.cartItems.isEmpty;
     final isPaymentMethodSelected = _selectedPaymentMethod.value.isNotEmpty;
@@ -622,6 +659,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         'deliveryCharge': billingBreakdown['deliveryCharge'],
         'couponDiscount': billingBreakdown['couponDiscount'],
         'finalTotal': billingBreakdown['finalTotal'],
+        'userName': _userName,
+        'userPhone': loginController.currentUser.value?['phoneNo'] ?? '',
         ...couponController.getOrderCouponData(),
       };
       if (_selectedPaymentMethod.value == 'COD') {
@@ -673,7 +712,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Widget build(BuildContext context) {
     final TextTheme textTheme = Theme.of(context).textTheme;
     final Color blinkitBackground = AppColors.neutralBackground;
-    return Scaffold(
+    return WillPopScope(
+      onWillPop: () async {
+        if (cartController.cartItems.isEmpty) {
+          Get.offAll(() => MainContainerScreen());
+          return false;
+        } else {
+          return true;
+        }
+      },
+      child: Scaffold(
       backgroundColor: blinkitBackground,
       appBar: AppBar(
         title: Text(
@@ -713,6 +761,51 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Container(
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppColors.neutralBackground,
+                    width: 1,
+                  ),
+                ),
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.person_outline, color: AppColors.primaryPurple, size: 20),
+                        const SizedBox(width: 8),
+                        Text(
+                          "User Details",
+                          style: textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textDark,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      _userName,
+                      style: textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textDark,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      loginController.currentUser.value?['phoneNo'] ?? '',
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: AppColors.textMedium,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
               Container(
                 decoration: BoxDecoration(
                   color: AppColors.white,
@@ -801,16 +894,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 ),
                 const SizedBox(height: 12),
                 SizedBox(
-                  height: 280,
+                  height: 230,
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
                     itemCount: relatedProducts.length,
                     itemBuilder: (context, index) {
                       final relatedProduct = relatedProducts[index];
                       return Padding(
-                        padding: const EdgeInsets.only(right: 14),
+                        padding: const EdgeInsets.only(right: 5),
                         child: SizedBox(
-                          width: 160,
+                          width: 120,
                           child: AllProductGridCard(
                             product: relatedProduct,
                             heroTag: 'product_image_checkout_related_${relatedProduct.id}_$index',
@@ -837,7 +930,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         );
       }),
       bottomNavigationBar: _buildDynamicBottomAppBar(context),
-    );
+    ));
   }
 
   Widget _buildDynamicBottomAppBar(BuildContext context) {
@@ -911,8 +1004,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     ),
                   ),
                   TextButton(
-                    onPressed: () {
-                      Get.to(() => AddressPage());
+                    onPressed: () async {
+                      final result = await Get.to(() => AddressPage());
+                      if (result == true) {
+                        _loadInitialData();
+                      }
                     },
                     style: TextButton.styleFrom(
                       padding: EdgeInsets.zero,

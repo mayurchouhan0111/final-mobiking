@@ -693,4 +693,39 @@ class OrderService extends GetxService {
     await _box.remove('razorpay_init_response');
     _log('Cleared stored order data');
   }
+
+  Future<void> submitReview(String orderId, double rating, String review) async {
+    final url = Uri.parse('$_baseUrl/review');
+    final headers = _getHeaders();
+    final body = jsonEncode({
+      'orderId': orderId,
+      'rating': rating,
+      'review': review,
+      'isReviewed': true,
+    });
+
+    try {
+      final response = await _makeRequest(
+        () => http.post(url, headers: headers, body: body),
+        'submitReview',
+      );
+
+      final responseBody = jsonDecode(response.body);
+      _log("submitReview Status: ${response.statusCode}, Body: ${response.body}");
+
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw OrderServiceException(
+          responseBody['message'] ?? 'Failed to submit review.',
+          statusCode: response.statusCode,
+        );
+      }
+    } on FormatException catch (e) {
+      _log('Server response format error during review submission: $e');
+      throw OrderServiceException('Server response format error during review submission: $e', statusCode: 0);
+    } catch (e) {
+      if (e is OrderServiceException) rethrow;
+      _log('Unexpected error occurred during review submission: $e');
+      throw OrderServiceException('An unexpected error occurred during review submission: $e');
+    }
+  }
 }

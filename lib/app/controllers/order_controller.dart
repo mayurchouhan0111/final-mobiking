@@ -1,6 +1,7 @@
 // app/controllers/order_controller.dart
 
 import 'dart:async';
+import 'package:mobiking/app/controllers/user_controller.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:flutter/material.dart';
@@ -151,7 +152,7 @@ class OrderController extends GetxController {
   final CouponController _couponController = Get.find();
 
   var isLoading = false.obs;
-  var orderHistory = [].obs;
+  var orderHistory = <OrderModel>[].obs;
   var orderHistoryErrorMessage = ''.obs;
   late Razorpay _razorpay;
 
@@ -296,6 +297,7 @@ class OrderController extends GetxController {
         'customerEmail': _currentOrderRequest!.email,
         'customerPhone': _currentOrderRequest!.phoneNo,
         'shippingAddress': _currentOrderRequest!.address,
+        'address': _addressController.selectedAddress.value?.toJson(),
         'createdAt': DateTime.now().toIso8601String(),
         'items': _currentOrderRequest!.items.map((item) => item.toJson()).toList(),
 
@@ -321,7 +323,7 @@ class OrderController extends GetxController {
         isError: false,
         icon: Icons.check_circle_outline,
         backgroundColor: Colors.green.shade600,
-        duration: const Duration(seconds: 5),
+        duration: const Duration(seconds: 10),
       );
 
       // SIMPLIFIED: Navigate directly to confirmation screen
@@ -331,6 +333,7 @@ class OrderController extends GetxController {
         if (Get.context != null) {
           Get.offAll(() => OrderConfirmationScreen(
             orderId: extractedOrderId,
+            orderData: completeOrderData,
           ));
         } else {
           throw Exception('Navigation context unavailable');
@@ -355,7 +358,7 @@ class OrderController extends GetxController {
         isError: true,
         icon: Icons.error_outline,
         backgroundColor: Colors.orange.shade600,
-        duration: const Duration(seconds: 8),
+        duration: const Duration(seconds: 10),
       );
     } catch (e, stackTrace) {
       debugPrint('❌ Unexpected error during payment verification: $e');
@@ -645,7 +648,7 @@ class OrderController extends GetxController {
       isError: true,
       icon: Icons.error_outline,
       backgroundColor: Colors.red.shade600,
-      duration: const Duration(seconds: 5),
+      duration: const Duration(seconds: 10),
     );
   }
 
@@ -655,6 +658,7 @@ class OrderController extends GetxController {
       'External Wallet Selected!',
       'Wallet: ${response.walletName ?? 'Unknown'}',
       Icons.account_balance_wallet_outlined,
+      duration: const Duration(seconds: 5),
     );
   }
 
@@ -726,37 +730,17 @@ class OrderController extends GetxController {
 
   // Validate and get user info
   Future<UserInfo?> _validateAndGetUserInfo() async {
+    final userController = Get.find<UserController>();
     Map user = Map.from(_box.read('user') ?? {});
     String? userId = user['_id'];
-    String? name = user['name'];
+    String? name = userController.userName.value;
     String? email = user['email'];
     String? phone = (user['phoneNo'] ?? user['phone'])?.toString();
 
     if (_isUserInfoIncomplete(userId, name, email, phone)) {
-      debugPrint('⚠️ User info incomplete. Prompting...');
-      isLoading.value = false;
-      final bool detailsConfirmed = await _promptUserInfo();
-      if (!detailsConfirmed) {
-        debugPrint('🛑 User info not confirmed. Aborting order placement.');
-        _showInfoSnackbar(
-          'Details Not Saved',
-          'User details were not updated. Please fill them out to proceed with your order.',
-          Icons.info_outline_rounded,
-        );
-        return null;
-      }
-
-      // Refresh user data after prompt
-      user = Map.from(_box.read('user') ?? {});
-      userId = user['_id'];
-      name = user['name'];
-      email = user['email'];
-      phone = (user['phoneNo'] ?? user['phone'])?.toString();
-
-      if (_isUserInfoIncomplete(userId, name, email, phone)) {
-        debugPrint('🛑 User info still incomplete after prompt. Aborting.');
-        return null;
-      }
+      debugPrint('⚠️ User info incomplete. Navigating to AddressPage...');
+      Get.to(() => AddressPage());
+      return null;
     }
 
     debugPrint('✅ User info verified: ID=$userId, Name=$name, Email=$email, Phone=$phone');
@@ -952,6 +936,7 @@ class OrderController extends GetxController {
           isError: true,
           icon: Icons.warning_outlined,
           backgroundColor: Colors.orange.shade600,
+          duration: const Duration(seconds: 5),
         );
         return;
       }
@@ -1009,7 +994,7 @@ class OrderController extends GetxController {
         isError: false,
         icon: Icons.phone_callback_outlined,
         backgroundColor: Colors.blueAccent.shade400,
-        duration: const Duration(seconds: 7),
+        duration: const Duration(seconds: 10),
       );
 
       // FIXED: Navigate to confirmation screen with validated data
@@ -1020,6 +1005,7 @@ class OrderController extends GetxController {
 
       Get.offAll(() => OrderConfirmationScreen(
         orderId: extractedOrderId,
+        orderData: completeOrderData,
       ));
 
     } catch (e, stackTrace) {
@@ -1070,6 +1056,7 @@ class OrderController extends GetxController {
         'customerEmail': orderRequest.email,
         'customerPhone': orderRequest.phoneNo,
         'shippingAddress': orderRequest.address,
+        'address': _addressController.selectedAddress.value?.toJson(),
         'createdAt': orderData['createdAt'] ?? DateTime.now().toIso8601String(),
         'items': orderRequest.items.map((item) => item.toJson()).toList(),
 
@@ -1509,7 +1496,7 @@ class OrderController extends GetxController {
     );
   }
 
-  void _showInfoSnackbar(String title, String message, IconData icon) {
+  void _showInfoSnackbar(String title, String message, IconData icon, {Duration? duration}) {
     _showModernSnackbar(
       title,
       message,
@@ -1517,91 +1504,11 @@ class OrderController extends GetxController {
       icon: icon,
       backgroundColor: AppColors.textLight.withOpacity(0.8),
       snackPosition: SnackPosition.TOP,
+      duration: duration,
     );
   }
 
-  // FIXED: _promptUserInfo method with better navigation handling
-  Future<bool> _promptUserInfo() async {
-    try {
-      debugPrint('🚀 Opening AddressPage for user profile management...');
-      isLoading.value = false;
-
-      final Map userBeforeNavigation = Map.from(_box.read('user') ?? {});
-      debugPrint('📱 Current user data before navigation: $userBeforeNavigation');
-
-      if (Get.context == null) {
-        debugPrint('❌ Get context is null, cannot navigate');
-        return false;
-      }
-
-      _showModernSnackbar(
-        'Complete Your Profile',
-        'Please update your personal information in the "User Info" section.',
-        isError: false,
-        icon: Icons.person_outline,
-        backgroundColor: AppColors.primaryGreen,
-        duration: const Duration(seconds: 4),
-      );
-
-      final bool? navigationResult = await Get.to(
-            () => AddressPage(),
-        fullscreenDialog: true,
-        transition: Transition.rightToLeft,
-        duration: const Duration(milliseconds: 300),
-        preventDuplicates: true,
-      );
-
-      debugPrint('🔙 AddressPage navigation completed with result: $navigationResult');
-
-      final Map updatedUser = Map.from(_box.read('user') ?? {});
-      debugPrint('📱 Updated user data after navigation: $updatedUser');
-
-      final bool userDataChanged = _hasUserDataChanged(userBeforeNavigation, updatedUser);
-      debugPrint('🔄 User data changed: $userDataChanged');
-
-      final bool hasRequiredFields = [
-        updatedUser['_id'],
-        updatedUser['name'],
-        updatedUser['email'],
-        updatedUser['phoneNo']
-      ].every((field) => field != null && field.toString().trim().isNotEmpty);
-
-      debugPrint('✅ Has required fields: $hasRequiredFields');
-
-      if (navigationResult == true && hasRequiredFields) {
-        debugPrint('✅ Navigation result is true AND all required fields are present');
-        return true;
-      } else if (hasRequiredFields && userDataChanged) {
-        debugPrint('✅ All required fields are present AND user data was changed (even if navigationResult is null)');
-        return true;
-      } else if (navigationResult == false) {
-        debugPrint('❌ User explicitly cancelled (navigationResult is false)');
-        return false;
-      } else {
-        debugPrint('⚠️ Navigation completed but required fields are still missing');
-        return false;
-      }
-
-    } catch (e, stackTrace) {
-      debugPrint('❌ Exception in _promptUserInfo: $e');
-      debugPrint('Stack trace: $stackTrace');
-      return false;
-    }
-  }
-
-  // Helper method to check if user data actually changed
-  bool _hasUserDataChanged(Map before, Map after) {
-    final fieldsToCheck = ['_id', 'name', 'email', 'phoneNo'];
-    for (String field in fieldsToCheck) {
-      final beforeValue = before[field]?.toString()?.trim() ?? '';
-      final afterValue = after[field]?.toString()?.trim() ?? '';
-      if (beforeValue != afterValue) {
-        debugPrint('🔄 Field "$field" changed from "$beforeValue" to "$afterValue"');
-        return true;
-      }
-    }
-    return false;
-  }
+  
 
   // Rest of the existing methods remain unchanged...
   Future fetchOrderHistory({bool isPoll = false}) async {
@@ -1616,7 +1523,7 @@ class OrderController extends GetxController {
 
       if (fetchedOrders.isNotEmpty) {
         fetchedOrders.sort((a, b) => b.createdAt?.compareTo(a.createdAt ?? DateTime(0)) ?? 0);
-        orderHistory.assignAll(fetchedOrders);
+        orderHistory.assignAll(fetchedOrders as Iterable<OrderModel>);
         if (!isPoll) {
           print('OrderController: Fetched ${orderHistory.length} orders successfully.');
         }
@@ -1882,6 +1789,37 @@ class OrderController extends GetxController {
         DateTime.now().difference(DateTime.tryParse(order.deliveredAt!) ?? DateTime(0)).inDays <= 7;
     final bool hasActiveReturnRequest = _isSpecificRequestActive(order, 'Return');
     return withinReturnPeriod && !hasActiveReturnRequest;
+  }
+
+  bool showReviewButton(OrderModel order) {
+    final bool isOrderDelivered = order.status.toLowerCase() == 'delivered';
+    return isOrderDelivered && !order.isReviewed;
+  }
+
+  Future<void> submitReview(String orderId, double rating, String review) async {
+    isLoading.value = true;
+    try {
+      await _orderService.submitReview(orderId, rating, review);
+      await fetchOrderHistory();
+      Get.back();
+      _showModernSnackbar(
+        'Review Submitted',
+        'Thank you for your feedback!',
+        isError: false,
+        icon: Icons.check_circle_outline,
+        backgroundColor: Colors.green.shade600,
+      );
+    } on OrderServiceException catch (e) {
+      _showModernSnackbar(
+        'Error',
+        e.message,
+        isError: true,
+        icon: Icons.error_outline,
+        backgroundColor: Colors.red.shade600,
+      );
+    } finally {
+      isLoading.value = false;
+    }
   }
 }
 

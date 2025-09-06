@@ -1,4 +1,4 @@
-// lib/app/data/product_model.dart
+
 
 // Assuming SellingPrice and ProductModel are defined here,
 // or defined globally if used elsewhere and not part of this file.
@@ -16,8 +16,8 @@ class SellingPrice {
 
   factory SellingPrice.fromJson(Map<String, dynamic> json) {
     return SellingPrice(
-      id: json['_id'] ?? '',
-      variantName: json['variantName'] ?? '',
+      id: json['_id'] as String? ?? '',
+      variantName: json['variantName'] as String? ?? '',
       price: (json['price'] as num?)?.toDouble() ?? 0.0,
       quantity: (json['quantity'] as num?)?.toInt() ?? 0,
     );
@@ -82,16 +82,16 @@ class OrderItemProductModel {
 
   factory OrderItemProductModel.fromJson(Map<String, dynamic> json) {
     return OrderItemProductModel(
-      id: json['_id'] ?? '',
-      name: json['name'] ?? '',
-      fullName: json['fullName'] ?? '',
-      slug: json['slug'] ?? '',
-      description: json['description'] ?? '',
-      active: json['active'] ?? false,
-      newArrival: json['newArrival'] ?? false,
-      liked: json['liked'] ?? false,
-      bestSeller: json['bestSeller'] ?? false,
-      recommended: json['recommended'] ?? false,
+      id: json['_id'] as String? ?? '',
+      name: json['name'] as String? ?? '',
+      fullName: json['fullName'] as String? ?? '',
+      slug: json['slug'] as String? ?? '',
+      description: json['description'] as String? ?? '',
+      active: json['active'] as bool? ?? false,
+      newArrival: json['newArrival'] as bool? ?? false,
+      liked: json['liked'] as bool? ?? false,
+      bestSeller: json['bestSeller'] as bool? ?? false,
+      recommended: json['recommended'] as bool? ?? false,
       sellingPrice: (json['sellingPrice'] as List<dynamic>?)
           ?.map((e) => SellingPrice.fromJson(e as Map<String, dynamic>))
           .toList() ??
@@ -119,16 +119,14 @@ class OrderItemProductModel {
           [],
       variants: Map<String, int>.from(json['variants'] ?? {}),
       createdAt: json['createdAt'] != null
-          ? DateTime.parse(json['createdAt'] as String)
+          ? DateTime.tryParse(json['createdAt'] as String)
           : null,
       updatedAt: json['updatedAt'] != null
-          ? DateTime.parse(json['updatedAt'] as String)
+          ? DateTime.tryParse(json['updatedAt'] as String)
           : null,
       v: json['__v'] as int?,
     );
   }
-
-
 
   Map<String, dynamic> toJson() {
     return {
@@ -349,7 +347,7 @@ class OrderModel {
   final String? phoneNo;
 
   // Address
-  final String? address;
+  final dynamic address;
   final String? addressId;
 
   // Relations
@@ -360,6 +358,8 @@ class OrderModel {
   final DateTime createdAt;
   final DateTime updatedAt;
   final int? v;
+  final bool isReviewed;
+
 
   OrderModel({
     required this.id, // MongoDB _id
@@ -405,6 +405,7 @@ class OrderModel {
     required this.createdAt,
     required this.updatedAt,
     this.v,
+    this.isReviewed = false,
   }) : requests = requests ?? [];
 
   
@@ -458,7 +459,7 @@ class OrderModel {
       email: json['email'] as String?,
       phoneNo: json['phoneNo'] as String?,
 
-      address: json['address'] as String?,
+      address: json['address'],
       addressId: json['addressId'] as String?,
 
       userId: json['userId'] != null && json['userId'] is Map
@@ -470,6 +471,7 @@ class OrderModel {
       createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '') ?? DateTime.now(),
       updatedAt: DateTime.tryParse(json['updatedAt'] as String? ?? '') ?? DateTime.now(),
       v: json['__v'] as int?,
+      isReviewed: json['isReviewed'] as bool? ?? false,
     );
   }
 
@@ -515,12 +517,15 @@ class OrderModel {
       'addressId': addressId,
       'userId': userId?.toJson(),
       'items': items.map((e) => e.toJson()).toList(),
-      'createdAt': createdAt?.toIso8601String(),
-      'updatedAt': updatedAt?.toIso8601String(),
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
       '__v': v,
+      'isReviewed': isReviewed,
     };
   }
 }
+
+
 
 class OrdersResponse {
   final int statusCode;

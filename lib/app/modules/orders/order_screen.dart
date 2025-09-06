@@ -10,6 +10,7 @@ import '../../themes/app_theme.dart';
 
 import '../home/home_screen.dart' hide SizedBox;
 import '../profile/query/Query_Detail_Screen.dart';
+import 'package:mobiking/app/modules/orders/add_review_screen.dart';
 import 'shipping_details_screen.dart';
 import 'package:mobiking/app/modules/profile/query/Raise_query.dart';
 
@@ -486,13 +487,13 @@ class _OrderCard extends StatelessWidget {
             Builder(
                 builder: (innerContext) {
                   // Active/cancel/return stuff...
-                  bool showAnyActionButton = controller.showCancelButton(order) || controller.showReturnButton(order);
+                  bool showAnyActionButton = controller.showCancelButton(order) || controller.showReturnButton(order) || controller.showReviewButton(order);
                   final activeRequests = order.requests?.where((req) {
                     final String status = req.status.toLowerCase();
                     return status != 'rejected' && status != 'resolved';
                   }).toList() ?? [];
 
-                  bool hasActiveOrResolvedQuery = order.requests?.any((req) =>
+                  bool hasActiveOrResolvedQuery = order.requests != null && order.requests!.any((req) =>
                   req.type.toLowerCase() == 'query' &&
                       (req.status.toLowerCase() != 'rejected' && req.status.toLowerCase() != 'cancelled')
                   ) ?? false;
@@ -540,7 +541,7 @@ class _OrderCard extends StatelessWidget {
                         Obx(() {
                           final int? orderId = int.tryParse(order.id.toString());
                           final bool hasQueryForThisOrder = queryController.myQueries.any(
-                                  (query) => query.orderId == orderId
+                                  (query) => query.orderId != null && query.orderId == orderId
                           );
 
                           if (hasQueryForThisOrder) {
@@ -610,6 +611,17 @@ class _OrderCard extends StatelessWidget {
                           icon: Icons.keyboard_return_outlined,
                           color: AppColors.info,
                           onPressed: () => controller.sendOrderRequest(order.id, 'Return'),
+                          isLoadingObservable: controller.isLoading,
+                        ),
+                      if (controller.showReviewButton(order))
+                        buildActionButton(
+                          innerContext,
+                          label: 'Add Review',
+                          icon: Icons.star_outline,
+                          color: AppColors.success,
+                          onPressed: () {
+                            Get.to(() => AddReviewScreen(order: order));
+                          },
                           isLoadingObservable: controller.isLoading,
                         ),
                     ],

@@ -98,18 +98,18 @@ class AddressController extends GetxController {
         print('AddressController: Location detected - City: ${locationData['city']}, State: ${locationData['state']}');
 
         // Show success message
-        
+        _showSnackbar('Location Detected', 'City and State have been auto-filled.', Colors.green, Icons.location_on);
       } else {
         detectionError.value = 'Could not detect location for this PIN code';
         print('AddressController: Could not detect location for PIN code: $pincode');
 
-        
+        _showSnackbar('Location Not Found', 'Could not detect location for this PIN code.', Colors.amber, Icons.location_off);
       }
     } catch (e) {
       detectionError.value = 'Network error while detecting location';
       print('AddressController: Error detecting location for PIN code $pincode: $e');
 
-      
+      _showSnackbar('Network Error', 'An error occurred while detecting location.', Colors.red, Icons.network_check);
     } finally {
       isDetectingLocation.value = false;
     }
@@ -188,7 +188,9 @@ class AddressController extends GetxController {
       }
 
       if (finalLabel.isEmpty) {
-        
+        _showSnackbar('Input Required', 'Please specify a label for your address (e.g., Home, Work).', Colors.amber, Icons.label_important_outline);
+        isLoading.value = false;
+        return false;
       }
 
       if (streetController.text.trim().isEmpty ||
@@ -205,6 +207,11 @@ class AddressController extends GetxController {
       if (!RegExp(r'^\d{6}$').hasMatch(pinCode)) {
         _showSnackbar('Invalid PIN Code', 'Please enter a valid 6-digit PIN code.', Colors.amber, Icons.pin_drop);
         isLoading.value = false;
+        return false;
+      }
+
+      // Validate city and state
+      if (!_validateLocation()) {
         return false;
       }
 
@@ -325,6 +332,18 @@ class AddressController extends GetxController {
     pinCodeController.clear();
     customLabelController.clear();
     selectedLabel.value = 'Home';
+  }
+
+  bool _validateLocation() {
+    if (cityController.text.trim().isEmpty) {
+      _showSnackbar('Invalid City', 'Please enter a valid city.', Colors.amber, Icons.location_city);
+      return false;
+    }
+    if (stateController.text.trim().isEmpty) {
+      _showSnackbar('Invalid State', 'Please enter a valid state.', Colors.amber, Icons.location_city);
+      return false;
+    }
+    return true;
   }
 
   // ✅ Enhanced snackbar with better positioning and styling

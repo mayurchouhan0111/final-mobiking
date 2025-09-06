@@ -75,15 +75,27 @@ class LoginController extends GetxController {
 
       final response = await loginService.sendOtp(phoneNumber);
 
-      if (response.statusCode == 200 && response.data['success'] == true) {
-        currentOtpPhoneNumber.value = phoneNumber; // Store phone number for resend
-        
+      if (response.statusCode == 200) {
+        // Safely cast response.data to a Map
+        final Map<String, dynamic>? responseData = response.data is Map
+            ? response.data as Map<String, dynamic>
+            : null;
 
-        print('LoginController: OTP sent successfully');
-        _startOtpResendTimer(); // Start the countdown timer
-        return true;
+        if (responseData != null && responseData['success'] == true) {
+          currentOtpPhoneNumber.value = phoneNumber; // Store phone number for resend
+          print('LoginController: OTP sent successfully');
+          _startOtpResendTimer(); // Start the countdown timer
+          return true;
+        } else {
+          // Handle cases where responseData is null or 'success' is false
+          throw Exception(responseData?['message'] ?? 'Failed to send OTP');
+        }
       } else {
-        throw Exception(response.data?['message'] ?? 'Failed to send OTP');
+        // Handle non-200 status codes
+        final Map<String, dynamic>? errorData = response.data is Map
+            ? response.data as Map<String, dynamic>
+            : null;
+        throw Exception(errorData?['message'] ?? 'Failed to send OTP with status ${response.statusCode}');
       }
     } catch (e) {
       print('LoginController: Error sending OTP: $e');
