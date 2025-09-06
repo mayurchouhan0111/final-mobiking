@@ -105,7 +105,7 @@ Future<void> main() async {
 
   // Put your FirebaseMessagingService into GetX dependency injection
   // Initialize it immediately as it sets up listeners for FCM messages.
-  Get.put(FirebaseMessagingService()).init(); // Call .init() immediately after putting
+  Get.put(FirebaseMessagingService()); // Call .init() immediately after putting
 
   // ✅ SERVICES: Put services into GetX dependency injection (ORDER MATTERS)
   Get.put(UserService(dioInstance)); // Put UserService first

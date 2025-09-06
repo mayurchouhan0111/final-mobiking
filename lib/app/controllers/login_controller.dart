@@ -140,6 +140,8 @@ class LoginController extends GetxController {
         await box.write('tokenCreationTime', DateTime.now().millisecondsSinceEpoch);
         print('LoginController: tokenCreationTime written: ${box.read('tokenCreationTime')}');
 
+        print('LoginController: User object before setting currentUser: $user');
+        print('LoginController: User _id before setting currentUser: ${user?['_id']}');
         currentUser.value = user;
 
         // Clear OTP related data
