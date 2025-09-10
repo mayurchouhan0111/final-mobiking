@@ -100,6 +100,28 @@ class _ProductImageBannerState extends State<ProductImageBanner> {
 
 
           // Favorite Button
+          if (widget.badgeText != null && widget.badgeText!.isNotEmpty)
+            Positioned(
+              top: 16,
+              left: 56, // Adjusted left position
+              child: SafeArea(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.success,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    widget.badgeText!,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: AppColors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ),
+            ),
           Positioned(
             top: 16,
             right: 16,

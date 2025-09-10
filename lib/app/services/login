@@ -28,7 +28,7 @@ class LoginService extends GetxService {
   LoginService(this._dio, this.box);
 
   // UPDATED: Use the same base URL as login service
-  final String _baseUrl = 'https://mobiking-e-commerce-backend-prod.vercel.app/api/v1/users';
+  final String _baseUrl = 'https://boxbudy.com/api/v1/users';
 
   void _log(String message) {
     print('[LoginService] $message');

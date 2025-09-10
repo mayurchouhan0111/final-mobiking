@@ -2,22 +2,18 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import 'package:mobiking/app/controllers/query_getx_controller.dart';
+import 'package:mobiking/app/controllers/query_getx_controller.dart'; // ✅ ADDED BACK
 import 'package:mobiking/app/themes/app_theme.dart';
 
 import '../../../data/QueryModel.dart';
 import '../../../data/order_model.dart';
 
 class QueryDetailScreen extends StatefulWidget {
-  final QueryModel? query;
   final OrderModel? order;
-  final String? orderId;
 
   const QueryDetailScreen({
     Key? key,
-    this.query,
-    this.order,
-    this.orderId,
+    required this.order,
   }) : super(key: key);
 
   @override
@@ -25,106 +21,54 @@ class QueryDetailScreen extends StatefulWidget {
 }
 
 class _QueryDetailScreenState extends State<QueryDetailScreen> with TickerProviderStateMixin {
-  final QueryGetXController controller = Get.find<QueryGetXController>();
-  bool _isTextFieldFocused = false;
+  late final QueryModel? currentQuery;
+  final TextEditingController _replyInputController = TextEditingController();
   final FocusNode _textFieldFocusNode = FocusNode();
-
-  // ✅ Add ScrollController for conversation
   final ScrollController _scrollController = ScrollController();
 
-  // ✅ Add animation controllers for message animations
+  bool _isTextFieldFocused = false;
+  bool _isSending = false; // ✅ ADDED: To manage loading state for the send button
   late AnimationController _messageAnimationController;
   late Animation<double> _messageAnimation;
-
-  // ✅ Add typing animation controller
-  late AnimationController _typingAnimationController;
 
   @override
   void initState() {
     super.initState();
-    print('QueryDetailScreen: initState called');
-    print('QueryDetailScreen: Widget query: ${widget.query?.id}');
-    print('QueryDetailScreen: Widget orderId: ${widget.orderId}');
-    print('QueryDetailScreen: Widget order: ${widget.order?.id}');
-
+    currentQuery = widget.order?.query;
     _initializeAnimations();
-    _initializeData();
     _setupFocusListener();
   }
 
   void _initializeAnimations() {
-    // Message animation
     _messageAnimationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    _messageAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _messageAnimationController,
-      curve: Curves.easeInOut,
-    ));
-
-    // Typing animation
-    _typingAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 1500),
-      vsync: this,
+    _messageAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _messageAnimationController, curve: Curves.easeInOut),
     );
-
     _messageAnimationController.forward();
-  }
-
-  void _initializeData() async {
-    print('QueryDetailScreen: _initializeData starting');
-
-    // If we have a query, fetch its details and set as current
-    if (widget.query?.id != null) {
-      print('QueryDetailScreen: Setting and fetching query by ID: ${widget.query!.id}');
-      controller.setCurrentQuery(widget.query!);
-      await controller.fetchQueryById(widget.query!.id!);
-    }
-    // If we have an orderId but no query, fetch query for this order
-    else if (widget.orderId != null) {
-      print('QueryDetailScreen: Fetching query by order ID: ${widget.orderId}');
-      await controller.fetchQueryByOrderId(widget.orderId!);
-    }
-    // If we have an order but no query, fetch query for this order
-    else if (widget.order?.id != null) {
-      print('QueryDetailScreen: Fetching query by order ID from order: ${widget.order!.id}');
-      await controller.fetchQueryByOrderId(widget.order!.id!);
-    }
   }
 
   void _setupFocusListener() {
     _textFieldFocusNode.addListener(() {
-      if (_textFieldFocusNode.hasFocus && !_isTextFieldFocused) {
-        Future.delayed(const Duration(milliseconds: 150), () {
-          if (mounted) {
-            setState(() {
-              _isTextFieldFocused = true;
-            });
-          }
-        });
-      } else if (!_textFieldFocusNode.hasFocus && _isTextFieldFocused) {
-        setState(() {
-          _isTextFieldFocused = false;
-        });
-      }
+      setState(() {
+        _isTextFieldFocused = _textFieldFocusNode.hasFocus;
+      });
     });
   }
 
-  // ✅ Add method to scroll to bottom with animation
   void _scrollToBottom({bool animate = true}) {
     if (_scrollController.hasClients) {
+      final position = _scrollController.position.maxScrollExtent;
       if (animate) {
         _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
+          position,
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeOut,
         );
       } else {
-        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+        _scrollController.jumpTo(position);
       }
     }
   }
@@ -134,7 +78,7 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> with TickerProvid
     _textFieldFocusNode.dispose();
     _scrollController.dispose();
     _messageAnimationController.dispose();
-    _typingAnimationController.dispose();
+    _replyInputController.dispose();
     super.dispose();
   }
 
@@ -156,170 +100,126 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> with TickerProvid
         elevation: 0,
         foregroundColor: AppColors.white,
         actions: [
-          // ✅ Add connection status indicator
-          Obx(() {
-            final isLoading = controller.isLoadingReplies;
-            return isLoading
-                ? Container(
-              margin: const EdgeInsets.only(right: 8),
-              width: 20,
-              height: 20,
-              child: const CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-              ),
-            )
-                : IconButton(
-              icon: const Icon(Icons.refresh),
-              onPressed: () async {
-                print('QueryDetailScreen: Manual refresh triggered');
-                await controller.refreshCurrentQuery();
-              },
-            );
-          }),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              // You can optionally trigger a refresh via the controller here if needed
+              final controller = Get.find<QueryGetXController>();
+              if (controller.currentQuery != null) {
+                controller.refreshCurrentQuery();
+                Get.snackbar("Syncing", "Refreshing conversation...", snackPosition: SnackPosition.BOTTOM);
+              }
+            },
+          ),
         ],
       ),
-      body: Obx(() {
-        // Use reactive current query
-        final currentQuery = controller.currentQuery;
-        final isLoading = controller.isLoading;
-
-        if (isLoading) {
-          return const Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 16),
-                Text('Loading query details...'),
-              ],
-            ),
-          );
-        }
-
-        // Show message if no query is found
-        if (currentQuery == null) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.help_outline,
-                  size: 64,
-                  color: AppColors.textLight,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'No Query Found',
-                  style: textTheme.titleLarge?.copyWith(
-                    color: AppColors.textDark,
-                    fontWeight: FontWeight.w600,
+      body: Builder(
+        builder: (context) {
+          // The main view logic still depends on the initial data
+          if (currentQuery == null) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.help_outline, size: 64, color: AppColors.textLight),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No Query Found',
+                    style: textTheme.titleLarge?.copyWith(
+                      color: AppColors.textDark,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'No query exists for this order yet.',
-                  style: textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textLight,
+                  const SizedBox(height: 8),
+                  Text(
+                    'No query has been raised for this order yet.',
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: AppColors.textLight,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: () {
-                    _showCreateQueryDialog();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryPurple,
-                    foregroundColor: AppColors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: _showCreateQueryDialog,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryPurple,
+                      foregroundColor: AppColors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    ),
+                    child: const Text('Create Query'),
                   ),
-                  child: const Text('Create Query'),
-                ),
-              ],
-            ),
-          );
-        }
+                ],
+              ),
+            );
+          }
 
-        return Column(
-          children: [
-            // Scrollable content section
-            Expanded(
-              child: SingleChildScrollView(
+          return Column(
+            children: [
+              SingleChildScrollView(
                 child: Column(
                   children: [
-                    // Order Information Card
                     _buildOrderInfoCard(widget.order, textTheme),
-
-                    // Query Details Card - use currentQuery from controller
                     _buildQueryDetailsCard(currentQuery, textTheme),
-
                     const SizedBox(height: 8),
                   ],
                 ),
               ),
-            ),
-
-            // ✅ Real-time Conversation Section with StreamBuilder
-            Expanded(
-              flex: 2,
-              child: Column(
-                children: [
-                  // Conversation header with live status
-                  _buildConversationHeader(textTheme),
-
-                  // ✅ StreamBuilder for real-time conversation
-                  Expanded(
-                    child: Container(
-                      margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                      decoration: BoxDecoration(
-                        color: AppColors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.lightGreyBackground, width: 1),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.04),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: StreamBuilder<List<dynamic>>(
-                        stream: controller.conversationStream,
-                        initialData: currentQuery.replies ?? [],
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState == ConnectionState.waiting &&
-                              (snapshot.data?.isEmpty ?? true)) {
-                            return const Center(child: CircularProgressIndicator());
-                          }
-
-                          final replies = snapshot.data ?? [];
-                          return _buildConversationList(replies, textTheme);
-                        },
+              Expanded(
+                child: Column(
+                  children: [
+                    _buildConversationHeader(textTheme),
+                    Expanded(
+                      child: Container(
+                        margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                        decoration: BoxDecoration(
+                          color: AppColors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppColors.lightGreyBackground, width: 1),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.04),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        // Using Obx & controller here to get real-time message updates after sending
+                        child: Obx(() {
+                          final liveQuery = Get.find<QueryGetXController>().currentQuery ?? currentQuery;
+                          return _buildConversationListFromQuery(liveQuery!, textTheme);
+                        }
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-
-            // Fixed input at bottom with typing indicator
-            if (currentQuery.status != 'resolved')
-              _buildMessageInputWithTyping(textTheme),
-          ],
-        );
-      }),
+              if (currentQuery?.status != 'resolved') _buildMessageInput(textTheme),
+            ],
+          );
+        },
+      ),
     );
   }
 
-  // ✅ Enhanced conversation header with live status
+  Widget _buildConversationListFromQuery(QueryModel query, TextTheme textTheme) {
+    final initialMessage = ReplyModel(
+      userId: query.userEmail,
+      replyText: query.message,
+      timestamp: query.raisedAt ?? query.createdAt,
+      isAdmin: false,
+    );
+
+    final fullConversation = [initialMessage, ...query.replies];
+    return _buildConversationList(fullConversation, textTheme);
+  }
+
   Widget _buildConversationHeader(TextTheme textTheme) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
-          Icon(Icons.chat_bubble_outline,
-              color: AppColors.primaryPurple, size: 20),
+          const Icon(Icons.chat_bubble_outline, color: AppColors.primaryPurple, size: 20),
           const SizedBox(width: 8),
           Text(
             'Conversation',
@@ -328,99 +228,27 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> with TickerProvid
               color: AppColors.textDark,
             ),
           ),
-          const SizedBox(width: 8),
-          // ✅ Live status indicator
-          Obx(() {
-            final isLoadingReplies = controller.isLoadingReplies;
-            final currentQuery = controller.currentQuery;
-
-            if (isLoadingReplies) {
-              return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: AppColors.accentOrange.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(
-                      width: 12,
-                      height: 12,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(AppColors.accentOrange),
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Syncing...',
-                      style: textTheme.labelSmall?.copyWith(
-                        color: AppColors.accentOrange,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }
-
-            return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: Colors.green.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 6,
-                    height: 6,
-                    decoration: const BoxDecoration(
-                      color: Colors.green,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Live',
-                    style: textTheme.labelSmall?.copyWith(
-                      color: Colors.green,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }),
           const Spacer(),
-          Obx(() {
-            final currentQuery = controller.currentQuery;
-            if (currentQuery?.status != 'resolved') {
-              return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryPurple.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
+          if (currentQuery?.status != 'resolved')
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.primaryPurple.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                'Active',
+                style: textTheme.labelSmall?.copyWith(
+                  color: AppColors.primaryPurple,
+                  fontWeight: FontWeight.w600,
                 ),
-                child: Text(
-                  'Active',
-                  style: textTheme.labelSmall?.copyWith(
-                    color: AppColors.primaryPurple,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              );
-            }
-            return const SizedBox.shrink();
-          }),
+              ),
+            ),
         ],
       ),
     );
   }
 
-  // Order Information Card (same as before)
   Widget _buildOrderInfoCard(OrderModel? order, TextTheme textTheme) {
     return Container(
       margin: const EdgeInsets.all(16),
@@ -447,79 +275,46 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> with TickerProvid
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Container(
+            Row(children: [
+              Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppColors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(Icons.shopping_bag, color: AppColors.white, size: 20),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Order Details',
-                        style: textTheme.titleMedium?.copyWith(
-                          color: AppColors.white,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      Text(
-                        'Query related to this order',
-                        style: textTheme.bodySmall?.copyWith(
-                          color: AppColors.white.withOpacity(0.8),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+                      color: AppColors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(8)),
+                  child: const Icon(Icons.shopping_bag, color: AppColors.white, size: 20)),
+              const SizedBox(width: 12),
+              Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text('Order Details',
+                        style: textTheme.titleMedium
+                            ?.copyWith(color: AppColors.white, fontWeight: FontWeight.w700)),
+                    Text('Query related to this order',
+                        style: textTheme.bodySmall
+                            ?.copyWith(color: AppColors.white.withOpacity(0.8)))
+                  ]))
+            ]),
             const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
+            Row(children: [
+              Expanded(
                   child: _buildOrderInfoItem(
-                    'Order ID',
-                    widget.orderId ?? order?.id ?? 'N/A',
-                    textTheme,
-                  ),
-                ),
-                Expanded(
-                  child: _buildOrderInfoItem(
-                    'Amount',
-                    '₹${order?.orderAmount?.toStringAsFixed(0) ?? 'N/A'}',
-                    textTheme,
-                  ),
-                ),
-              ],
-            ),
+                      'Order ID', order?.orderId ?? 'N/A', textTheme)),
+              Expanded(
+                  child: _buildOrderInfoItem('Amount',
+                      '₹${order?.orderAmount.toStringAsFixed(0) ?? 'N/A'}', textTheme))
+            ]),
             const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
+            Row(children: [
+              Expanded(
                   child: _buildOrderInfoItem(
-                    'Date',
-                    order?.createdAt != null
-                        ? DateFormat('MMM d, yyyy').format(order!.createdAt!)
-                        : 'N/A',
-                    textTheme,
-                  ),
-                ),
-                Expanded(
+                      'Date',
+                      order?.createdAt != null
+                          ? DateFormat('MMM d, yyyy').format(order!.createdAt)
+                          : 'N/A',
+                      textTheme)),
+              Expanded(
                   child: _buildOrderInfoItem(
-                    'Status',
-                    order?.status?.capitalizeFirst ?? 'N/A',
-                    textTheme,
-                  ),
-                ),
-              ],
-            ),
+                      'Status', order?.status.capitalizeFirst ?? 'N/A', textTheme))
+            ])
           ],
         ),
       ),
@@ -549,7 +344,6 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> with TickerProvid
     );
   }
 
-  // Query Details Card (same as before)
   Widget _buildQueryDetailsCard(QueryModel? query, TextTheme textTheme) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -611,7 +405,7 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> with TickerProvid
             const SizedBox(height: 12),
             Row(
               children: [
-                Icon(Icons.access_time, size: 16, color: AppColors.textLight),
+                const Icon(Icons.access_time, size: 16, color: AppColors.textLight),
                 const SizedBox(width: 4),
                 Text(
                   'Raised ${DateFormat('MMM d, yyyy').format(query?.raisedAt ?? DateTime.now())}',
@@ -622,7 +416,7 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> with TickerProvid
                 ),
                 if (query?.status == 'resolved' && query?.resolvedAt != null) ...[
                   const SizedBox(width: 16),
-                  Icon(Icons.check_circle, size: 16, color: AppColors.success),
+                  const Icon(Icons.check_circle, size: 16, color: AppColors.success),
                   const SizedBox(width: 4),
                   Text(
                     'Resolved ${DateFormat('MMM d').format(query!.resolvedAt!)}',
@@ -640,7 +434,6 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> with TickerProvid
     );
   }
 
-  // ✅ Enhanced conversation list with animations
   Widget _buildConversationList(List<dynamic> replies, TextTheme textTheme) {
     if (replies.isEmpty) {
       return Container(
@@ -650,90 +443,59 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> with TickerProvid
           children: [
             Container(
               padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppColors.neutralBackground,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(Icons.chat_bubble_outline,
+              decoration: const BoxDecoration(
+                  color: AppColors.neutralBackground, shape: BoxShape.circle),
+              child: const Icon(Icons.chat_bubble_outline,
                   size: 32, color: AppColors.textLight),
             ),
             const SizedBox(height: 16),
-            Text(
-              'No messages yet',
-              style: textTheme.titleMedium?.copyWith(
-                color: AppColors.textDark,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+            Text('No messages yet',
+                style: textTheme.titleMedium?.copyWith(
+                    color: AppColors.textDark, fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
-            Text(
-              'Start the conversation by sending a message',
-              style: textTheme.bodyMedium?.copyWith(color: AppColors.textLight),
-              textAlign: TextAlign.center,
-            ),
+            Text('Start the conversation by sending a message',
+                style: textTheme.bodyMedium?.copyWith(color: AppColors.textLight),
+                textAlign: TextAlign.center),
           ],
         ),
       );
     }
 
-    // Sort replies by timestamp to ensure proper chronological order
     final sortedReplies = List.from(replies);
     sortedReplies.sort((a, b) {
       final dateA = a.timestamp ?? a.createdAt ?? DateTime.now();
       final dateB = b.timestamp ?? b.createdAt ?? DateTime.now();
-      return dateA.compareTo(dateB); // Oldest first
+      return dateA.compareTo(dateB);
     });
 
-    print('QueryDetailScreen: Displaying ${sortedReplies.length} messages in chronological order');
-
-    // Auto-scroll to bottom after building
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollToBottom();
     });
 
-    return Column(
-      children: [
-        // Message list
-        Expanded(
-          child: ListView.separated(
-            controller: _scrollController,
-            padding: const EdgeInsets.all(20),
-            itemCount: sortedReplies.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 16),
-            itemBuilder: (context, index) {
-              final reply = sortedReplies[index];
-              final isUser = !reply.isAdmin;
-
-              return AnimatedBuilder(
-                animation: _messageAnimation,
-                builder: (context, child) {
-                  return Transform.scale(
-                    scale: 0.8 + (0.2 * _messageAnimation.value),
-                    child: Opacity(
-                      opacity: _messageAnimation.value,
-                      child: _buildMessageBubble(reply, isUser, textTheme),
-                    ),
-                  );
-                },
-              );
-            },
-          ),
-        ),
-
-        // ✅ Typing indicator
-        Obx(() {
-          final isTyping = controller.isTyping;
-          return AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            height: isTyping ? 50 : 0,
-            child: isTyping ? _buildTypingIndicator(textTheme) : null,
-          );
-        }),
-      ],
+    return ListView.separated(
+      controller: _scrollController,
+      padding: const EdgeInsets.all(20),
+      itemCount: sortedReplies.length,
+      separatorBuilder: (context, index) => const SizedBox(height: 16),
+      itemBuilder: (context, index) {
+        final reply = sortedReplies[index];
+        final isUser = !reply.isAdmin;
+        return AnimatedBuilder(
+          animation: _messageAnimation,
+          builder: (context, child) {
+            return Transform.scale(
+              scale: 0.8 + (0.2 * _messageAnimation.value),
+              child: Opacity(
+                opacity: _messageAnimation.value,
+                child: _buildMessageBubble(reply, isUser, textTheme),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
-  // ✅ Build message bubble
   Widget _buildMessageBubble(dynamic reply, bool isUser, TextTheme textTheme) {
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
@@ -766,10 +528,8 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> with TickerProvid
                     Container(
                       width: 6,
                       height: 6,
-                      decoration: BoxDecoration(
-                        color: AppColors.success,
-                        shape: BoxShape.circle,
-                      ),
+                      decoration: const BoxDecoration(
+                          color: AppColors.success, shape: BoxShape.circle),
                     ),
                     const SizedBox(width: 6),
                     Text(
@@ -806,10 +566,10 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> with TickerProvid
                   ),
                   if (isUser) ...[
                     const SizedBox(width: 4),
-                    Icon(
+                    const Icon(
                       Icons.check,
                       size: 12,
-                      color: AppColors.white.withOpacity(0.7),
+                      color: Colors.white70,
                     ),
                   ],
                 ],
@@ -821,121 +581,45 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> with TickerProvid
     );
   }
 
-  // ✅ Build typing indicator
-  Widget _buildTypingIndicator(TextTheme textTheme) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: AppColors.neutralBackground,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 6,
-                height: 6,
-                decoration: BoxDecoration(
-                  color: AppColors.success,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                'Support is typing',
-                style: textTheme.labelSmall?.copyWith(
-                  color: AppColors.textLight,
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-              const SizedBox(width: 8),
-              SizedBox(
-                width: 20,
-                height: 8,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: List.generate(3, (index) {
-                    return AnimatedBuilder(
-                      animation: _typingAnimationController,
-                      builder: (context, child) {
-                        return Container(
-                          width: 4,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: AppColors.textLight.withOpacity(
-                              0.3 + (0.7 * ((_typingAnimationController.value + index * 0.3) % 1.0)),
-                            ),
-                            shape: BoxShape.circle,
-                          ),
-                        );
-                      },
-                    );
-                  }),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ✅ Enhanced message input with real-time typing detection
-  Widget _buildMessageInputWithTyping(TextTheme textTheme) {
+  Widget _buildMessageInput(TextTheme textTheme) {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       decoration: BoxDecoration(
         color: AppColors.white,
-        border: Border(
-          top: BorderSide(color: AppColors.lightGreyBackground, width: 1),
-        ),
-        boxShadow: _isTextFieldFocused ? [
+        border: Border(top: BorderSide(color: AppColors.lightGreyBackground, width: 1)),
+        boxShadow: _isTextFieldFocused
+            ? [
           BoxShadow(
             color: AppColors.primaryPurple.withOpacity(0.1),
             blurRadius: 8,
             offset: const Offset(0, -2),
           ),
-        ] : null,
+        ]
+            : null,
       ),
       child: SafeArea(
         child: Row(
           children: [
-            // Attachment button
-            /*Container(
-              decoration: BoxDecoration(
-                color: AppColors.neutralBackground,
-                shape: BoxShape.circle,
-              ),
-              child: IconButton(
-                icon: Icon(Icons.attach_file, color: AppColors.textLight),
-                onPressed: () => _showAttachmentOptions(),
-              ),
-            ),*/
             const SizedBox(width: 12),
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
                   color: AppColors.neutralBackground,
                   borderRadius: BorderRadius.circular(24),
-                  border: _isTextFieldFocused ? Border.all(
+                  border: _isTextFieldFocused
+                      ? Border.all(
                     color: AppColors.primaryPurple.withOpacity(0.3),
                     width: 1,
-                  ) : null,
+                  )
+                      : null,
                 ),
                 child: TextField(
-                  controller: controller.replyInputController,
+                  controller: _replyInputController,
                   focusNode: _textFieldFocusNode,
                   decoration: const InputDecoration(
                     hintText: 'Type your message...',
                     border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 14
-                    ),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   ),
                   maxLines: 4,
                   minLines: 1,
@@ -944,28 +628,25 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> with TickerProvid
               ),
             ),
             const SizedBox(width: 12),
-            Obx(() {
-              final isLoading = controller.isLoading;
-              return Container(
-                decoration: BoxDecoration(
-                  color: isLoading ? AppColors.textLight : AppColors.primaryPurple,
-                  shape: BoxShape.circle,
-                ),
-                child: IconButton(
-                  icon: isLoading
-                      ? SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.white),
-                    ),
-                  )
-                      : Icon(Icons.send, color: AppColors.white),
-                  onPressed: isLoading ? null : () => _sendMessage(),
-                ),
-              );
-            }),
+            Container(
+              decoration: BoxDecoration(
+                color: _isSending ? AppColors.textLight : AppColors.primaryPurple,
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                icon: _isSending
+                    ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.white),
+                  ),
+                )
+                    : const Icon(Icons.send, color: AppColors.white),
+                onPressed: _isSending ? null : _sendMessage,
+              ),
+            ),
           ],
         ),
       ),
@@ -989,44 +670,44 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> with TickerProvid
     }
   }
 
-  // ✅ Enhanced _sendMessage with animation
-  void _sendMessage() {
-    print('QueryDetailScreen: _sendMessage called');
-    final currentQuery = controller.currentQuery;
+  // ✅ MODIFIED: This function now works again.
+  void _sendMessage() async {
+    if (_replyInputController.text.trim().isEmpty || currentQuery == null) {
+      return;
+    }
 
-    if (controller.replyInputController.text.trim().isNotEmpty && currentQuery?.id != null) {
-      print('QueryDetailScreen: Sending reply to query: ${currentQuery!.id}');
+    // Find the controller to perform the action
+    final controller = Get.find<QueryGetXController>();
+    final textToSend = _replyInputController.text.trim();
 
-      // Start typing animation
-      _typingAnimationController.repeat();
+    _textFieldFocusNode.unfocus();
+    _replyInputController.clear();
 
-      controller.replyToQuery(
-        queryId: currentQuery.id!,
-        replyText: controller.replyInputController.text.trim(),
+    setState(() {
+      _isSending = true;
+    });
+
+    try {
+      await controller.replyToQuery(
+        queryId: currentQuery!.id,
+        replyText: textToSend,
       );
-
-      // Remove focus after sending message
-      _textFieldFocusNode.unfocus();
-
-      // Scroll to bottom after sending message
-      Future.delayed(const Duration(milliseconds: 500), () {
-        _scrollToBottom();
-        _typingAnimationController.stop();
+      // Let the Obx handle the UI update
+    } catch (e) {
+      // Handle error, maybe show a snackbar
+      Get.snackbar("Error", "Failed to send message.");
+      // If failed, put the text back for the user to retry
+      _replyInputController.text = textToSend;
+    } finally {
+      setState(() {
+        _isSending = false;
       });
-
-    } else {
-      print('QueryDetailScreen: Cannot send message - text empty or no current query');
-      if (currentQuery?.id == null) {
-        /*Get.snackbar(
-          'Error',
-          'No active query found. Please refresh the page.',
-          backgroundColor: AppColors.danger,
-          colorText: AppColors.white,
-        );*/
-      }
+      // Scroll to bottom after a short delay to allow UI to update
+      Future.delayed(const Duration(milliseconds: 300), () => _scrollToBottom());
     }
   }
 
+  // ✅ MODIFIED: This function now works again.
   void _showCreateQueryDialog() {
     final titleController = TextEditingController();
     final messageController = TextEditingController();
@@ -1064,81 +745,19 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> with TickerProvid
             onPressed: () async {
               if (titleController.text.trim().isNotEmpty &&
                   messageController.text.trim().isNotEmpty) {
-                Get.back();
+                // Find the controller to perform the action
+                final controller = Get.find<QueryGetXController>();
+                Get.back(); // Close the dialog first
                 await controller.raiseQuery(
                   title: titleController.text.trim(),
                   message: messageController.text.trim(),
-                  orderId: widget.orderId ?? widget.order?.id,
+                  orderId: widget.order?.id,
                 );
               }
             },
             child: const Text('Create'),
           ),
         ],
-      ),
-    );
-  }
-
-  void _showAttachmentOptions() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Add Attachment',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildAttachmentOption(Icons.camera_alt, 'Camera', () {}),
-                _buildAttachmentOption(Icons.image, 'Gallery', () {}),
-                _buildAttachmentOption(Icons.insert_drive_file, 'Document', () {}),
-              ],
-            ),
-            const SizedBox(height: 20),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAttachmentOption(IconData icon, String label, VoidCallback onTap) {
-    return InkWell(
-      onTap: () {
-        Navigator.pop(context);
-        onTap();
-      },
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.neutralBackground,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: AppColors.primaryPurple, size: 32),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

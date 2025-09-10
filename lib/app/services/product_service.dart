@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import '../data/product_model.dart';
 
 class ProductService {
-  static const String baseUrl = "https://mobiking-e-commerce-backend-prod.vercel.app/api/v1";
+  static const String baseUrl = "https://boxbudy.com/api/v1";
 
   void _log(String message) {
     print('[ProductService] $message');

@@ -20,6 +20,7 @@ import '../../controllers/coupon_controller.dart';
 import '../../data/AddressModel.dart';
 import '../../data/coupon_model.dart';
 import '../../data/product_model.dart';
+import '../../data/category_model.dart'; // Ensure this is imported
 import '../../themes/app_theme.dart';
 import '../home/widgets/AllProductGridCard.dart';
 import '../home/widgets/ProductCard.dart';
@@ -40,25 +41,21 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final couponController = Get.find<CouponController>();
   final loginController = Get.find<LoginController>();
   final userController = Get.find<UserController>();
+
   final _storage = GetStorage();
 
   final RxString _selectedPaymentMethod = ''.obs;
-  String _userName = '';
+  
 
   @override
   void initState() {
     super.initState();
     _loadInitialData();
-    userController.userName.listen((name) {
-      setState(() {
-        _userName = name;
-      });
-    });
+    
   }
 
   Future<void> _loadInitialData() async {
-    // Fetch user name
-    _userName = userController.userName.value;
+    
 
     // Fetch addresses
     await addressController.fetchAddresses();
@@ -69,7 +66,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       final defaultAddress = AddressModel.fromJson(defaultAddressData);
       addressController.selectAddress(defaultAddress);
     } else if (addressController.addresses.length == 1) {
-      addressController.selectAddress(addressController.addresses.first);
+      final singleAddress = addressController.addresses.first;
+      addressController.selectAddress(singleAddress);
+      // Also save this single address as the default for next time
+      await _storage.write('default_address', singleAddress.toJson());
     }
 
     // Fetch coupons
@@ -80,25 +80,23 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     });
   }
 
+  
+
   double _calculateCartTotal() {
     try {
       double total = 0.0;
-
       for (var item in cartController.cartItems) {
         final productData = item['productId'];
         final quantity = (item['quantity'] as int?) ?? 1;
 
         if (productData is Map<String, dynamic>) {
           final product = ProductModel.fromJson(productData);
-
-          // ✅ CHANGED: Using .last to get the most recent price instead of the first one.
           if (product.sellingPrice.isNotEmpty && product.sellingPrice.last.price != null) {
             final itemPrice = product.sellingPrice.last.price!.toDouble();
             total += itemPrice * quantity;
           }
         }
       }
-
       return double.parse(total.toStringAsFixed(2));
     } catch (e) {
       print('Error calculating cart total: $e');
@@ -106,16 +104,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
   }
 
-  // ... (The rest of the CheckoutScreen file remains the same as your provided version)
-  // ... (I'm omitting the rest for brevity, but it's identical to what you provided)
-  // The only required change was in the `_calculateCartTotal` method above.
-
-  // (Paste the rest of your `CheckoutScreen.dart` code here, starting from `_calculateDeliveryCharge` method)
-  double _calculateDeliveryCharge(double cartTotal) {
-    if (cartTotal <= 0) return 0.0;
-    if (cartTotal >= 500) return 0.0;
-    return 40.0;
-  }
+  
 
   double _calculateGST(double cartTotal) {
     return 0.0;
@@ -123,7 +112,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   Map<String, double> _calculateBillingBreakdown() {
     final cartTotal = _calculateCartTotal();
-    final deliveryCharge = _calculateDeliveryCharge(cartTotal);
+    final deliveryCharge = cartController.calculateDeliveryCharge();
     final gstCharge = _calculateGST(cartTotal);
     final subtotal = cartTotal + deliveryCharge + gstCharge;
     final couponDiscount = couponController.isCouponApplied.value
@@ -260,13 +249,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         couponController.selectCoupon(coupon);
       }
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to select coupon. Please try again.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: AppColors.danger.withOpacity(0.9),
-        colorText: AppColors.white,
-      );
+
     }
   }
 
@@ -618,23 +601,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   void _handlePlaceOrder(BuildContext context) async {
-    if (_userName.isEmpty) {
-      Get.to(() => AddressPage());
-      return;
-    }
+    
 
     final isAddressSelected = addressController.selectedAddress.value != null;
     final isCartEmpty = cartController.cartItems.isEmpty;
     final isPaymentMethodSelected = _selectedPaymentMethod.value.isNotEmpty;
     final billingBreakdown = _calculateBillingBreakdown();
     if (billingBreakdown['finalTotal']! <= 0) {
-      Get.snackbar(
-        'Invalid Order',
-        'Order total cannot be zero or negative',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: AppColors.danger.withOpacity(0.9),
-        colorText: AppColors.white,
-      );
       return;
     }
     if (!isAddressSelected) {
@@ -659,23 +632,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         'deliveryCharge': billingBreakdown['deliveryCharge'],
         'couponDiscount': billingBreakdown['couponDiscount'],
         'finalTotal': billingBreakdown['finalTotal'],
-        'userName': _userName,
+        
         'userPhone': loginController.currentUser.value?['phoneNo'] ?? '',
         ...couponController.getOrderCouponData(),
       };
       if (_selectedPaymentMethod.value == 'COD') {
         await orderController.placeOrder(method: 'COD');
       } else if (_selectedPaymentMethod.value == 'Online') {
-        Get.snackbar(
-          'Online Payment',
-          'Initiating secure payment...',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: AppColors.primaryPurple.withOpacity(0.8),
-          colorText: AppColors.white,
-          icon: const Icon(Icons.credit_card_outlined, color: AppColors.white),
-          margin: const EdgeInsets.all(10),
-          borderRadius: 10,
-        );
+        
         await orderController.placeOrder(method: 'Online');
       }
     } finally {
@@ -687,18 +651,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final allProducts = productController.allProducts;
     final Set<String> cartCategoryIds = {};
     for (var entry in cartProductsWithDetails) {
-      final ProductModel product = entry['product'] as ProductModel;
-      if (product.categoryId.isNotEmpty) {
-        cartCategoryIds.add(product.categoryId);
+      final product = entry['product'] as ProductModel;
+      if (product.category != null && product.category!.id.isNotEmpty) {
+        cartCategoryIds.add(product.category!.id);
       }
     }
     final Set<String> cartProductIds = {};
     for (var entry in cartProductsWithDetails) {
-      final ProductModel product = entry['product'] as ProductModel;
+      final product = entry['product'] as ProductModel;
       cartProductIds.add(product.id);
     }
     final relatedProducts = allProducts.where((product) {
-      final bool isSameCategory = cartCategoryIds.contains(product.categoryId);
+      final bool isSameCategory = product.category != null && cartCategoryIds.contains(product.category!.id);
       final bool isNotInCart = !cartProductIds.contains(product.id);
       final bool isAvailable = product.active &&
           product.variants.entries.any((variant) => variant.value > 0);
@@ -713,224 +677,180 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final TextTheme textTheme = Theme.of(context).textTheme;
     final Color blinkitBackground = AppColors.neutralBackground;
     return WillPopScope(
-      onWillPop: () async {
-        if (cartController.cartItems.isEmpty) {
-          Get.offAll(() => MainContainerScreen());
-          return false;
-        } else {
-          return true;
-        }
-      },
-      child: Scaffold(
-      backgroundColor: blinkitBackground,
-      appBar: AppBar(
-        title: Text(
-          "Checkout",
-          style: textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: AppColors.textDark,
+        onWillPop: () async {
+          if (cartController.cartItems.isEmpty) {
+            Get.offAll(() => MainContainerScreen());
+            return false;
+          } else {
+            return true;
+          }
+        },
+        child: Scaffold(
+          backgroundColor: blinkitBackground,
+          appBar: AppBar(
+            title: Text(
+              "Checkout",
+              style: textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: AppColors.textDark,
+              ),
+            ),
+            backgroundColor: AppColors.white,
+            foregroundColor: AppColors.textDark,
+            elevation: 0.5,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back_ios_new_rounded),
+              onPressed: () => Get.back(),
+            ),
           ),
-        ),
-        backgroundColor: AppColors.white,
-        foregroundColor: AppColors.textDark,
-        elevation: 0.5,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          onPressed: () => Get.back(),
-        ),
-      ),
-      body: Obx(() {
-        final cartItems = cartController.cartItems;
-        final cartProductsWithDetails = cartItems
-            .where((item) => item['productId'] is Map<String, dynamic>)
-            .map((item) {
-          final productData = item['productId'] as Map<String, dynamic>;
-          final product = ProductModel.fromJson(productData);
-          final quantity = item['quantity'] as int? ?? 1;
-          final variantName = item['variantName'] as String? ?? 'Default';
-          return {
-            'product': product,
-            'quantity': quantity,
-            'variantName': variantName
-          };
-        }).toList();
-        final billingBreakdown = _calculateBillingBreakdown();
-        final relatedProducts = _getRelatedProducts(cartProductsWithDetails);
-        return SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  color: AppColors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: AppColors.neutralBackground,
-                    width: 1,
-                  ),
-                ),
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+          body: Obx(() {
+            final cartItems = cartController.cartItems;
+            final cartProductsWithDetails = cartItems
+                .where((item) => item['productId'] is Map<String, dynamic>)
+                .map((item) {
+              final productData = item['productId'] as Map<String, dynamic>;
+              final product = ProductModel.fromJson(productData);
+              final quantity = item['quantity'] as int? ?? 1;
+              final variantName = item['variantName'] as String? ?? 'Default';
+              return {
+                'product': product,
+                'quantity': quantity,
+                'variantName': variantName
+              };
+            }).toList();
+            final billingBreakdown = _calculateBillingBreakdown();
+            final relatedProducts = _getRelatedProducts(cartProductsWithDetails);
+            return SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppColors.neutralBackground,
+                        width: 1,
+                      ),
+                    ),
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(Icons.person_outline, color: AppColors.primaryPurple, size: 20),
-                        const SizedBox(width: 8),
                         Text(
-                          "User Details",
+                          "Cart Items (${cartProductsWithDetails.length})",
                           style: textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w700,
                             color: AppColors.textDark,
                           ),
                         ),
+                        const SizedBox(height: 12),
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: cartProductsWithDetails.length,
+                          itemBuilder: (context, index) {
+                            final entry = cartProductsWithDetails[index];
+                            final product = entry['product'] as ProductModel;
+                            final quantity = entry['quantity'] as int;
+                            final variantName = entry['variantName'].toString();
+                            return CartItemTile(
+                              product: product,
+                              quantity: quantity,
+                              variantName: variantName,
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  _buildCouponSection(context),
+                  const SizedBox(height: 20),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppColors.neutralBackground,
+                        width: 1,
+                      ),
+                    ),
+                    child: BillSection(
+                      itemTotal: billingBreakdown['cartTotal']!.toInt(),
+                      deliveryCharge: billingBreakdown['deliveryCharge']!.toInt(),
+                      couponDiscount: billingBreakdown['couponDiscount']!.toInt(),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  if (relatedProducts.isNotEmpty) ...[
+                    Row(
+                      children: [
+                        Text(
+                          "You might also like",
+                          style: textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textDark,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryPurple.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            '${relatedProducts.length}',
+                            style: textTheme.labelSmall?.copyWith(
+                              color: AppColors.primaryPurple,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 12),
-                    Text(
-                      _userName,
-                      style: textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textDark,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      loginController.currentUser.value?['phoneNo'] ?? '',
-                      style: textTheme.bodyMedium?.copyWith(
-                        color: AppColors.textMedium,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-              Container(
-                decoration: BoxDecoration(
-                  color: AppColors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: AppColors.neutralBackground,
-                    width: 1,
-                  ),
-                ),
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Cart Items (${cartProductsWithDetails.length})",
-                      style: textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textDark,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: cartProductsWithDetails.length,
-                      itemBuilder: (context, index) {
-                        final entry = cartProductsWithDetails[index];
-                        final product = entry['product'] as ProductModel;
-                        final quantity = entry['quantity'] as int;
-                        final variantName = entry['variantName'].toString();
-                        return CartItemTile(
-                          product: product,
-                          quantity: quantity,
-                          variantName: variantName,
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-              _buildCouponSection(context),
-              const SizedBox(height: 20),
-              Container(
-                decoration: BoxDecoration(
-                  color: AppColors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: AppColors.neutralBackground,
-                    width: 1,
-                  ),
-                ),
-                child: BillSection(
-                  itemTotal: billingBreakdown['cartTotal']!.toInt(),
-                  deliveryCharge: billingBreakdown['deliveryCharge']!.toInt(),
-                  couponDiscount: billingBreakdown['couponDiscount']!.toInt(),
-                ),
-              ),
-              const SizedBox(height: 24),
-              if (relatedProducts.isNotEmpty) ...[
-                Row(
-                  children: [
-                    Text(
-                      "You might also like",
-                      style: textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textDark,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryPurple.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        '${relatedProducts.length}',
-                        style: textTheme.labelSmall?.copyWith(
-                          color: AppColors.primaryPurple,
-                          fontWeight: FontWeight.w600,
-                        ),
+                    SizedBox(
+                      height: 230,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: relatedProducts.length,
+                        itemBuilder: (context, index) {
+                          final relatedProduct = relatedProducts[index];
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 5),
+                            child: SizedBox(
+                              width: 120,
+                              child: AllProductGridCard(
+                                product: relatedProduct,
+                                heroTag: 'product_image_checkout_related_${relatedProduct.id}_$index',
+                                onTap: (tappedProduct) {
+                                  Get.to(
+                                        () => ProductPage(
+                                      product: tappedProduct,
+                                      heroTag: 'product_image_checkout_related_${tappedProduct.id}_$index',
+                                    ),
+                                    transition: Transition.fadeIn,
+                                    duration: const Duration(milliseconds: 300),
+                                  );
+                                },
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ),
                   ],
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  height: 230,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: relatedProducts.length,
-                    itemBuilder: (context, index) {
-                      final relatedProduct = relatedProducts[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 5),
-                        child: SizedBox(
-                          width: 120,
-                          child: AllProductGridCard(
-                            product: relatedProduct,
-                            heroTag: 'product_image_checkout_related_${relatedProduct.id}_$index',
-                            onTap: (tappedProduct) {
-                              Get.to(
-                                    () => ProductPage(
-                                  product: tappedProduct,
-                                  heroTag: 'product_image_checkout_related_${tappedProduct.id}_$index',
-                                ),
-                                transition: Transition.fadeIn,
-                                duration: const Duration(milliseconds: 300),
-                              );
-                            },
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-              const SizedBox(height: 100),
-            ],
-          ),
-        );
-      }),
-      bottomNavigationBar: _buildDynamicBottomAppBar(context),
-    ));
+                  const SizedBox(height: 100),
+                ],
+              ),
+            );
+          }),
+          bottomNavigationBar: _buildDynamicBottomAppBar(context),
+        ));
   }
 
   Widget _buildDynamicBottomAppBar(BuildContext context) {
@@ -1005,7 +925,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   ),
                   TextButton(
                     onPressed: () async {
-                      final result = await Get.to(() => AddressPage());
+                      final result = await Get.to(() => AddressPage(showAddressListFirst: true));
                       if (result == true) {
                         _loadInitialData();
                       }
@@ -1173,4 +1093,3 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 }
-

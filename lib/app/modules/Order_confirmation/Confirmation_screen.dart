@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
 import 'package:get_storage/get_storage.dart';
+import '../../data/AddressModel.dart';
 import '../../themes/app_theme.dart';
 import '../../data/order_model.dart';
 import '../bottombar/Bottom_bar.dart';
@@ -15,11 +16,13 @@ import '../../controllers/cart_controller.dart';
 class OrderConfirmationScreen extends StatefulWidget {
   final String? orderId;
   final Map<String, dynamic>? orderData;
+  final AddressModel? address;
 
   const OrderConfirmationScreen({
     Key? key,
     this.orderId,
     this.orderData,
+    this.address,
   }) : super(key: key);
 
   @override
@@ -481,8 +484,18 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
 
   Widget _buildAddressCard(BuildContext context, TextTheme textTheme, OrderModel order) {
     String fullAddress = 'Address not available.';
+    String recipientName = order.name ?? 'N/A';
+    String phoneNumber = order.phoneNo ?? '';
 
-    if (order.address is Map) {
+    if (widget.address != null) {
+      final List<String?> parts = [
+        widget.address!.street,
+        widget.address!.city,
+        widget.address!.state,
+        widget.address!.pinCode
+      ];
+      fullAddress = parts.where((part) => part != null && part.isNotEmpty).join(', ');
+    } else if (order.address is Map) {
       // If the address is a Map, concatenate the parts into a single string.
       final Map<dynamic, dynamic> addressMap = order.address! as Map;
       final String street = addressMap['street']?.toString() ?? '';
@@ -497,7 +510,7 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
       }
     } else if (order.address is String && order.address!.isNotEmpty) {
       // If the address is already a non-empty string, use it directly.
-      fullAddress = order.address!;
+      fullAddress = order.address! as String;
     }
 
     return _buildCard(
@@ -508,7 +521,7 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
             textTheme,
             Icons.person_outline,
             'Recipient',
-            order.name ?? 'N/A',
+            recipientName,
           ),
           _buildDetailRow(
             textTheme,
@@ -517,12 +530,12 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
             fullAddress,
             color: AppColors.textDark,
           ),
-          if (order.phoneNo != null && order.phoneNo!.isNotEmpty)
+          if (phoneNumber.isNotEmpty)
             _buildDetailRow(
               textTheme,
               Icons.phone,
               'Phone Number',
-              order.phoneNo!,
+              phoneNumber,
             ),
         ],
       ),

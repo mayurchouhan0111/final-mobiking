@@ -1,6 +1,6 @@
 import 'package:get/get.dart';
 import 'package:mobiking/app/modules/address/AddressPage.dart';
-import 'package:mobiking/app/modules/cart/cart_bottom_dialoge.dart';
+import 'package:mobiking/app/modules/checkout/CheckoutScreen.dart';
 import 'package:mobiking/app/modules/home/home_screen.dart';
 import '../modules/profile/profile_screen.dart';
 import '../bindings/user_binding.dart';
@@ -31,12 +31,12 @@ class AppPages {
     ),
     GetPage(
       name: '/cart',
-      page: () => CartScreen(),
+      page: () => CheckoutScreen(),
       binding: CartBinding(),
     ),
     GetPage(
       name: '/category',
-      page: () => CartScreen(),
+      page: () => CheckoutScreen(),
       binding: CategoryBinding(),
     ),
     GetPage(
@@ -46,7 +46,7 @@ class AppPages {
     ),
    /* GetPage(
       name: '/order',
-      page: () => CartScreen(),
+      page: () => CheckoutScreen(),
       binding: OrderBinding(),
     ),*/
     GetPage(

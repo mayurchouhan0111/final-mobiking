@@ -1,3 +1,4 @@
+/*
 // lib/screens/queries_screen.dart
 import 'dart:ui'; // Make sure this is imported
 
@@ -117,13 +118,15 @@ class _QueriesScreenState extends State<QueriesScreen> {
     return Scaffold(
       backgroundColor: AppColors.neutralBackground,
       // ✅ Add floating action button for raising new query
-    /*  floatingActionButton: FloatingActionButton.extended(
+    */
+/*  floatingActionButton: FloatingActionButton.extended(
         onPressed: _showRaiseQueryDialog,
         backgroundColor: AppColors.primaryPurple,
         foregroundColor: AppColors.white,
         icon: Icon(Icons.add),
         label: Text('Raise Query'),
-      ),*/
+      ),*//*
+
       body: CustomScrollView(
         slivers: [
           // Top Section: 'Talk with Support' and Quick Input - Enhanced for Blinkit feel
@@ -586,3 +589,4 @@ class _QueriesScreenState extends State<QueriesScreen> {
     );
   }
 }
+*/

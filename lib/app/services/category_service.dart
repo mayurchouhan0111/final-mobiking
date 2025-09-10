@@ -8,7 +8,7 @@ import '../data/sub_category_model.dart';
 import 'package:dio/dio.dart' as dio;
 
 class CategoryService {
-  static const String baseUrl = 'https://mobiking-e-commerce-backend-prod.vercel.app/api/v1';
+  static const String baseUrl = 'https://boxbudy.com/api/v1';
 
   // Hive configuration
   static const String categoriesBoxName = 'categories';

@@ -539,9 +539,12 @@ class _OrderCard extends StatelessWidget {
                       // THE MAIN QUERY BUTTON!
                       if (order.id != null)
                         Obx(() {
-                          final int? orderId = int.tryParse(order.id.toString());
+                          final String orderId = order.id;
                           final bool hasQueryForThisOrder = queryController.myQueries.any(
-                                  (query) => query.orderId != null && query.orderId == orderId
+                                  (query) {
+                                    print('Comparing query.orderId: ${query.orderId} with order.id: $orderId');
+                                    return query.orderId != null && query.orderId == orderId;
+                                  }
                           );
 
                           if (hasQueryForThisOrder) {
@@ -551,7 +554,7 @@ class _OrderCard extends StatelessWidget {
                                 width: double.infinity,
                                 child: ElevatedButton.icon(
                                   onPressed: () {
-                                    Get.to(() => QueryDetailScreen(orderId: order.id));
+                                    Get.to(() => QueryDetailScreen(order: order));
                                   },
                                   icon: Icon(Icons.info_outline, size: 20, color: AppColors.white),
                                   label: Text(

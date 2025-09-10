@@ -6,7 +6,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import '../data/sub_category_model.dart';
 
 class SubCategoryService {
-  final String baseUrl = 'https://mobiking-e-commerce-backend-prod.vercel.app/api/v1/categories/';
+  final String baseUrl = 'https://boxbudy.com/api/v1/categories/';
   static const String boxName = 'subcategories';
   static const String lastFetchKey = 'last_fetch_timestamp';
   static const Duration cacheValidDuration = Duration(hours: 1);
@@ -22,6 +22,7 @@ class SubCategoryService {
       _log('Hive boxes initialized successfully');
     } catch (e) {
       _log('Error initializing Hive boxes: $e');
+      await clearAllBoxes(); // Clear boxes on error
       rethrow;
     }
   }
@@ -222,6 +223,23 @@ class SubCategoryService {
     await _subCategoriesBox.clear();
     await _metadataBox.delete(lastFetchKey);
     _log('Cache cleared');
+  }
+
+  // Method to clear all Hive boxes related to this service
+  Future<void> clearAllBoxes() async {
+    try {
+      if (Hive.isBoxOpen(boxName)) {
+        await _subCategoriesBox.clear();
+        await _subCategoriesBox.close();
+      }
+      if (Hive.isBoxOpen('metadata')) {
+        await _metadataBox.clear();
+        await _metadataBox.close();
+      }
+      _log('All related Hive boxes cleared and closed.');
+    } catch (e) {
+      _log('Error clearing all boxes: $e');
+    }
   }
 
   // Method to get cache info - SAFE VERSION

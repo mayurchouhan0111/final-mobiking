@@ -181,6 +181,21 @@ class CartController extends GetxController {
     return totalCount;
   }
 
+  double calculateDeliveryCharge() {
+    double maxDeliveryCharge = 0.0;
+    for (var item in cartItems) {
+      final productData = item['productId'];
+      if (productData is Map<String, dynamic>) {
+        final product = ProductModel.fromJson(productData);
+        final itemDeliveryCharge = product.category?.deliveryCharge ?? 0.0;
+        if (itemDeliveryCharge > maxDeliveryCharge) {
+          maxDeliveryCharge = itemDeliveryCharge;
+        }
+      }
+    }
+    return maxDeliveryCharge;
+  }
+
   // ✅ FIXED: Rewrote totalCartValue to ensure consistency with CheckoutScreen.
   // It now recalculates the price from the full product data every time,
   // preventing stale price issues.
@@ -236,11 +251,11 @@ class CartController extends GetxController {
 
       if (response['success'] == true) {
         await _updateStorageAndCartData(response);
-        _showSnackbar('Added to Cart', 'Product quantity increased successfully!', Colors.green, Icons.add_shopping_cart_outlined);
+        
         return true;
       } else {
         final errorMessage = response['message'] ?? 'Failed to add product to cart.';
-        _showSnackbar('Error', errorMessage, Colors.red, Icons.error);
+
         return false;
       }
     } catch (e) {
@@ -251,7 +266,7 @@ class CartController extends GetxController {
         errorMessage = e.toString();
       }
       print("🛒 CartController: Add to cart error: $errorMessage");
-      _showSnackbar('Error', errorMessage, Colors.red, Icons.error);
+      
       return false;
     } finally {
       processingProductId.value = '';
@@ -278,7 +293,7 @@ class CartController extends GetxController {
 
       if (response['success'] == true) {
         await _updateStorageAndCartData(response);
-        _showSnackbar('Removed from Cart', 'Product quantity decreased successfully!', Colors.blueGrey, Icons.remove_shopping_cart_outlined);
+        
       }
     } catch (e) {
       print("🛒 CartController: Remove from cart error: $e");

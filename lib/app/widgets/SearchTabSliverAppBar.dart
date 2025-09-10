@@ -97,14 +97,16 @@ class _StickySearchAndTabBarDelegate extends SliverPersistentHeaderDelegate {
   });
 
   @override
-  double get maxExtent => 240;
+  double get maxExtent => 230; // Reduced from 240
 
   @override
-  double get minExtent => 220;
+  double get minExtent => 180; // Reduced from 220
 
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    final bool isCollapsed = shrinkOffset > 0;
+    // Calculate animation progress (0.0 to 1.0)
+    final double animationProgress = (shrinkOffset / (maxExtent - minExtent)).clamp(0.0, 1.0);
+    final bool isCollapsed = animationProgress > 0.5;
     final TextStyle? appThemeHintStyle = Theme.of(context).inputDecorationTheme.hintStyle;
 
     String? backgroundImage;
@@ -135,21 +137,29 @@ class _StickySearchAndTabBarDelegate extends SliverPersistentHeaderDelegate {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // --- Collapsible Title Section ---
           SafeArea(
-            child: const Padding(
-              padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
-              child: Text(
-                'Mobiking Wholesale',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              height: (1.0 - animationProgress) * 50, // Shrinks from 50 to 0
+              child: Opacity(
+                opacity: 1.0 - animationProgress, // Fades out as it shrinks
+                child: const Padding(
+                  padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
+                  child: Text(
+                    'Mobiking Wholesale',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
               ),
             ),
           ),
 
-          // --- Search Bar ---
+          // --- Search Bar (Always Visible) ---
           Padding(
             padding: EdgeInsets.only(
               left: 16,
@@ -172,7 +182,7 @@ class _StickySearchAndTabBarDelegate extends SliverPersistentHeaderDelegate {
                       Icons.search,
                       color: isCollapsed ? Colors.black : AppColors.textMedium,
                     ),
-                    SizedBox(width: 8), // Adjust this value to control the spacing
+                    SizedBox(width: 8),
                     Obx(() {
                       return AnimatedSwitcher(
                         duration: const Duration(milliseconds: 500),
@@ -198,16 +208,13 @@ class _StickySearchAndTabBarDelegate extends SliverPersistentHeaderDelegate {
                         ),
                       );
                     }),
-                    /*Icon(
-            Icons.mic_none,
-            color: isCollapsed ? Colors.black : AppColors.textMedium,
-          ),*/
                   ],
                 ),
               ),
             ),
-          ),          const SizedBox(height: 7),
-          // 🟢 Category Tab Section
+          ),
+          const SizedBox(height: 7),
+          // --- Category Tab Section (Always Visible) ---
           CustomTabBarSection(),
         ],
       ),
@@ -216,6 +223,6 @@ class _StickySearchAndTabBarDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) {
-    return true; // Always rebuild when sliver scrolls
+    return true;
   }
 }

@@ -132,16 +132,16 @@ class ProductController extends GetxController {
   }
 
   List<ProductModel> getProductsInSameParentCategory(String currentProductId, String? parentCategory) {
-    // If no parent category is provided or it's empty, there's nothing to filter by.
     if (parentCategory == null || parentCategory.isEmpty) {
       return [];
     }
 
-    // Filter the 'allProducts' list
-    return allProducts
-        .where((product) =>
-    product.id != currentProductId && // Exclude the current product by its ID
-        product.categoryId.contains(parentCategory)) // Check if the product's categories list contains the specified parentCategory
-        .toList(); // Convert the filtered iterable to a List
+    // Corrected logic to check the parent category ID
+    return allProducts.where((product) {
+      // Check if the product has a category and if its parentCategory matches the one provided.
+      return product.id != currentProductId &&
+          product.category != null &&
+          product.category!.id == parentCategory;
+    }).toList();
   }
 }

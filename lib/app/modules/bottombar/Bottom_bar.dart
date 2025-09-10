@@ -15,7 +15,7 @@ import 'package:mobiking/app/modules/home/widgets/FloatingCartButton.dart';
 
 import '../../controllers/BottomNavController.dart';
 import '../../widgets/CustomBottomBar.dart';
-import '../cart/cart_bottom_dialoge.dart';
+import '../checkout/CheckoutScreen.dart';
 
 class MainContainerScreen extends StatefulWidget {
   const MainContainerScreen({super.key});
@@ -117,11 +117,11 @@ class _MainContainerScreenState extends State<MainContainerScreen> with WidgetsB
               itemCount: totalItemsInCart,
               onTap: () {
                 // ✅ Navigate with custom transition
-                Get.to(
-                      () => CartScreen(),
-                  transition: Transition.rightToLeft,
-                  duration: const Duration(milliseconds: 300),
-                );
+                                  Get.to(
+                        () => CheckoutScreen(),
+                    transition: Transition.rightToLeft,
+                    duration: const Duration(milliseconds: 300),
+                  );
               },
             ),
           );

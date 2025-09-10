@@ -28,7 +28,7 @@ class ProductModelAdapter extends TypeAdapter<ProductModel> {
       bestSeller: fields[8] as bool,
       recommended: fields[9] as bool,
       sellingPrice: (fields[10] as List).cast<SellingPrice>(),
-      categoryId: fields[11] as String,
+      category: fields[11] as CategoryModel?,
       stockIds: (fields[12] as List).cast<String>(),
       orderIds: (fields[13] as List).cast<String>(),
       groupIds: (fields[14] as List).cast<String>(),
@@ -69,7 +69,7 @@ class ProductModelAdapter extends TypeAdapter<ProductModel> {
       ..writeByte(10)
       ..write(obj.sellingPrice)
       ..writeByte(11)
-      ..write(obj.categoryId)
+      ..write(obj.category)
       ..writeByte(12)
       ..write(obj.stockIds)
       ..writeByte(13)

@@ -2,9 +2,9 @@ import 'package:hive/hive.dart';
 import 'key_information.dart';
 import 'order_model.dart' hide SellingPrice;
 import 'selling_price.dart';
+import 'category_model.dart'; // Import the new model
 
-
-part 'product_model.g.dart'; // ADDED: Part directive for code generation
+part 'product_model.g.dart';
 
 @HiveType(typeId: 2)
 class ProductModel extends HiveObject {
@@ -42,7 +42,7 @@ class ProductModel extends HiveObject {
   final List<SellingPrice> sellingPrice;
 
   @HiveField(11)
-  final String categoryId;
+  final CategoryModel? category; // UPDATED: Full CategoryModel object
 
   @HiveField(12)
   final List<String> stockIds;
@@ -70,6 +70,7 @@ class ProductModel extends HiveObject {
 
   @HiveField(20)
   final double? averageRating;
+
   @HiveField(21)
   final int? reviewCount;
 
@@ -87,7 +88,7 @@ class ProductModel extends HiveObject {
     required this.bestSeller,
     required this.recommended,
     required this.sellingPrice,
-    required this.categoryId,
+    required this.category, // UPDATED
     required this.stockIds,
     required this.orderIds,
     required this.groupIds,
@@ -101,8 +102,12 @@ class ProductModel extends HiveObject {
     this.regularPrice,
   });
 
-  // ... rest of your fromJson and toJson methods stay the same
   factory ProductModel.fromJson(Map<String, dynamic> json) {
+    CategoryModel? categoryModel;
+    if (json['category'] != null && json['category'] is Map) {
+      categoryModel = CategoryModel.fromJson(json['category'] as Map<String, dynamic>);
+    }
+
     return ProductModel(
       id: json['_id'] ?? '',
       name: json['name'] ?? '',
@@ -117,9 +122,7 @@ class ProductModel extends HiveObject {
       sellingPrice: (json['sellingPrice'] as List<dynamic>? ?? [])
           .map((e) => SellingPrice.fromJson(e))
           .toList(),
-      categoryId: (json['category'] != null && json['category'] is Map)
-          ? (json['category']['_id'] as String? ?? '')
-          : (json['category'] is String ? json['category'] as String : ''),
+      category: categoryModel, // UPDATED
       stockIds: (json['stock'] as List<dynamic>? ?? [])
           .map((e) => e is Map ? (e['_id'] as String? ?? '') : e.toString())
           .where((id) => id.isNotEmpty)
@@ -139,7 +142,7 @@ class ProductModel extends HiveObject {
       keyInformation: (json['keyInformation'] as List<dynamic>? ?? [])
           .map((e) => KeyInformation.fromJson(e))
           .toList(),
-      averageRating: (json['rating'] as num?)?.toDouble(), // Corrected field name
+      averageRating: (json['rating'] as num?)?.toDouble(),
       reviewCount: (json['reviewCount'] as num?)?.toInt(),
       regularPrice: (json['regularPrice'] as num?)?.toInt(),
     );
@@ -158,7 +161,7 @@ class ProductModel extends HiveObject {
       'bestSeller': bestSeller,
       'recommended': recommended,
       'sellingPrice': sellingPrice.map((e) => e.toJson()).toList(),
-      'categoryId': categoryId,
+      'category': category?.toJson(), // UPDATED
       'stockIds': stockIds,
       'orderIds': orderIds,
       'groupIds': groupIds,
@@ -171,4 +174,3 @@ class ProductModel extends HiveObject {
     };
   }
 }
-

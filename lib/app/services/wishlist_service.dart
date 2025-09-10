@@ -7,10 +7,10 @@ import '../data/product_model.dart'; // Required for kDebugMode
 
 class WishlistService {
   static const String baseUrl =
-      'https://mobiking-e-commerce-backend-prod.vercel.app/api/v1/users/wishlist';
+      'https://boxbudy.com/api/v1/users/wishlist';
 
   static const String userProfileUrl =
-      'https://mobiking-e-commerce-backend-prod.vercel.app/api/v1/users/me';
+      'https://boxbudy.com/api/v1/users/me';
 
   final GetStorage _box = GetStorage();
 

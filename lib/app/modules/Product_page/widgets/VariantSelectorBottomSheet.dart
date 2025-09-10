@@ -145,21 +145,7 @@ class VariantSelectorBottomSheet extends StatelessWidget {
                     );
                   }
                       : () { // Action when button is disabled (i.e., out of stock or no variant selected)
-                    if (isProductOutOfStock) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            "${product.name} is currently out of stock.",
-                            style: const TextStyle(fontWeight: FontWeight.w500, color: Colors.white),
-                          ),
-                          backgroundColor: Colors.red[700],
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                      );
-                    }
+                    
                     // If not out of stock but no variant selected, user can select one
                     // No need for a snackbar here, the button will simply be disabled until a variant is chosen.
                   },

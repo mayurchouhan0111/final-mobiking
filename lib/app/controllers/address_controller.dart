@@ -109,7 +109,7 @@ class AddressController extends GetxController {
       detectionError.value = 'Network error while detecting location';
       print('AddressController: Error detecting location for PIN code $pincode: $e');
 
-      _showSnackbar('Network Error', 'An error occurred while detecting location.', Colors.red, Icons.network_check);
+      
     } finally {
       isDetectingLocation.value = false;
     }

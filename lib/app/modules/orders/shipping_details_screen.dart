@@ -1,45 +1,60 @@
 // Path: lib/app/modules/order_history/shipping_details_screen.dart
 
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:intl/intl.dart'; // For date formatting
+import 'package:intl/intl.dart';
 import 'package:mobiking/app/data/scan_model.dart';
+import 'package:animated_milestone/view/milestone_timeline.dart';
+import 'package:animated_milestone/model/milestone.dart' as am_milestone;
 
 import '../../data/order_model.dart';
-import '../../themes/app_theme.dart'; // Ensure this path is correct
-// Import your OrderModel and ScanEntry classes
-
-
-// Only import MilestoneTimeline and its Milestone model
-import 'package:animated_milestone/view/milestone_timeline.dart';
-import 'package:animated_milestone/model/milestone.dart' as am_milestone; // Alias for clarity
-
+import '../../themes/app_theme.dart';
 
 class ShippingDetailsScreen extends StatelessWidget {
-  // Make the OrderModel a required parameter
   final OrderModel order;
 
-  const ShippingDetailsScreen({Key? key, required this.order}) : super(key: key); // Make it required
+  const ShippingDetailsScreen({Key? key, required this.order}) : super(key: key);
+
+  // ✅ REFACTORED: Moved status determination logic into a helper function for clarity.
+  int _getCurrentMilestoneIndex(List<Scan> scans) {
+    if (scans.isEmpty) {
+      return 0; // Default to 'Order Placed' if no scans exist
+    }
+
+    final String latestStatus = scans.last.status.toUpperCase();
+    final String latestSrStatusLabel = scans.last.srStatusLabel.toUpperCase();
+
+    // The order of these checks is important (most advanced status first).
+    if (latestStatus.contains('DELIVERED')) {
+      return 4; // Delivered
+    }
+    if (latestStatus.contains('OUT_FOR_DELIVERY') || latestSrStatusLabel.contains('OUT FOR DELIVERY')) {
+      return 3; // Out for Delivery
+    }
+    if (latestStatus.contains('IN_TRANSIT') || latestSrStatusLabel.contains('IN TRANSIT')) {
+      return 2; // In Transit
+    }
+    if (latestStatus.contains('SHIPPED') || latestStatus.contains('PICKED_UP')) {
+      return 1; // Shipped
+    }
+
+    // Default to Order Placed if none of the above match.
+    return 0;
+  }
 
   @override
   Widget build(BuildContext context) {
     final TextTheme textTheme = Theme.of(context).textTheme;
+    final List<Scan> scans = order.scans ?? [];
 
-    // Access the scans directly from the 'order' property
-    final List<Scan>? scans = order.scans;
-
-    // Default values if no scans are available
-    String currentActivity = 'No updates yet.';
+    // --- Data Preparation ---
+    String currentActivity = 'Your order has been placed.';
     String currentLocation = 'N/A';
-    String currentStatusLabel = 'Pending';
     DateTime? lastScanDateTime;
 
-    // Get the latest scan details if available
-    if (scans!.isNotEmpty) {
+    if (scans.isNotEmpty) {
       final Scan lastScan = scans.last;
       currentActivity = lastScan.activity;
       currentLocation = lastScan.location;
-      currentStatusLabel = lastScan.srStatusLabel;
       try {
         lastScanDateTime = DateTime.parse(lastScan.date);
       } catch (e) {
@@ -47,7 +62,6 @@ class ShippingDetailsScreen extends StatelessWidget {
       }
     }
 
-    // Map your tracking statuses to the Amazon-like overall milestones
     final List<String> overallMilestones = [
       'Order Placed',
       'Shipped',
@@ -56,186 +70,110 @@ class ShippingDetailsScreen extends StatelessWidget {
       'Delivered',
     ];
 
-    // Determine which overall milestone is active based on the latest scan status
-    int currentOverallMilestoneIndex = 0; // Default to 'Order Placed'
+    final int currentMilestoneIndex = _getCurrentMilestoneIndex(scans);
 
-    if (scans.isNotEmpty) {
-      final String latestSrStatusLabel = scans.last.srStatusLabel.toUpperCase();
-      final String latestStatus = scans.last.status.toUpperCase();
-      final String latestActivity = scans.last.activity.toUpperCase();
-
-      if (latestSrStatusLabel.contains('DELIVERED') || latestStatus.contains('DELIVERED')) {
-        currentOverallMilestoneIndex = 4; // Delivered
-      } else if (latestSrStatusLabel.contains('OUT FOR DELIVERY') || latestStatus.contains('OUT_FOR_DELIVERY')) {
-        currentOverallMilestoneIndex = 3; // Out for Delivery
-      } else if (latestSrStatusLabel.contains('IN TRANSIT') || latestStatus.contains('IN_TRANSIT') || latestActivity.contains('HUB')) {
-        currentOverallMilestoneIndex = 2; // In Transit
-      } else if (latestSrStatusLabel.contains('PICKED UP') || latestStatus.contains('PICKED_UP')) {
-        currentOverallMilestoneIndex = 1; // Shipped
-      } else if (latestSrStatusLabel.contains('MANIFEST GENERATED') || latestStatus.contains('MANIFESTED') || latestStatus.contains('ORDER_PLACED')) {
-        currentOverallMilestoneIndex = 0; // Order Placed (or Manifested)
+    // ✅ FIXED: Use the actual expected delivery date from the order model.
+    String estimatedDelivery = 'Not available';
+    if (order.expectedDeliveryDate != null && order.expectedDeliveryDate!.isNotEmpty) {
+      try {
+        final dt = DateTime.parse(order.expectedDeliveryDate!);
+        estimatedDelivery = DateFormat('EEEE, MMM d').format(dt.toLocal());
+      } catch (e) {
+        estimatedDelivery = order.expectedDeliveryDate!;
       }
     }
 
+    if (currentMilestoneIndex == 4 && lastScanDateTime != null) {
+      estimatedDelivery = 'on ${DateFormat('EEEE, MMM d').format(lastScanDateTime.toLocal())}';
+    }
 
-    List<am_milestone.Milestone> combinedMilestones = [];
 
-    // 1. Add overall progress milestones first
+    // --- Timeline Building ---
+    List<am_milestone.Milestone> timelineMilestones = [];
+
+    // 1. Build the Overall Progress section
     for (int i = 0; i < overallMilestones.length; i++) {
-      String milestoneTitle = overallMilestones[i];
-      bool isActive = i <= currentOverallMilestoneIndex; // Highlight up to the current overall status
+      final bool isCompleted = i < currentMilestoneIndex;
+      final bool isActive = i == currentMilestoneIndex;
+      final bool isPending = i > currentMilestoneIndex;
 
-      // Only add detailed description for the *current* active overall milestone
-      String? milestoneDescription;
-      if (i == currentOverallMilestoneIndex) {
-        milestoneDescription = 'Your package is $currentActivity at $currentLocation.';
-      } else if (i < currentOverallMilestoneIndex) {
-        // Optionally, you can add a brief 'completed' message for past milestones
-        milestoneDescription = 'Completed.';
+      // ✅ ENHANCED: Use a specific date for completed milestones if possible
+      String description = '';
+      if (isCompleted) {
+        // Find the first scan that corresponds to this completed status
+        final relevantScan = scans.firstWhere(
+              (s) => _getCurrentMilestoneIndex([s]) >= i,
+          orElse: () => scans.first,
+        );
+        final completedDate = DateTime.tryParse(relevantScan.date);
+        description = completedDate != null
+            ? 'Completed on ${DateFormat('dd MMM').format(completedDate.toLocal())}'
+            : 'Completed';
+      } else if (isActive) {
+        description = 'In Progress';
       }
 
-      combinedMilestones.add(
+      timelineMilestones.add(
         am_milestone.Milestone(
-          isActive: isActive,
+          isActive: isCompleted || isActive,
           title: Text(
-            milestoneTitle,
+            overallMilestones[i],
             style: textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w700,
-              color: isActive ? AppColors.textDark : AppColors.textLight,
+              color: isPending ? AppColors.textLight : AppColors.textDark,
             ),
           ),
-          child: milestoneDescription != null
-              ? Text(
-            milestoneDescription,
+          child: Text(
+            description,
             style: textTheme.bodyMedium?.copyWith(color: AppColors.textMedium),
-          )
-              : const SizedBox.shrink(),
-          icon: i < currentOverallMilestoneIndex // Use check icon for completed overall milestones
-              ? Icon(Icons.check_circle_rounded, color: AppColors.success, size: 20)
-              : null,
-        ),
-      );
-    }
-
-    // Add a separator/header for Detailed History if there are scans
-    if (scans.isNotEmpty) {
-      combinedMilestones.add(
-        am_milestone.Milestone( // Adding a "start of details" milestone
-          isActive: true, // Always active as it's the start of the detailed log
-          title: Text(
-            'Detailed History:',
-            style: textTheme.bodyLarge?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: AppColors.textDark,
-            ),
           ),
-          child: const SizedBox.shrink(),
-          icon: Icon(Icons.history, color: AppColors.textDark, size: 20), // Icon for history
+          // ✅ ENHANCED: Use distinct icons for different states
+          icon: isCompleted
+              ? const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 24)
+              : isActive
+              ? const Icon(Icons.radio_button_checked_rounded, color: AppColors.info, size: 24)
+              : const Icon(Icons.radio_button_unchecked_rounded, color: AppColors.textLight, size: 24),
         ),
       );
     }
 
-
-    // 2. Append detailed scan history (reversed to show newest first)
-    // Filter out initial placeholder scans if they are purely "order placed" and we have more detailed ones
-    final List<Scan> filteredScans = scans.where((scan) {
-      // You might want to filter out very generic 'order placed' if more specific scans follow
-      return !(scan.status.toUpperCase() == 'ORDER_PLACED' && scans.length > 1);
-    }).toList().reversed.toList(); // Reverse to show newest first
-
-    if (filteredScans.isEmpty && scans.isNotEmpty) {
-      // If filtering resulted in empty but original scans existed, just show all original scans
-      // This handles cases where only 'ORDER_PLACED' scan might be present initially
-      filteredScans.addAll(scans.reversed);
-    } else if (scans.isEmpty) {
-      // If there are no scans at all, add a single placeholder milestone
-      combinedMilestones.add(
+    // 2. Add Detailed History section if scans are available
+    if (scans.isNotEmpty) {
+      timelineMilestones.add(
         am_milestone.Milestone(
           isActive: true,
-          title: Text(
-            'No tracking information available yet.',
-            style: textTheme.bodyMedium?.copyWith(fontStyle: FontStyle.italic),
-          ),
+          title: Text('Detailed History', style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold)),
           child: const SizedBox.shrink(),
+          icon: const Icon(Icons.history, color: AppColors.textDark, size: 24),
         ),
       );
-    }
 
+      for (final scan in scans.reversed) { // Show newest first
+        final String formattedDate = DateTime.tryParse(scan.date) != null
+            ? DateFormat('dd MMM, hh:mm a').format(DateTime.parse(scan.date).toLocal())
+            : 'N/A';
 
-    for (int i = 0; i < filteredScans.length; i++) {
-      final Scan scan = filteredScans[i];
-      final String activity = scan.activity;
-      final String location = scan.location;
-
-      DateTime scanDateTime;
-      String formattedDate = 'N/A';
-      try {
-        scanDateTime = DateTime.parse(scan.date);
-        formattedDate = DateFormat('dd MMM, hh:mm a').format(scanDateTime.toLocal());
-      } catch (e) {
-        debugPrint('Error parsing date for scan: ${scan.date} - $e');
-      }
-
-      bool isLatestDetailedScan = (i == 0); // The first item in reversed/filtered list is the very latest detailed scan
-
-      combinedMilestones.add(
-        am_milestone.Milestone(
-          isActive: isLatestDetailedScan, // Highlight only the very latest detailed scan
-          // Only show custom icon if not delivered (last overall milestone)
-          icon: isLatestDetailedScan && currentOverallMilestoneIndex < overallMilestones.length - 1
-              ? const Icon(Icons.circle, color: AppColors.info, size: 12) // Small dot for detailed scans
-              : null,
-          title: Text(
-            activity,
-            style: textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-              overflow: TextOverflow.ellipsis,
-              color: AppColors.textDark,
+        timelineMilestones.add(
+          am_milestone.Milestone(
+            isActive: true, // All history items are "active" in the timeline sense
+            icon: const Icon(Icons.circle, color: AppColors.textLight, size: 12),
+            title: Text(scan.activity, style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(formattedDate, style: textTheme.bodySmall?.copyWith(color: AppColors.textMedium)),
+                Text(scan.location, style: textTheme.bodySmall?.copyWith(color: AppColors.textMedium)),
+              ],
             ),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                formattedDate,
-                style: textTheme.bodySmall?.copyWith(color: AppColors.textMedium),
-              ),
-              Text(
-                location,
-                style: textTheme.bodySmall?.copyWith(
-                    color: AppColors.textMedium,
-                    overflow: TextOverflow.ellipsis
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
+        );
+      }
     }
-
-    // Determine estimated delivery date (dummy for now, based on current overall milestone)
-    String estimatedDelivery = 'Not available';
-    if (currentOverallMilestoneIndex < overallMilestones.length - 1) { // If not yet delivered
-      // Placeholder: In a real app, this would come from the API or a more complex calculation
-      estimatedDelivery = DateFormat('EEEE, MMM d, y').format(
-          DateTime.now().add(const Duration(days: 2)) // Example: 2 days from now
-      );
-    } else if (currentOverallMilestoneIndex == overallMilestones.length - 1 && lastScanDateTime != null) {
-      // If delivered, show the actual delivery date
-      estimatedDelivery = 'Delivered on ${DateFormat('EEEE, MMM d, y').format(lastScanDateTime.toLocal())}';
-    }
-
 
     return Scaffold(
       backgroundColor: AppColors.neutralBackground,
       appBar: AppBar(
-        title: Text(
-          'Shipment Tracking',
-          style: textTheme.titleLarge?.copyWith(
-            color: AppColors.textDark,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
+        title: Text('Shipment Tracking', style: textTheme.titleLarge?.copyWith(color: AppColors.textDark, fontWeight: FontWeight.w700)),
         backgroundColor: AppColors.white,
         elevation: 0.5,
         centerTitle: false,
@@ -246,68 +184,62 @@ class ShippingDetailsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Top Card with Current Status
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: AppColors.white,
                 borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.textDark.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
+                boxShadow: [BoxShadow(color: AppColors.textDark.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    overallMilestones[currentOverallMilestoneIndex], // Display current overall milestone
-                    style: textTheme.headlineSmall?.copyWith(
-                      color: AppColors.success, // Highlight current status in success color
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Your package is currently: $currentActivity at $currentLocation.',
-                    style: textTheme.bodyLarge?.copyWith(color: AppColors.textDark),
+                    'Order ID: #${order.orderId}',
+                    style: textTheme.labelLarge?.copyWith(color: AppColors.textMedium),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Estimated delivery: $estimatedDelivery',
-                    style: textTheme.bodySmall?.copyWith(color: AppColors.textMedium),
+                    overallMilestones[currentMilestoneIndex],
+                    style: textTheme.headlineSmall?.copyWith(color: AppColors.success, fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Latest Update: $currentActivity',
+                    style: textTheme.bodyLarge?.copyWith(color: AppColors.textDark),
+                  ),
+                  const Divider(height: 24),
+                  Row(
+                    children: [
+                      const Icon(Icons.local_shipping_outlined, color: AppColors.textMedium, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        currentMilestoneIndex == 4 ? 'Delivered ' : 'Estimated Delivery: ',
+                        style: textTheme.bodyMedium?.copyWith(color: AppColors.textMedium),
+                      ),
+                      Text(
+                        estimatedDelivery,
+                        style: textTheme.bodyMedium?.copyWith(color: AppColors.textDark, fontWeight: FontWeight.bold),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 20), // Spacing below the current status card
-
-            // Combined Overall Progress and Detailed Tracking Timeline
+            const SizedBox(height: 20),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
                 color: AppColors.white,
                 borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.textDark.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
+                boxShadow: [BoxShadow(color: AppColors.textDark.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
               ),
               child: MilestoneTimeline(
-                milestones: combinedMilestones,
-                color: AppColors.success, // Color for active elements
-                circleRadius: 8, // Adjust circle size for main milestones
-                stickThickness: 2, // Thinner stick
-                activeWithStick: true, // Connect active milestones with the stick
-                showLastStick: true, // Show stick for the last milestone
-                greyoutContentWithInactive: false, // Don't grey out content of inactive milestones
-                milestoneIntervalDurationInMillis: 300, // Speed of animation
+                milestones: timelineMilestones,
+                color: AppColors.success,
+                stickThickness: 2,
+                activeWithStick: true,
+                milestoneIntervalDurationInMillis: 200,
               ),
             ),
             const SizedBox(height: 20),

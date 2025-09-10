@@ -2,7 +2,7 @@ import 'package:hive/hive.dart';
 
 part 'category_model.g.dart';
 
-@HiveType(typeId: 5) // Using typeId 5 to continue the sequence
+@HiveType(typeId: 5)
 class CategoryModel extends HiveObject {
   @HiveField(0)
   final String id;
@@ -17,18 +17,22 @@ class CategoryModel extends HiveObject {
   final bool active;
 
   @HiveField(4)
-  final String? image; // nullable as in your original
+  final String? image;
 
   @HiveField(5)
   final List<String> subCategoryIds;
+
+  @HiveField(6)
+  final double deliveryCharge;
 
   CategoryModel({
     required this.id,
     required this.name,
     required this.slug,
     required this.active,
-    required this.image,
+    this.image,
     required this.subCategoryIds,
+    this.deliveryCharge = 0.0,
   });
 
   factory CategoryModel.fromJson(Map<String, dynamic> json) {
@@ -47,8 +51,9 @@ class CategoryModel extends HiveObject {
       name: json['name'] ?? '',
       slug: json['slug'] ?? '',
       active: json['active'] ?? false,
-      image: json['image'] as String?, // safely cast
+      image: json['image'] as String?,
       subCategoryIds: subCategoryIds,
+      deliveryCharge: (json['deliveryCharge'] as num?)?.toDouble() ?? 0.0,
     );
   }
 
@@ -59,5 +64,6 @@ class CategoryModel extends HiveObject {
     'active': active,
     'image': image,
     'subCategories': subCategoryIds,
+    'deliveryCharge': deliveryCharge,
   };
 }

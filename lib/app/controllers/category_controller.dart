@@ -45,13 +45,7 @@ class CategoryController extends GetxController {
 
     } catch (e) {
       print('[CategoryController] Error in fetchCategories: $e');
-      Get.snackbar(
-        'Error',
-        'Failed to load categories: $e',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.shade600,
-        colorText: Colors.white,
-      );
+      
     } finally {
       isLoading.value = false;
       isInitialLoad.value = false;

@@ -1,11 +1,18 @@
+import 'dart:convert';
 
-
-// Assuming SellingPrice and ProductModel are defined here,
-// or defined globally if used elsewhere and not part of this file.
-// If SellingPrice is not defined, you'll need to define it as below:
 import 'package:mobiking/app/data/product_model.dart';
 import 'package:mobiking/app/data/scan_model.dart';
 
+import 'QueryModel.dart';
+
+// ===================================================================
+// QUERY MODEL (Included from previous context for completeness)
+// ===================================================================
+
+
+// ===================================================================
+// SELLING PRICE & PRODUCT MODELS (Unchanged)
+// ===================================================================
 class SellingPrice {
   final String id;
   final String variantName;
@@ -45,7 +52,7 @@ class OrderItemProductModel {
   final bool bestSeller;
   final bool recommended;
   final List<SellingPrice> sellingPrice;
-  final String categoryId; // This will store the _id of the category
+  final String categoryId;
   final List<String> images;
   final int totalStock;
   final List<String> stockIds;
@@ -54,7 +61,7 @@ class OrderItemProductModel {
   final Map<String, int> variants;
   final DateTime? createdAt;
   final DateTime? updatedAt;
-  final int? v; // "__v" field
+  final int? v;
 
   OrderItemProductModel({
     required this.id,
@@ -96,7 +103,6 @@ class OrderItemProductModel {
           ?.map((e) => SellingPrice.fromJson(e as Map<String, dynamic>))
           .toList() ??
           [],
-      // Handle category which can be an object or just an ID string
       categoryId: (json['category'] is Map && json['category'] != null)
           ? json['category']['_id'] as String? ?? ''
           : (json['category'] is String ? json['category'] as String : ''),
@@ -141,7 +147,7 @@ class OrderItemProductModel {
       'bestSeller': bestSeller,
       'recommended': recommended,
       'sellingPrice': sellingPrice.map((e) => e.toJson()).toList(),
-      'category': categoryId, // Sending back just the ID
+      'category': categoryId,
       'images': images,
       'totalStock': totalStock,
       'stock': stockIds,
@@ -156,11 +162,11 @@ class OrderItemProductModel {
 }
 
 class OrderItemModel {
-  final String id; // Added _id for the order item itself
-  final OrderItemProductModel? productDetails; // Changed name for clarity, made nullable
+  final String id;
+  final OrderItemProductModel? productDetails;
   final String variantName;
   final int quantity;
-  final double price; // Changed to double as prices often have decimals
+  final double price;
 
   OrderItemModel({
     required this.id,
@@ -172,20 +178,20 @@ class OrderItemModel {
 
   factory OrderItemModel.fromJson(Map<String, dynamic> json) {
     return OrderItemModel(
-      id: json['_id'] as String? ?? '', // Parse the _id of the item in the array
+      id: json['_id'] as String? ?? '',
       productDetails: json['productId'] != null && json['productId'] is Map<String, dynamic>
           ? OrderItemProductModel.fromJson(json['productId'] as Map<String, dynamic>)
-          : null, // Correctly parse nested product details if populated
+          : null,
       variantName: json['variantName'] as String? ?? '',
       quantity: (json['quantity'] as num?)?.toInt() ?? 0,
-      price: (json['price'] as num?)?.toDouble() ?? 0.0, // Safely parse to double
+      price: (json['price'] as num?)?.toDouble() ?? 0.0,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      '_id': id, // Include _id when converting to JSON
-      'productId': productDetails?.toJson(), // Use productDetails.toJson()
+      '_id': id,
+      'productId': productDetails?.toJson(),
       'variantName': variantName,
       'quantity': quantity,
       'price': price,
@@ -193,18 +199,15 @@ class OrderItemModel {
   }
 }
 
-// You might need a simple User model for userId if you want to parse it fully
 class OrderUserModel {
   final String id;
   final String? email;
   final String? phoneNo;
-  // ... other fields if needed from userId object
 
   OrderUserModel({
     required this.id,
     this.email,
     this.phoneNo,
-    // ...
   });
 
   factory OrderUserModel.fromJson(Map<String, dynamic> json) {
@@ -224,27 +227,15 @@ class OrderUserModel {
   }
 }
 
-// Helper function to parse numeric values which might come as String or num
-double _parseNum(dynamic value) {
-  if (value == null) return 0.0;
-  if (value is num) return value.toDouble();
-  if (value is String) return double.tryParse(value) ?? 0.0;
-  return 0.0; // Fallback for unexpected types
-}
-
-// Represents a request (Cancel, Warranty, Return) associated with an order.
-// This is moved here from request_model.dart as it's part of the order details.
 class RequestModel {
-  final String? id; // Mongoose _id for the subdocument
+  final String? id;
   final String type;
   final bool isRaised;
-  final DateTime? raisedAt; // Use DateTime for timestamps
+  final DateTime? raisedAt;
   final bool isResolved;
   final String status;
-  final DateTime? resolvedAt; // Use DateTime for timestamps
-  final String? reason; // Reason for the request
-
-  // Timestamps from Mongoose: createdAt and updatedAt
+  final DateTime? resolvedAt;
+  final String? reason;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -261,7 +252,6 @@ class RequestModel {
     this.updatedAt,
   });
 
-  /// Factory constructor to create a RequestModel from a JSON map.
   factory RequestModel.fromJson(Map<String, dynamic> json) {
     return RequestModel(
       id: json['_id'] as String?,
@@ -277,7 +267,6 @@ class RequestModel {
     );
   }
 
-  /// Converts a RequestModel instance to a JSON map.
   Map<String, dynamic> toJson() {
     return {
       '_id': id,
@@ -294,16 +283,25 @@ class RequestModel {
   }
 }
 
+
+// ===================================================================
+// FULLY ALIGNED ORDER MODEL
+// ===================================================================
+
 class OrderModel {
-  final String id; // This is the MongoDB _id
-  final String orderId; // This is the human-readable order ID like "842BABB1"
+  final String id;
+  final String orderId;
 
   // Core Order States
-  final String status; // Main order status
-  final String? holdReason;
-  final String shippingStatus; // Shipping status
+  final String status;
+  final String? reason; // MODIFIED: Changed from holdReason to generic reason
+  final String? comments; // ADDED
+  final String shippingStatus;
   final List<Scan>? scans;
+  final Map<String, dynamic>? returnData; // ADDED: For Mixed type
   final String paymentStatus;
+  final DateTime? paymentDate; // ADDED
+  final bool isReviewed;
 
   // Shiprocket Fields
   final String? shipmentId;
@@ -320,6 +318,9 @@ class OrderModel {
   final String? shippingLabelUrl;
   final String? shippingManifestUrl;
   final String? deliveredAt;
+  final String? rtoInitiatedAt; // ADDED
+  final String? rtoDeliveredAt; // ADDED
+  final String? retrunDeliveredAt; // ADDED
 
   // Payment Fields
   final String? razorpayOrderId;
@@ -335,6 +336,7 @@ class OrderModel {
   final bool abondonedOrder;
 
   // Pricing
+  final String? couponId; // ADDED: To store the coupon's _id
   final double orderAmount;
   final double deliveryCharge;
   final double discount;
@@ -347,28 +349,43 @@ class OrderModel {
   final String? phoneNo;
 
   // Address
-  final dynamic address;
+  final String? address; // Main address line
+  final String? address2; // ADDED
+  final String? city; // ADDED
+  final String? state; // ADDED
+  final String? pincode; // ADDED
+  final String? country; // ADDED
   final String? addressId;
 
   // Relations
   final OrderUserModel? userId;
-  final List<OrderItemModel> items;
+  final QueryModel? query; // ADDED: To hold populated query details
 
-  // Timestamps from Mongoose
+  // Product/Items Details
+  final List<OrderItemModel> items;
+  final double? length; // ADDED
+  final double? breadth; // ADDED
+  final double? height; // ADDED
+  final double? weight; // ADDED
+
+  // Timestamps
   final DateTime createdAt;
   final DateTime updatedAt;
   final int? v;
-  final bool isReviewed;
 
 
   OrderModel({
-    required this.id, // MongoDB _id
-    required this.orderId, // Human-readable orderId
+    required this.id,
+    required this.orderId,
     required this.status,
-    this.holdReason,
+    this.reason, // MODIFIED
+    this.comments, // ADDED
     required this.shippingStatus,
     this.scans,
+    this.returnData, // ADDED
     required this.paymentStatus,
+    this.paymentDate, // ADDED
+    this.isReviewed = false,
     this.shipmentId,
     this.shiprocketOrderId,
     this.shiprocketChannelId,
@@ -383,6 +400,9 @@ class OrderModel {
     this.shippingLabelUrl,
     this.shippingManifestUrl,
     this.deliveredAt,
+    this.rtoInitiatedAt, // ADDED
+    this.rtoDeliveredAt, // ADDED
+    this.retrunDeliveredAt, // ADDED
     this.razorpayOrderId,
     this.razorpayPaymentId,
     List<RequestModel>? requests,
@@ -390,6 +410,7 @@ class OrderModel {
     required this.method,
     this.isAppOrder = false,
     this.abondonedOrder = true,
+    this.couponId, // ADDED
     required this.orderAmount,
     this.deliveryCharge = 0.0,
     this.discount = 0.0,
@@ -399,28 +420,40 @@ class OrderModel {
     this.email,
     this.phoneNo,
     this.address,
+    this.address2, // ADDED
+    this.city, // ADDED
+    this.state, // ADDED
+    this.pincode, // ADDED
+    this.country, // ADDED
     this.addressId,
     this.userId,
+    this.query, // ADDED
     required this.items,
+    this.length, // ADDED
+    this.breadth, // ADDED
+    this.height, // ADDED
+    this.weight, // ADDED
     required this.createdAt,
     required this.updatedAt,
     this.v,
-    this.isReviewed = false,
   }) : requests = requests ?? [];
 
-  
-
   factory OrderModel.fromJson(Map<String, dynamic> json) {
+    print('Parsing OrderModel. Query field: ${json['query']}');
     return OrderModel(
-      id: json['_id'] as String? ?? '', // Parsing MongoDB _id
-      orderId: json['orderId'] as String? ?? '', // Parsing human-readable orderId
+      id: json['_id'] as String? ?? '',
+      orderId: json['orderId'] as String? ?? '',
       status: json['status'] as String? ?? 'New',
-      holdReason: json['holdReason'] as String?,
+      reason: json['reason'] as String?, // MODIFIED
+      comments: json['comments'] as String?, // ADDED
       shippingStatus: json['shippingStatus'] as String? ?? 'Pending',
       scans: (json['scans'] as List<dynamic>?)
           ?.map((e) => Scan.fromJson(e as Map<String, dynamic>))
           .toList(),
+      returnData: json['returnData'] as Map<String, dynamic>?, // ADDED
       paymentStatus: json['paymentStatus'] as String? ?? 'Pending',
+      paymentDate: DateTime.tryParse(json['paymentDate'] as String? ?? ''), // ADDED
+      isReviewed: json['isReviewed'] as bool? ?? false,
 
       shipmentId: json['shipmentId'] as String?,
       shiprocketOrderId: json['shiprocketOrderId'] as String?,
@@ -436,6 +469,9 @@ class OrderModel {
       shippingLabelUrl: json['shippingLabelUrl'] as String?,
       shippingManifestUrl: json['shippingManifestUrl'] as String?,
       deliveredAt: json['deliveredAt'] as String?,
+      rtoInitiatedAt: json['rtoInitiatedAt'] as String?, // ADDED
+      rtoDeliveredAt: json['rtoDeliveredAt'] as String?, // ADDED
+      retrunDeliveredAt: json['retrunDeliveredAt'] as String?, // ADDED
 
       razorpayOrderId: json['razorpayOrderId'] as String?,
       razorpayPaymentId: json['razorpayPaymentId'] as String?,
@@ -449,6 +485,8 @@ class OrderModel {
       isAppOrder: json['isAppOrder'] as bool? ?? false,
       abondonedOrder: json['abondonedOrder'] as bool? ?? true,
 
+      couponId: (json['coupon'] is Map ? json['coupon']['_id'] : json['coupon']) as String?, // ADDED
+
       orderAmount: (json['orderAmount'] as num?)?.toDouble() ?? 0.0,
       deliveryCharge: (json['deliveryCharge'] as num?)?.toDouble() ?? 0.0,
       discount: (json['discount'] as num?)?.toDouble() ?? 0.0,
@@ -459,31 +497,50 @@ class OrderModel {
       email: json['email'] as String?,
       phoneNo: json['phoneNo'] as String?,
 
-      address: json['address'],
+      address: json['address'] as String?,
+      address2: json['address2'] as String?, // ADDED
+      city: json['city'] as String?, // ADDED
+      state: json['state'] as String?, // ADDED
+      pincode: json['pincode'] as String?, // ADDED
+      country: json['country'] as String?, // ADDED
       addressId: json['addressId'] as String?,
 
       userId: json['userId'] != null && json['userId'] is Map
           ? OrderUserModel.fromJson(json['userId'] as Map<String, dynamic>)
           : null,
+
+      query: json['query'] != null && json['query'] is Map // ADDED
+          ? QueryModel.fromJson(json['query'] as Map<String, dynamic>)
+          : null,
+
       items: (json['items'] as List<dynamic>?)
           ?.map((e) => OrderItemModel.fromJson(e as Map<String, dynamic>))
           .toList() ?? [],
+
+      length: (json['length'] as num?)?.toDouble(), // ADDED
+      breadth: (json['breadth'] as num?)?.toDouble(), // ADDED
+      height: (json['height'] as num?)?.toDouble(), // ADDED
+      weight: (json['weight'] as num?)?.toDouble(), // ADDED
+
       createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '') ?? DateTime.now(),
       updatedAt: DateTime.tryParse(json['updatedAt'] as String? ?? '') ?? DateTime.now(),
       v: json['__v'] as int?,
-      isReviewed: json['isReviewed'] as bool? ?? false,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      '_id': id, // Include MongoDB _id when converting to JSON
-      'orderId': orderId, // Include human-readable orderId when converting to JSON
+      '_id': id,
+      'orderId': orderId,
       'status': status,
-      'holdReason': holdReason,
+      'reason': reason, // MODIFIED
+      'comments': comments, // ADDED
       'shippingStatus': shippingStatus,
       'scans': scans?.map((e) => e.toJson()).toList(),
+      'returnData': returnData, // ADDED
       'paymentStatus': paymentStatus,
+      'paymentDate': paymentDate?.toIso8601String(), // ADDED
+      'isReviewed': isReviewed,
       'shipmentId': shipmentId,
       'shiprocketOrderId': shiprocketOrderId,
       'shiprocketChannelId': shiprocketChannelId,
@@ -498,6 +555,9 @@ class OrderModel {
       'shippingLabelUrl': shippingLabelUrl,
       'shippingManifestUrl': shippingManifestUrl,
       'deliveredAt': deliveredAt,
+      'rtoInitiatedAt': rtoInitiatedAt, // ADDED
+      'rtoDeliveredAt': rtoDeliveredAt, // ADDED
+      'retrunDeliveredAt': retrunDeliveredAt, // ADDED
       'razorpayOrderId': razorpayOrderId,
       'razorpayPaymentId': razorpayPaymentId,
       'requests': requests.map((e) => e.toJson()).toList(),
@@ -505,6 +565,7 @@ class OrderModel {
       'method': method,
       'isAppOrder': isAppOrder,
       'abondonedOrder': abondonedOrder,
+      'coupon': couponId, // ADDED
       'orderAmount': orderAmount,
       'deliveryCharge': deliveryCharge,
       'discount': discount,
@@ -514,18 +575,25 @@ class OrderModel {
       'email': email,
       'phoneNo': phoneNo,
       'address': address,
+      'address2': address2, // ADDED
+      'city': city, // ADDED
+      'state': state, // ADDED
+      'pincode': pincode, // ADDED
+      'country': country, // ADDED
       'addressId': addressId,
       'userId': userId?.toJson(),
+      'query': query?.id, // ADDED: Send back only the ID
       'items': items.map((e) => e.toJson()).toList(),
+      'length': length, // ADDED
+      'breadth': breadth, // ADDED
+      'height': height, // ADDED
+      'weight': weight, // ADDED
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
       '__v': v,
-      'isReviewed': isReviewed,
     };
   }
 }
-
-
 
 class OrdersResponse {
   final int statusCode;

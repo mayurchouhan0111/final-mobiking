@@ -18,6 +18,7 @@ class BillSection extends StatefulWidget {
 }
 
 class _BillSectionState extends State<BillSection> {
+  final _formKey = GlobalKey<FormState>();
   bool _hasGstNumber = false;
   bool _showGstInput = false;
   final TextEditingController _gstController = TextEditingController();
@@ -69,98 +70,110 @@ class _BillSectionState extends State<BillSection> {
                   ),
                 ],
               ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Do you have a GST number?',
-                    style: TextStyle(
-                      color: AppColors.textMedium,
-                      fontSize: 14,
+              content: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Do you have a GST number?',
+                      style: TextStyle(
+                        color: AppColors.textMedium,
+                        fontSize: 14,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // GST Number Option
-                  Row(
-                    children: [
-                      Radio<bool>(
-                        value: true,
-                        groupValue: _hasGstNumber,
-                        onChanged: (value) {
-                          setDialogState(() {
-                            _hasGstNumber = value ?? false;
-                            if (_hasGstNumber) {
-                              _showGstInput = true;
-                            }
-                          });
-                        },
-                        activeColor: AppColors.primaryPurple,
-                      ),
-                      Expanded(
-                        child: Text(
-                          'Yes, I have a GST number',
-                          style: TextStyle(
-                            color: AppColors.textDark,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  // No GST Number Option
-                  Row(
-                    children: [
-                      Radio<bool>(
-                        value: false,
-                        groupValue: _hasGstNumber,
-                        onChanged: (value) {
-                          setDialogState(() {
-                            _hasGstNumber = value ?? true;
-                            if (!_hasGstNumber) {
-                              _showGstInput = false;
-                              _gstController.clear();
-                              _gstNumberController.clear();
-                            }
-                          });
-                        },
-                        activeColor: AppColors.primaryPurple,
-                      ),
-                      Expanded(
-                        child: Text(
-                          'No, I don\'t have GST',
-                          style: TextStyle(
-                            color: AppColors.textDark,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  // GST Number Input (if has GST)
-                  if (_hasGstNumber) ...[
                     const SizedBox(height: 16),
-                    TextField(
-                      controller: _gstNumberController,
-                      decoration: InputDecoration(
-                        labelText: 'GST Number',
-                        hintText: 'Enter your GST number',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
+
+                    // GST Number Option
+                    Row(
+                      children: [
+                        Radio<bool>(
+                          value: true,
+                          groupValue: _hasGstNumber,
+                          onChanged: (value) {
+                            setDialogState(() {
+                              _hasGstNumber = value ?? false;
+                              if (_hasGstNumber) {
+                                _showGstInput = true;
+                              }
+                            });
+                          },
+                          activeColor: AppColors.primaryPurple,
                         ),
-                        prefixIcon: Icon(
-                          Icons.numbers,
-                          color: AppColors.primaryPurple,
+                        Expanded(
+                          child: Text(
+                            'Yes, I have a GST number',
+                            style: TextStyle(
+                              color: AppColors.textDark,
+                              fontSize: 14,
+                            ),
+                          ),
                         ),
-                      ),
-                      textCapitalization: TextCapitalization.characters,
+                      ],
                     ),
-                    const SizedBox(height: 12),
+
+                    // No GST Number Option
+                    Row(
+                      children: [
+                        Radio<bool>(
+                          value: false,
+                          groupValue: _hasGstNumber,
+                          onChanged: (value) {
+                            setDialogState(() {
+                              _hasGstNumber = value ?? true;
+                              if (!_hasGstNumber) {
+                                _showGstInput = false;
+                                _gstController.clear();
+                                _gstNumberController.clear();
+                              }
+                            });
+                          },
+                          activeColor: AppColors.primaryPurple,
+                        ),
+                        Expanded(
+                          child: Text(
+                            'No, I don\'t have GST',
+                            style: TextStyle(
+                              color: AppColors.textDark,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    // GST Number Input (if has GST)
+                    if (_hasGstNumber) ...[
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _gstNumberController,
+                        decoration: InputDecoration(
+                          labelText: 'GST Number',
+                          hintText: 'Enter your GST number',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          prefixIcon: Icon(
+                            Icons.numbers,
+                            color: AppColors.primaryPurple,
+                          ),
+                        ),
+                        textCapitalization: TextCapitalization.characters,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter a GST number';
+                          }
+                          if (value.length != 15) {
+                            return 'GST number must be 15 characters long';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                    ],
                   ],
-                ],
+                ),
               ),
               actions: [
                 TextButton(
@@ -174,10 +187,19 @@ class _BillSectionState extends State<BillSection> {
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    setState(() {
-                      _showGstInput = _hasGstNumber;
-                    });
-                    Navigator.of(context).pop();
+                    if (_hasGstNumber) {
+                      if (_formKey.currentState!.validate()) {
+                        setState(() {
+                          _showGstInput = _hasGstNumber;
+                        });
+                        Navigator.of(context).pop();
+                      }
+                    } else {
+                      setState(() {
+                        _showGstInput = _hasGstNumber;
+                      });
+                      Navigator.of(context).pop();
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryPurple,

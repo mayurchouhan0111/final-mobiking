@@ -5,7 +5,7 @@ import '../data/login_model.dart';
 
 class UserService {
   final Dio _dio;
-  final String _baseUrl = 'https://mobiking-e-commerce-backend-prod.vercel.app/api/v1/users';
+  final String _baseUrl = 'https://boxbudy.com/api/v1/users';
 
   UserService(this._dio); // Inject Dio instance
 

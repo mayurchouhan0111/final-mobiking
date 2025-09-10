@@ -4,7 +4,7 @@ import '../data/QueryModel.dart';
 
 class QueryService {
   final Dio _dio;
-  final String _baseUrl = "https://mobiking-e-commerce-backend-prod.vercel.app/api/v1";
+  final String _baseUrl = "https://boxbudy.com/api/v1";
   String? _authToken;
 
   QueryService({Dio? dio}) : _dio = dio ?? Dio() {
@@ -183,7 +183,15 @@ class QueryService {
       final response = await _dio.get(url);
       return await _handleDioResponse(
           response,
-              (json) => QueryModel.fromJson(json as Map<String, dynamic>)
+              (json) {
+                if (json is List && json.isNotEmpty) {
+                  return QueryModel.fromJson(json.first as Map<String, dynamic>);
+                } else if (json is Map<String, dynamic>) {
+                  return QueryModel.fromJson(json);
+                } else {
+                  throw Exception('Unexpected response format from getQueryById');
+                }
+              }
       );
     } on DioException catch (e) {
       throw Exception('Failed to get query by ID: ${_getDioErrorMessage(e)}');

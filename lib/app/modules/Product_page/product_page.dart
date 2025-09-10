@@ -21,7 +21,7 @@ import 'widgets/featured_product_banner.dart';
 import 'widgets/collapsible_section.dart';
 import 'widgets/animated_cart_button.dart';
 import 'package:mobiking/app/modules/home/widgets/FloatingCartButton.dart';
-import 'package:mobiking/app/modules/cart/cart_bottom_dialoge.dart';
+import 'package:mobiking/app/modules/checkout/CheckoutScreen.dart';
 
 class ProductPage extends StatefulWidget {
   final ProductModel product;
@@ -770,19 +770,21 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
     final product = widget.product;
     final TextTheme textTheme = Theme.of(context).textTheme;
     final double sellingPrice;
+    String discountBadgeText = '';
     final double? originalPrice = product.regularPrice?.toDouble();
 
     if (product.sellingPrice.isNotEmpty) {
-      sellingPrice = product.sellingPrice.last.price.toDouble();
+      sellingPrice = product.sellingPrice.map((e) => e.price.toDouble()).reduce(min);
+      final maxPrice = product.sellingPrice.map((e) => e.price.toDouble()).reduce(max);
+      final actualPrice = originalPrice ?? maxPrice;
+      if (actualPrice > sellingPrice) {
+        double discount = ((actualPrice - sellingPrice) / actualPrice) * 100;
+        discountBadgeText = '${discount.round()}% OFF';
+      }
     } else {
       sellingPrice = 0.0;
     }
 
-    final double discountPercentage = (originalPrice != null && originalPrice > sellingPrice)
-        ? ((originalPrice - sellingPrice) / originalPrice * 100)
-        : 0;
-    final String discountBadgeText =
-    discountPercentage > 0 ? '${discountPercentage.toStringAsFixed(0)}% OFF' : '';
 
     final variantNames = product.variants.keys.toList();
     final inStockVariantNames = variantNames.where((name) {
@@ -1038,8 +1040,7 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
                     ),
                   ),
 
-                  // Keep all your existing sections for variants, related products, etc.
-                  // Now, use the filtered list to generate the ChoiceChips
+                  // Keep existing sections for variants, etc.
                   if (inStockVariantNames.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: _horizontalPagePadding),
@@ -1093,12 +1094,10 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
                       return const SizedBox.shrink();
                     }
 
-                    final String? parentCategory = widget.product.categoryId.isNotEmpty
-                        ? widget.product.categoryId
-                        : null;
+                    final String? parentCategoryId = widget.product.category?.id;
                     final List<ProductModel> relatedProducts = productController.getProductsInSameParentCategory(
                       widget.product.id,
-                      parentCategory,
+                      parentCategoryId, // Corrected parameter
                     );
 
                     if (relatedProducts.isEmpty) {
@@ -1187,7 +1186,7 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
             productImageUrls: imageUrls,
             itemCount: totalItemsInCart,
             onTap: () {
-              Get.to(() => CartScreen());
+              Get.to(() => CheckoutScreen());
             },
           ),
         );

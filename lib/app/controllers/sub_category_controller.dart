@@ -67,6 +67,7 @@ class SubCategoryController extends GetxController {
         backgroundColor: Colors.red.shade600,
         colorText: Colors.white,
       );
+      await _service.clearCache(); // Clear cache on error
     } finally {
       isLoading.value = false;
       isInitialLoad.value = false;

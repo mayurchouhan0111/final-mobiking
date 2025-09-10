@@ -25,7 +25,7 @@ class CouponService extends GetxService {
 
   CouponService(this._dio, this.box);
 
-  final String _baseUrl = 'https://mobiking-e-commerce-backend-prod.vercel.app/api/v1';
+  final String _baseUrl = 'https://boxbudy.com/api/v1';
 
   void _log(String message) {
     print('[CouponService] $message');

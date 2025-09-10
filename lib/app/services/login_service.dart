@@ -34,7 +34,7 @@ class LoginService extends GetxService {
   // Constructor to receive the Dio instance and GetStorage box
   LoginService(this._dio, this.box, this._userService);
 
-  final String _baseUrl = 'https://mobiking-e-commerce-backend-prod.vercel.app/api/v1/users';
+  final String _baseUrl = 'https://boxbudy.com/api/v1/users';
 
   // UPDATED: SMS API Configuration for mylogin.co.in
   

@@ -28,10 +28,10 @@ class AddressService extends GetxService {
 
   AddressService(this._dio, this._box);
 
-  final String _addUrl = 'https://mobiking-e-commerce-backend-prod.vercel.app/api/v1/users/address/add';
-  final String _viewUrl = 'https://mobiking-e-commerce-backend-prod.vercel.app/api/v1/users/address/view';
-  final String _deleteBaseUrl = 'https://mobiking-e-commerce-backend-prod.vercel.app/api/v1/users/address/';
-  final String _updateBaseUrl = 'https://mobiking-e-commerce-backend-prod.vercel.app/api/v1/users/address/';
+  final String _addUrl = 'gemin/users/address/add';
+  final String _viewUrl = 'https://boxbudy.com/api/v1/users/address/view';
+  final String _deleteBaseUrl = 'https://boxbudy.com/api/v1/users/address/';
+  final String _updateBaseUrl = 'https://boxbudy.com/api/v1/users/address/';
 
   String? _getAccessToken() {
     final token = _box.read('accessToken');

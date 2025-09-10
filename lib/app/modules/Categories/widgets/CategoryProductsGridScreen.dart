@@ -4,7 +4,7 @@ import 'package:mobiking/app/data/sub_category_model.dart';
 import 'package:mobiking/app/modules/home/widgets/AllProductGridCard.dart';
 import 'package:mobiking/app/modules/home/widgets/FloatingCartButton.dart';
 import 'package:mobiking/app/controllers/cart_controller.dart';
-import 'package:mobiking/app/modules/cart/cart_bottom_dialoge.dart';
+import 'package:mobiking/app/modules/checkout/CheckoutScreen.dart';
 
 import '../../../data/product_model.dart';
 import '../../../themes/app_theme.dart';
@@ -225,7 +225,7 @@ class _CategoryProductsGridScreenState extends State<CategoryProductsGridScreen>
             productImageUrls: imageUrls,
             itemCount: totalItemsInCart,
             onTap: () {
-              Get.to(() => CartScreen());
+              Get.to(() => CheckoutScreen());
             },
           ),
         );

@@ -348,7 +348,7 @@ class ProductCards extends StatelessWidget {
                   if (cartItemsForProduct.isNotEmpty) {
                     final singleVariantName = cartItemsForProduct.keys.first;
                     cartController.removeFromCart(productId: product.id, variantName: singleVariantName);
-                    _showSnackBar(context, 'Removed from cart', AppColors.danger);
+                    
                   }
                 }
               },
@@ -400,7 +400,7 @@ class ProductCards extends StatelessWidget {
                 } else {
                   final singleVariant = product.variants.entries.firstWhere((element) => element.value > 0);
                   cartController.addToCart(productId: product.id, variantName: singleVariant.key, product: product);
-                  _showSnackBar(context, 'Added to cart', AppColors.success);
+
                 }
               },
               borderRadius: const BorderRadius.only(
@@ -457,7 +457,7 @@ class ProductCards extends StatelessWidget {
           } else {
             final singleVariant = product.variants.entries.firstWhere((element) => element.value > 0);
             cartController.addToCart(productId: product.id, variantName: singleVariant.key, product: product);
-            _showSnackBar(context, 'Added to cart', AppColors.success);
+            
           }
         },
         style: ElevatedButton.styleFrom(

@@ -79,6 +79,9 @@ void _showModernSnackbar(
       double? borderRadius,
       bool isError = false,
     }) {
+  if (isError) {
+    return;
+  }
   // FIXED: Safer way to close existing snackbar
   try {
     if (Get.isSnackbarOpen) {
@@ -334,6 +337,7 @@ class OrderController extends GetxController {
           Get.offAll(() => OrderConfirmationScreen(
             orderId: extractedOrderId,
             orderData: completeOrderData,
+            address: _addressController.selectedAddress.value,
           ));
         } else {
           throw Exception('Navigation context unavailable');
@@ -789,6 +793,15 @@ class OrderController extends GetxController {
 
     final OrderTotals totals = _calculateOrderTotals();
     final AddressModel address = _addressController.selectedAddress.value!;
+    final List<String?> parts = [
+      address.street,
+      address.city,
+      address.state,
+      address.pinCode
+    ];
+    debugPrint('Address parts: $parts');
+    final String fullAddress = parts.where((part) => part != null && part.trim().isNotEmpty).join(', ');
+    debugPrint('Full address: $fullAddress');
     final String? addressId = _addressController.selectedAddress.value?.id;
     final bool isCouponApplied = _couponController.isCouponApplied.value;
     final String? couponId = isCouponApplied ? _couponController.selectedCoupon.value?.id : null;
@@ -810,7 +823,7 @@ class OrderController extends GetxController {
       deliveryCharge: totals.deliveryCharge,
       gst: totals.gst,
       subtotal: totals.subtotal,
-      address: '${address.street}, ${address.city}, ${address.state}, ${address.pinCode}',
+      address: fullAddress,
       method: method,
       items: orderItems,
       addressId: addressId,
@@ -821,7 +834,7 @@ class OrderController extends GetxController {
   // Calculate order totals
   OrderTotals _calculateOrderTotals() {
     final double subtotal = _calculateSubtotal();
-    const double deliveryCharge = 45.0;
+    final double deliveryCharge = _cartController.calculateDeliveryCharge();
     const double gst = 0.0;
     final double discount = _couponController.isCouponApplied.value
         ? _couponController.discountAmount.value
@@ -904,12 +917,16 @@ class OrderController extends GetxController {
 
     } on OrderServiceException catch (e) {
       debugPrint('❌ OrderServiceException: Status ${e.statusCode} - ${e.message}');
-      _showModernSnackbar(
-        'Order Error',
-        e.message,
-        isError: true,
-        icon: Icons.error_outline,
-      );
+      if (e.message == 'Cart is empty or not found.') {
+        await _cartController.fetchAndLoadCartData();
+      } else {
+        _showModernSnackbar(
+          'Order Error',
+          e.message,
+          isError: true,
+          icon: Icons.error_outline,
+        );
+      }
     } catch (e) {
       debugPrint('❌ Unexpected Exception: $e');
       _showModernSnackbar(
@@ -1006,6 +1023,7 @@ class OrderController extends GetxController {
       Get.offAll(() => OrderConfirmationScreen(
         orderId: extractedOrderId,
         orderData: completeOrderData,
+        address: _addressController.selectedAddress.value,
       ));
 
     } catch (e, stackTrace) {
@@ -1469,6 +1487,14 @@ class OrderController extends GetxController {
       debugPrint('✅ Order data stored in ALL possible keys');
       debugPrint('✅ Order ID for confirmation: $orderId');
 
+      // Save the address as the default address
+      /*
+      if (orderData.containsKey('address') && orderData['address'] != null) {
+        await _box.write('default_address', orderData['address']);
+        debugPrint('✅ Saved default address');
+      }
+      */
+
       // Clear cart data
       await _cartController.clearCartData();
 
@@ -1508,8 +1534,6 @@ class OrderController extends GetxController {
     );
   }
 
-  
-
   // Rest of the existing methods remain unchanged...
   Future fetchOrderHistory({bool isPoll = false}) async {
     if (!isPoll) {
@@ -1523,7 +1547,7 @@ class OrderController extends GetxController {
 
       if (fetchedOrders.isNotEmpty) {
         fetchedOrders.sort((a, b) => b.createdAt?.compareTo(a.createdAt ?? DateTime(0)) ?? 0);
-        orderHistory.assignAll(fetchedOrders as Iterable<OrderModel>);
+        orderHistory.assignAll(fetchedOrders.cast<OrderModel>());
         if (!isPoll) {
           print('OrderController: Fetched ${orderHistory.length} orders successfully.');
         }

@@ -306,8 +306,7 @@ class QueryGetXController extends GetxController {
       );
       _myQueries.insert(0, newQuery);
       _myQueries.refresh();
-      // Always refresh from backend; this is most robust in production (handles server-side changes)
-      await refreshMyQueries();
+      
       if (orderId != null) {
         _currentQuery.value = newQuery;
         _updateConversationStream(newQuery.replies ?? []);
@@ -402,6 +401,9 @@ class QueryGetXController extends GetxController {
     required bool isSuccess,
     Duration duration = const Duration(seconds: 3),
   }) {
+    if (!isSuccess) {
+      return;
+    }
     Color backgroundColor = isSuccess ? AppColors.success : AppColors.danger;
     IconData icon = isSuccess ? Icons.check_circle_outline : Icons.error_outline;
     Get.rawSnackbar(

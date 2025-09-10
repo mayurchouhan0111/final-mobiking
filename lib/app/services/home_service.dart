@@ -6,7 +6,7 @@ import '../data/Home_model.dart';
 import '../data/group_model.dart';
 
 class HomeService {
-  static const String _baseUrl = 'https://mobiking-e-commerce-backend-prod.vercel.app/api/v1';
+  static const String _baseUrl = 'https://boxbudy.com/api/v1';
 
   void _log(String message) {
     print('[HomeService] $message');

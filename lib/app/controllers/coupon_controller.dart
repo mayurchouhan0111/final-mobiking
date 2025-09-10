@@ -54,14 +54,7 @@ class CouponController extends GetxController {
   void _showError(String message) {
     errorMessage.value = message;
     successMessage.value = '';
-    Get.snackbar(
-      'Error',
-      message,
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.red.shade100,
-      colorText: Colors.red.shade900,
-      duration: const Duration(seconds: 3),
-    );
+    
   }
 
   // Show success message

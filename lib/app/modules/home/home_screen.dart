@@ -15,7 +15,7 @@ import '../../widgets/CustomBottomBar.dart';
 import '../../widgets/CategoryTab.dart';
 import '../../widgets/CustomAppBar.dart';
 import '../../widgets/SearchTabSliverAppBar.dart' show SearchTabSliverAppBar;
-import '../cart/cart_bottom_dialoge.dart';
+
 
 class HomeScreen extends StatefulWidget {
   HomeScreen({super.key});

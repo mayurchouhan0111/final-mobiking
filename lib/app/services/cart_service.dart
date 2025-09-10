@@ -6,7 +6,7 @@ import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 
 class CartService {
-  final String baseUrl = 'https://mobiking-e-commerce-backend-prod.vercel.app/api/v1';
+  final String baseUrl = 'https://boxbudy.com/api/v1';
   final box = GetStorage();
 
   void _log(String message) {

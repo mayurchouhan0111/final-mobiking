@@ -14,8 +14,9 @@ import 'package:mobiking/app/modules/checkout/CheckoutScreen.dart';
 
 class AddressPage extends StatefulWidget {
   final Map<String, dynamic>? initialUser;
+  final bool showAddressListFirst;
 
-  AddressPage({Key? key, this.initialUser}) : super(key: key) {
+  AddressPage({Key? key, this.initialUser, this.showAddressListFirst = false}) : super(key: key) {
     if (!Get.isRegistered<AddressController>()) {
       Get.put(AddressController());
     }
@@ -54,6 +55,9 @@ class _AddressPageState extends State<AddressPage> {
   @override
   void initState() {
     super.initState();
+    if (widget.showAddressListFirst) {
+      _showUserSection.value = false;
+    }
     _initializeUserControllers();
     _setupUserChangeListener();
     controller.fetchAddresses(); // Fetch addresses when the page initializes
@@ -77,13 +81,7 @@ class _AddressPageState extends State<AddressPage> {
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        Get.snackbar(
-          'Permission Denied',
-          'Location permission is required to fetch your current location',
-          backgroundColor: AppColors.danger,
-          colorText: AppColors.white,
-          icon: Icon(Icons.location_off, color: AppColors.white),
-        );
+        
         return false;
       }
     }
@@ -121,13 +119,7 @@ class _AddressPageState extends State<AddressPage> {
       // Check if location services are enabled
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        Get.snackbar(
-          'Location Services Disabled',
-          'Please enable location services and try again',
-          backgroundColor: AppColors.danger,
-          colorText: AppColors.white,
-          icon: Icon(Icons.location_off, color: AppColors.white),
-        );
+        
         return;
       }
 
@@ -167,12 +159,7 @@ class _AddressPageState extends State<AddressPage> {
         _showLocationOptions.value = false;
       }
     }  catch (e) {
-      Get.snackbar(
-        'Location Error',
-        'Failed to get current location: ${e.toString()}',
-        backgroundColor: AppColors.danger,
-        colorText: AppColors.white,
-      );
+      
     } finally {
       _isLoadingLocation.value = false;
     }
@@ -199,7 +186,7 @@ class _AddressPageState extends State<AddressPage> {
       AlertDialog(
         title: Row(
           children: [
-            Icon(Icons.location_on, color: AppColors.primaryGreen),
+            Icon(Icons.location_on, color: AppColors.blinkitGreen),
             SizedBox(width: 8),
             Text('Get Location'),
           ],
@@ -210,7 +197,7 @@ class _AddressPageState extends State<AddressPage> {
             Text('Choose how you want to add your location:'),
             SizedBox(height: 20),
             ListTile(
-              leading: Icon(Icons.my_location, color: AppColors.primaryGreen),
+              leading: Icon(Icons.my_location, color: AppColors.blinkitGreen),
               title: Text('Use Current Location'),
               subtitle: Text('Automatically fill address using GPS'),
               onTap: () {
@@ -323,7 +310,7 @@ class _AddressPageState extends State<AddressPage> {
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryGreen,
+                  backgroundColor: AppColors.blinkitGreen,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -360,19 +347,19 @@ class _AddressPageState extends State<AddressPage> {
                   onPressed: () => _showUserSection.value = true,
                   icon: Icon(
                     Icons.person_outline,
-                    color: _showUserSection.value ? AppColors.white : AppColors.primaryGreen,
+                    color: _showUserSection.value ? AppColors.white : AppColors.blinkitGreen,
                   ),
                   label: Text(
                     'User Info',
                     style: textTheme.labelLarge?.copyWith(
-                      color: _showUserSection.value ? AppColors.white : AppColors.primaryGreen,
+                      color: _showUserSection.value ? AppColors.white : AppColors.blinkitGreen,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _showUserSection.value ? AppColors.primaryGreen : AppColors.white,
-                    foregroundColor: _showUserSection.value ? AppColors.white : AppColors.primaryGreen,
-                    side: BorderSide(color: AppColors.primaryGreen),
+                    backgroundColor: _showUserSection.value ? AppColors.blinkitGreen : AppColors.white,
+                    foregroundColor: _showUserSection.value ? AppColors.white : AppColors.blinkitGreen,
+                    side: BorderSide(color: AppColors.blinkitGreen),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -385,19 +372,19 @@ class _AddressPageState extends State<AddressPage> {
                   onPressed: () => _showUserSection.value = false,
                   icon: Icon(
                     Icons.location_on_outlined,
-                    color: !_showUserSection.value ? AppColors.white : AppColors.primaryGreen,
+                    color: !_showUserSection.value ? AppColors.white : AppColors.blinkitGreen,
                   ),
                   label: Text(
                     'Addresses',
                     style: textTheme.labelLarge?.copyWith(
-                      color: !_showUserSection.value ? AppColors.white : AppColors.primaryGreen,
+                      color: !_showUserSection.value ? AppColors.white : AppColors.blinkitGreen,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: !_showUserSection.value ? AppColors.primaryGreen : AppColors.white,
-                    foregroundColor: !_showUserSection.value ? AppColors.white : AppColors.primaryGreen,
-                    side: BorderSide(color: AppColors.primaryGreen),
+                    backgroundColor: !_showUserSection.value ? AppColors.blinkitGreen : AppColors.white,
+                    foregroundColor: !_showUserSection.value ? AppColors.white : AppColors.blinkitGreen,
+                    side: BorderSide(color: AppColors.blinkitGreen),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -484,14 +471,14 @@ class _AddressPageState extends State<AddressPage> {
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryGreen,
+                  backgroundColor: AppColors.blinkitGreen,
                   foregroundColor: AppColors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                   elevation: 2,
-                  disabledBackgroundColor: AppColors.primaryGreen.withOpacity(0.6),
+                  disabledBackgroundColor: AppColors.blinkitGreen.withOpacity(0.6),
                 ),
               ),
             )),
@@ -545,14 +532,14 @@ class _AddressPageState extends State<AddressPage> {
   Widget _buildAddressListSection(BuildContext context) {
     if (controller.isLoading.value && controller.addresses.isEmpty) {
       return Center(
-        child: CircularProgressIndicator(color: AppColors.primaryGreen),
+        child: CircularProgressIndicator(color: AppColors.blinkitGreen),
       );
     } else if (controller.addresses.isEmpty) {
       return RefreshIndicator(
         onRefresh: () async {
           await controller.fetchAddresses();
         },
-        color: AppColors.primaryGreen,
+        color: AppColors.blinkitGreen,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           child: SizedBox(
@@ -601,7 +588,7 @@ class _AddressPageState extends State<AddressPage> {
       onRefresh: () async {
         await controller.fetchAddresses();
       },
-      color: AppColors.primaryGreen,
+      color: AppColors.blinkitGreen,
       child: ListView.separated(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, totalBottomPadding),
         itemCount: controller.addresses.length,
@@ -625,7 +612,7 @@ class _AddressPageState extends State<AddressPage> {
               child: CustomPaint(
                 painter: AddressCardPainter(
                   backgroundColor: AppColors.white,
-                  accentColor: AppColors.primaryGreen,
+                  accentColor: AppColors.blinkitGreen,
                   isSelected: isSelected,
                 ),
                 child: Container(
@@ -672,7 +659,7 @@ class _AddressPageState extends State<AddressPage> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
-                              icon: Icon(Icons.edit, color: AppColors.primaryGreen, size: 20),
+                              icon: Icon(Icons.edit, color: AppColors.blinkitGreen, size: 20),
                               onPressed: () {
                                 controller.startEditingAddress(addr);
                               },
@@ -716,9 +703,7 @@ class _AddressPageState extends State<AddressPage> {
                                     await controller.deleteAddress(addr.id!);
                                   }
                                 } else {
-                                  Get.snackbar('Error', 'Address ID is missing, cannot delete.',
-                                      snackPosition: SnackPosition.BOTTOM,
-                                      backgroundColor: AppColors.danger);
+                                  
                                 }
                               },
                               padding: EdgeInsets.zero,
@@ -729,7 +714,7 @@ class _AddressPageState extends State<AddressPage> {
                               Padding(
                                 padding: const EdgeInsets.only(left: 8.0),
                                 child: Icon(Icons.check_circle_rounded,
-                                    color: AppColors.primaryGreen, size: 24),
+                                    color: AppColors.blinkitGreen, size: 24),
                               ),
                           ],
                         ),
@@ -789,7 +774,7 @@ class _AddressPageState extends State<AddressPage> {
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryGreen,
+                  backgroundColor: AppColors.blinkitGreen,
                   padding: EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -804,19 +789,19 @@ class _AddressPageState extends State<AddressPage> {
               padding: EdgeInsets.all(12),
               margin: EdgeInsets.only(bottom: 20),
               decoration: BoxDecoration(
-                color: AppColors.primaryGreen.withOpacity(0.1),
+                color: AppColors.blinkitGreen.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppColors.primaryGreen.withOpacity(0.3)),
+                border: Border.all(color: AppColors.blinkitGreen.withOpacity(0.3)),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.info_outline, color: AppColors.primaryGreen, size: 20),
+                  Icon(Icons.info_outline, color: AppColors.blinkitGreen, size: 20),
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'Use the location button above or fill the form manually. You can edit GPS-filled data if needed.',
                       style: textTheme.bodySmall?.copyWith(
-                        color: AppColors.primaryGreen,
+                        color: AppColors.blinkitGreen,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -892,12 +877,12 @@ class _AddressPageState extends State<AddressPage> {
                             color: isSelected ? AppColors.white : AppColors.textDark,
                             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500),
                         backgroundColor: AppColors.neutralBackground,
-                        selectedColor: AppColors.primaryGreen,
+                        selectedColor: AppColors.blinkitGreen,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                           side: BorderSide(
                             color: isSelected
-                                ? AppColors.primaryGreen
+                                ? AppColors.blinkitGreen
                                 : AppColors.textLight.withOpacity(0.5),
                             width: isSelected ? 1.5 : 1.0,
                           ),
@@ -949,8 +934,8 @@ class _AddressPageState extends State<AddressPage> {
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryGreen,
-                  disabledBackgroundColor: AppColors.lightGreen.withOpacity(0.5),
+                  backgroundColor: AppColors.blinkitGreen,
+                  disabledBackgroundColor: AppColors.blinkitGreen.withOpacity(0.5),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -993,10 +978,10 @@ class _AddressPageState extends State<AddressPage> {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: AppColors.primaryGreen.withOpacity(0.1),
+            color: AppColors.blinkitGreen.withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(icon, color: AppColors.primaryGreen, size: 20),
+          child: Icon(icon, color: AppColors.blinkitGreen, size: 20),
         ),
         const SizedBox(width: 12),
         Text(
@@ -1080,7 +1065,7 @@ class _AddressPageState extends State<AddressPage> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.primaryGreen, width: 2),
+              borderSide: BorderSide(color: AppColors.blinkitGreen, width: 2),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -1131,7 +1116,7 @@ class _AddressPageState extends State<AddressPage> {
           borderRadius: BorderRadius.circular(8),
         ),
         focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: AppColors.primaryGreen, width: 2),
+          borderSide: BorderSide(color: AppColors.blinkitGreen, width: 2),
           borderRadius: BorderRadius.circular(8),
         ),
         errorBorder: OutlineInputBorder(
@@ -1193,14 +1178,7 @@ class _AddressPageState extends State<AddressPage> {
       );
 
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to save user information',
-        backgroundColor: AppColors.danger,
-        colorText: AppColors.white,
-        icon: Icon(Icons.error, color: AppColors.white),
-        duration: const Duration(seconds: 2),
-      );
+      
     } finally {
       _isUserLoading.value = false;
     }

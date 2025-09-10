@@ -23,8 +23,8 @@ class OrderServiceException implements Exception {
 }
 
 class OrderService extends GetxService {
-  static const String _baseUrl = 'https://mobiking-e-commerce-backend-prod.vercel.app/api/v1/orders';
-  static const String _userRequestBaseUrl = 'https://mobiking-e-commerce-backend-prod.vercel.app/api/v1/users/request';
+  static const String _baseUrl = 'https://boxbudy.com/api/v1/orders';
+  static const String _userRequestBaseUrl = 'https://boxbudy.com/api/v1/users/request';
   final GetStorage _box = GetStorage();
 
   // ENHANCED: Timeout configurations

@@ -6,7 +6,7 @@ import '../data/stock_model.dart';
 class StockService {
   Dio _dio;
 
-  StockService() : _dio = Dio(BaseOptions(baseUrl: 'http://your-api-url.com'));
+  StockService() : _dio = Dio(BaseOptions(baseUrl: 'https://boxbudy.com/api/v1'));
 
   // For test injection
   void overrideDio(Dio dio) {

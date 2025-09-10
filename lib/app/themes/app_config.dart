@@ -1,3 +1,3 @@
 class AppConfig {
-  static const String baseUrl = 'https://mobiking-e-commerce-backend-prod.vercel.app/api/v1';
+  static const String baseUrl = 'https://boxbudy.com/api/v1';
 }
