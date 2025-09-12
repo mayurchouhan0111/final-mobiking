@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:mobiking/app/controllers/user_controller.dart';
 import 'package:mobiking/app/modules/address/AddressPage.dart';
 import 'package:mobiking/app/modules/policy/cancellation_policy.dart';
 import 'package:mobiking/app/modules/policy/refund_policy.dart';
@@ -27,8 +28,9 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final LoginController loginController = Get.find<LoginController>();
     final TextTheme textTheme = Theme.of(context).textTheme;
+    final UserController userController = Get.find<UserController>();
 
-    return Scaffold(
+      return Scaffold(
       backgroundColor: AppColors.neutralBackground,
       appBar: AppBar(
         title: Text(
@@ -53,33 +55,19 @@ class ProfileScreen extends StatelessWidget {
             children: [
               // User Info Section (Blinkit style)
               Obx(() {
+                final userName = userController.userName.value;
                 final userMap = loginController.currentUser.value;
-                String userName = 'Guest User';
-                String userContact = '';
+                String phoneNumber = '';
 
                 if (userMap != null) {
-                  final String? name = userMap['name'] as String?;
-                  final String? email = userMap['email'] as String?;
-                  final String? phoneNumber = userMap['phoneNo'] as String?;
-
-                  if (name?.isNotEmpty == true) {
-                    userName = name!;
-                  } else if (email?.isNotEmpty == true) {
-                    userName = email!.split('@')[0];
-                  }
-
-                  if (email?.isNotEmpty == true) {
-                    userContact = email!;
-                  } else if (phoneNumber?.isNotEmpty == true) {
-                    userContact = phoneNumber!;
-                  }
+                  phoneNumber = userMap['phoneNo'] as String? ?? '';
                 }
 
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      userName,
+                      userName.isNotEmpty ? userName : (phoneNumber.isNotEmpty ? phoneNumber : 'Guest User'),
                       style: textTheme.bodyMedium?.copyWith(
                         color: AppColors.textDark,
                         fontWeight: FontWeight.w700,
@@ -456,3 +444,31 @@ class ProfileScreen extends StatelessWidget {
     }
   }
 }
+
+  void _launchWhatsApp() async {
+    const phoneNumber = "+1234567890"; // Replace with your WhatsApp number
+    const message = "Hello! I need help with Mobiking app.";
+
+    final whatsappUrl = "https://wa.me/$phoneNumber?text=${Uri.encodeComponent(message)}";
+
+    try {
+      if (await canLaunchUrl(Uri.parse(whatsappUrl))) {
+        await launchUrl(Uri.parse(whatsappUrl), mode: LaunchMode.externalApplication);
+      } else {/*
+        Get.snackbar(
+          'Error',
+          'WhatsApp is not installed on your device',
+          backgroundColor: AppColors.danger,
+          colorText: AppColors.white,
+        );*/
+      }
+    } catch (e) {
+      /*Get.snackbar(
+        'Error',
+        'Could not open WhatsApp',
+        backgroundColor: AppColors.danger,
+        colorText: AppColors.white,
+      );*/
+    }
+  }
+

@@ -18,10 +18,18 @@ class UserController extends GetxController {
     }
   }
 
-  void saveUserName(String name) {
+  Future<void> updateUser({String? name, String? email, String? phone}) async {
     final user = _storage.read('user') ?? {};
-    user['name'] = name;
-    _storage.write('user', user);
-    userName.value = name;
+    if (name != null) {
+      user['name'] = name;
+      userName.value = name;
+    }
+    if (email != null) {
+      user['email'] = email;
+    }
+    if (phone != null) {
+      user['phoneNo'] = phone;
+    }
+    await _storage.write('user', user);
   }
 }

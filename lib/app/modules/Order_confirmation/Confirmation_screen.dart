@@ -10,6 +10,7 @@ import '../../data/AddressModel.dart';
 import '../../themes/app_theme.dart';
 import '../../data/order_model.dart';
 import '../bottombar/Bottom_bar.dart';
+import 'package:mobiking/app/controllers/product_controller.dart';
 import '../../services/order_service.dart';
 import '../../controllers/cart_controller.dart';
 
@@ -61,6 +62,7 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
 
   void _navigateToMainScreen() {
     _cartController.clearCartData();
+    Get.find<ProductController>().fetchInitialProducts();
     Get.offAll(() => MainContainerScreen());
   }
 

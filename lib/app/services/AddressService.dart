@@ -28,7 +28,7 @@ class AddressService extends GetxService {
 
   AddressService(this._dio, this._box);
 
-  final String _addUrl = 'gemin/users/address/add';
+  final String _addUrl = 'https://boxbudy.com/api/v1/users/address/add';
   final String _viewUrl = 'https://boxbudy.com/api/v1/users/address/view';
   final String _deleteBaseUrl = 'https://boxbudy.com/api/v1/users/address/';
   final String _updateBaseUrl = 'https://boxbudy.com/api/v1/users/address/';

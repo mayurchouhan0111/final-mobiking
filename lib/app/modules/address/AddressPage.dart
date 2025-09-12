@@ -1216,20 +1216,11 @@ class _AddressPageState extends State<AddressPage> {
   }
 
   Future<void> _saveUserDataToStorage() async {
-    userController.saveUserName(_nameController.text.trim());
-    final existingUser = widget.initialUser ?? _storage.read('user') ?? {};
-
-    final userInfo = {
-      '_id': _safeStringExtract(existingUser['_id']),
-      'email': _emailController.text.trim(),
-      'phoneNo': _phoneController.text.trim(),
-      'address': _safeStringExtract(existingUser['address']),
-      'city': _safeStringExtract(existingUser['city']),
-      'state': _safeStringExtract(existingUser['state']),
-      'pincode': _safeStringExtract(existingUser['pincode']),
-    };
-
-    await _storage.write('user', userInfo);
+    await userController.updateUser(
+      name: _nameController.text.trim(),
+      email: _emailController.text.trim(),
+      phone: _phoneController.text.trim(),
+    );
     _hasUserChanges.value = false;
   }
 }
