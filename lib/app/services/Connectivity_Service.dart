@@ -8,27 +8,26 @@ class ConnectivityService extends GetxService {
     print('[ConnectivityService] $message');
   }
 
-  // Stream to listen for connectivity changes
-  Stream<ConnectivityResult> get connectivityStream => _connectivity.onConnectivityChanged;
+  // FIXED: Returns Stream<List<ConnectivityResult>>
+  Stream<List<ConnectivityResult>> get connectivityStream => _connectivity.onConnectivityChanged;
 
-  // Get current connectivity status
-  Future<ConnectivityResult> checkConnectivity() async {
+  // FIXED: Returns Future<List<ConnectivityResult>>
+  Future<List<ConnectivityResult>> checkConnectivity() async {
     try {
       final result = await _connectivity.checkConnectivity();
       _log('Current connectivity status: $result');
       return result;
     } catch (e) {
       _log('Exception in checkConnectivity: $e');
-      // Return none as fallback for any connectivity check errors
-      return ConnectivityResult.none;
+      return [ConnectivityResult.none];
     }
   }
 
-  // Check if device is connected to internet
+  // FIXED: Uses List<ConnectivityResult>
   Future<bool> isConnected() async {
     try {
-      final result = await checkConnectivity();
-      final connected = result != ConnectivityResult.none;
+      final results = await checkConnectivity();
+      final connected = !results.contains(ConnectivityResult.none);
       _log('Device connected: $connected');
       return connected;
     } catch (e) {
@@ -37,24 +36,37 @@ class ConnectivityService extends GetxService {
     }
   }
 
-  // Get connectivity type as string
-  String getConnectivityType(ConnectivityResult result) {
-    switch (result) {
-      case ConnectivityResult.wifi:
-        return 'WiFi';
-      case ConnectivityResult.mobile:
-        return 'Mobile Data';
-      case ConnectivityResult.ethernet:
-        return 'Ethernet';
-      case ConnectivityResult.bluetooth:
-        return 'Bluetooth';
-      case ConnectivityResult.vpn:
-        return 'VPN';
-      case ConnectivityResult.other:
-        return 'Other';
-      case ConnectivityResult.none:
-      default:
-        return 'No Connection';
+  // FIXED: Accepts List<ConnectivityResult> with proper type annotation
+  String getConnectivityTypes(List<ConnectivityResult> results) {
+    if (results.contains(ConnectivityResult.none) || results.isEmpty) {
+      return 'No Connection';
     }
+
+    List<String> types = [];
+    for (var result in results) {
+      switch (result) {
+        case ConnectivityResult.wifi:
+          types.add('WiFi');
+          break;
+        case ConnectivityResult.mobile:
+          types.add('Mobile Data');
+          break;
+        case ConnectivityResult.ethernet:
+          types.add('Ethernet');
+          break;
+        case ConnectivityResult.bluetooth:
+          types.add('Bluetooth');
+          break;
+        case ConnectivityResult.vpn:
+          types.add('VPN');
+          break;
+        case ConnectivityResult.other:
+          types.add('Other');
+          break;
+        case ConnectivityResult.none:
+          break;
+      }
+    }
+    return types.isNotEmpty ? types.join(', ') : 'Unknown';
   }
 }

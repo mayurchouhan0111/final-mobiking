@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:async';
+import 'package:fluttertoast/fluttertoast.dart';
 
 import '../data/AddressModel.dart';
 import '../services/AddressService.dart';
@@ -69,7 +70,7 @@ class AddressController extends GetxController {
     detectionError.value = '';
 
     // Only proceed if we have a 6-digit PIN code
-    if (pincode.length == 6 && RegExp(r'^\d{6}$').hasMatch(pincode)) {
+    if (pincode.length == 6 && RegExp(r'^\d{6}').hasMatch(pincode)) {
       // Debounce the API call by 500ms
       _pinCodeDebounceTimer = Timer(const Duration(milliseconds: 500), () {
         // Double-check the PIN code hasn't changed during the delay
@@ -98,12 +99,12 @@ class AddressController extends GetxController {
         print('AddressController: Location detected - City: ${locationData['city']}, State: ${locationData['state']}');
 
         // Show success message
-        _showSnackbar('Location Detected', 'City and State have been auto-filled.', Colors.green, Icons.location_on);
+        _showToast('City and State have been auto-filled.', backgroundColor: Colors.green);
       } else {
         detectionError.value = 'Could not detect location for this PIN code';
         print('AddressController: Could not detect location for PIN code: $pincode');
 
-        _showSnackbar('Location Not Found', 'Could not detect location for this PIN code.', Colors.amber, Icons.location_off);
+        _showToast('Could not detect location for this PIN code.', backgroundColor: Colors.amber);
       }
     } catch (e) {
       detectionError.value = 'Network error while detecting location';
@@ -149,11 +150,9 @@ class AddressController extends GetxController {
     } on AddressServiceException catch (e) {
       print('AddressController: Error fetching addresses: $e');
       addressErrorMessage.value = e.message;
-     /* _showSnackbar('Fetch Failed', e.message, Colors.red, Icons.cloud_off_outlined);*/
     } catch (e) {
       print('AddressController: Unexpected error fetching addresses: $e');
       addressErrorMessage.value = 'An unexpected error occurred while fetching addresses.';
-     /* _showSnackbar('Error', 'An unexpected error occurred while fetching addresses.', Colors.red, Icons.cloud_off_outlined);*/
     } finally {
       isLoading.value = false;
     }
@@ -188,7 +187,7 @@ class AddressController extends GetxController {
       }
 
       if (finalLabel.isEmpty) {
-        _showSnackbar('Input Required', 'Please specify a label for your address (e.g., Home, Work).', Colors.amber, Icons.label_important_outline);
+        _showToast('Please specify a label for your address (e.g., Home, Work).', backgroundColor: Colors.amber);
         isLoading.value = false;
         return false;
       }
@@ -197,15 +196,16 @@ class AddressController extends GetxController {
           cityController.text.trim().isEmpty ||
           stateController.text.trim().isEmpty ||
           pinCodeController.text.trim().isEmpty) {
-        _showSnackbar('Input Required', 'Please fill in all address fields.', Colors.amber, Icons.edit_road_outlined);
+        _showToast('Please fill in all address fields.', backgroundColor: Colors.amber);
         isLoading.value = false;
         return false;
       }
 
       // ✅ Enhanced PIN code validation
       final pinCode = pinCodeController.text.trim();
-      if (!RegExp(r'^\d{6}$').hasMatch(pinCode)) {
-        _showSnackbar('Invalid PIN Code', 'Please enter a valid 6-digit PIN code.', Colors.amber, Icons.pin_drop);
+      if (!RegExp(r'^\d{6}'
+).hasMatch(pinCode)) {
+        _showToast('Please enter a valid 6-digit PIN code.', backgroundColor: Colors.amber);
         isLoading.value = false;
         return false;
       }
@@ -243,13 +243,11 @@ class AddressController extends GetxController {
           if (selectedAddress.value?.id == resultAddress.id) {
             selectedAddress.value = resultAddress;
           }
-          _showSnackbar('Success!', 'Address updated successfully.', Colors.green, Icons.check_circle_outline);
+          _showToast('Address updated successfully.', backgroundColor: Colors.green);
         } else {
           addresses.add(resultAddress);
-          _showSnackbar('Success!', 'Your new address has been added.', Colors.green, Icons.location_on_outlined);
-          if (addresses.length == 1 && selectedAddress.value == null) {
-            selectedAddress.value = resultAddress;
-          }
+          _showToast('Your new address has been added.', backgroundColor: Colors.green);
+          selectedAddress.value = resultAddress; // Select the new address
         }
         cancelEditing();
         return true;
@@ -260,12 +258,10 @@ class AddressController extends GetxController {
     } on AddressServiceException catch (e) {
       print('AddressController: Error saving address: $e');
       addressErrorMessage.value = e.message;
-     /* _showSnackbar(_isEditing.value ? 'Update Failed' : 'Add Failed', e.message, Colors.red, Icons.error_outline);*/
       return false;
     } catch (e) {
       print('AddressController: Unexpected error saving address: $e');
       addressErrorMessage.value = 'An unexpected error occurred. Please try again later.';
-  /*    _showSnackbar('Error', 'An unexpected error occurred. Please try again later.', Colors.red, Icons.cloud_off_outlined);*/
       return false;
     } finally {
       isLoading.value = false;
@@ -283,19 +279,17 @@ class AddressController extends GetxController {
         if (selectedAddress.value?.id == addressId) {
           selectedAddress.value = addresses.isNotEmpty ? addresses.first : null;
         }
-        _showSnackbar('Deleted!', 'Address removed successfully.', Colors.green, Icons.delete_forever_outlined);
+        _showToast('Address removed successfully.', backgroundColor: Colors.green);
         return true;
       }
       return false;
     } on AddressServiceException catch (e) {
       print('AddressController: Error deleting address: $e');
       addressErrorMessage.value = e.message;
-     /* _showSnackbar('Deletion Failed', e.message, Colors.red, Icons.error_outline);*/
       return false;
     } catch (e) {
       print('AddressController: Unexpected error deleting address: $e');
       addressErrorMessage.value = 'An unexpected error occurred while deleting address.';
-     /* _showSnackbar('Error', 'An unexpected error occurred while deleting address.', Colors.red, Icons.cloud_off_outlined);*/
       return false;
     } finally {
       isLoading.value = false;
@@ -336,32 +330,25 @@ class AddressController extends GetxController {
 
   bool _validateLocation() {
     if (cityController.text.trim().isEmpty) {
-      _showSnackbar('Invalid City', 'Please enter a valid city.', Colors.amber, Icons.location_city);
+      _showToast('Please enter a valid city.', backgroundColor: Colors.amber);
       return false;
     }
     if (stateController.text.trim().isEmpty) {
-      _showSnackbar('Invalid State', 'Please enter a valid state.', Colors.amber, Icons.location_city);
+      _showToast('Please enter a valid state.', backgroundColor: Colors.amber);
       return false;
     }
     return true;
   }
 
-  // ✅ Enhanced snackbar with better positioning and styling
-  void _showSnackbar(String title, String message, Color color, IconData icon) {
-    Get.snackbar(
-      title,
-      message,
-      snackPosition: SnackPosition.TOP,
-      backgroundColor: color.withOpacity(0.9),
-      colorText: Colors.white,
-      icon: Icon(icon, color: Colors.white),
-      margin: const EdgeInsets.all(16),
-      borderRadius: 12,
-      animationDuration: const Duration(milliseconds: 300),
-      duration: const Duration(seconds: 3),
-      isDismissible: true,
-      forwardAnimationCurve: Curves.easeOutBack,
-      reverseAnimationCurve: Curves.easeInBack,
+  void _showToast(String message, {Color? backgroundColor, Color? textColor}) {
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      timeInSecForIosWeb: 1,
+      backgroundColor: backgroundColor ?? Colors.black,
+      textColor: textColor ?? Colors.white,
+      fontSize: 16.0,
     );
   }
 }

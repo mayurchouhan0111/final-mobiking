@@ -1,11 +1,11 @@
-
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:get/get.dart';
 import 'package:mobiking/app/services/connectivity_service.dart';
 
 class ConnectivityController extends GetxController {
   final ConnectivityService _connectivityService = Get.find<ConnectivityService>();
-  final RxBool isConnected = true.obs; // Assume connected initially
+  final RxBool isConnected = true.obs;
+  final RxString connectionType = 'Unknown'.obs;
 
   @override
   void onInit() {
@@ -14,43 +14,42 @@ class ConnectivityController extends GetxController {
   }
 
   void _initConnectivityListener() {
-    // Initial check
-    _connectivityService.checkConnectivity().then((result) {
-      _updateConnectionStatus(result);
+    // FIXED: Handles List<ConnectivityResult>
+    _connectivityService.checkConnectivity().then((results) {
+      _updateConnectionStatus(results);
     });
 
-    // Listen to connectivity changes
-    _connectivityService.connectivityStream.listen((result) {
-      _updateConnectionStatus(result);
+    // FIXED: Handles List<ConnectivityResult>
+    _connectivityService.connectivityStream.listen((results) {
+      _updateConnectionStatus(results);
     });
   }
 
-  void _updateConnectionStatus(ConnectivityResult result) {
-    if (result == ConnectivityResult.none) {
+  // FIXED: Accepts List<ConnectivityResult> with proper type annotation
+  void _updateConnectionStatus(List<ConnectivityResult> results) {
+    if (results.contains(ConnectivityResult.none) || results.isEmpty) {
       isConnected.value = false;
-      // Optionally show a snackbar or dialog if they're currently on a different screen
-      // if (Get.currentRoute != '/NoNetworkScreen') {
-      //   Get.snackbar('Offline', 'You are currently offline!',
-      //       snackPosition: SnackPosition.BOTTOM,
-      //       backgroundColor: Colors.red,
-      //       colorText: Colors.white);
-      // }
+      connectionType.value = 'No Connection';
     } else {
       isConnected.value = true;
-      // if (Get.currentRoute == '/NoNetworkScreen') {
-      //   Get.back(); // Automatically pop the NoNetworkScreen if connectivity is restored
-      // }
-      // Get.snackbar('Online', 'You are back online!',
-      //     snackPosition: SnackPosition.BOTTOM,
-      //     backgroundColor: Colors.green,
-      //     colorText: Colors.white);
+      connectionType.value = _connectivityService.getConnectivityTypes(results);
     }
   }
 
-  // This method will be called when the user taps 'RETRY' on the NoNetworkScreen
+  // FIXED: Handles List<ConnectivityResult>
   Future<void> retryConnection() async {
-    final result = await _connectivityService.checkConnectivity();
-    _updateConnectionStatus(result);
-    // If connection is restored, the Obx in MyApp will handle the navigation back
+    final results = await _connectivityService.checkConnectivity();
+    _updateConnectionStatus(results);
+  }
+
+  // Helper methods
+  Future<bool> get isWiFiConnected async {
+    final results = await _connectivityService.checkConnectivity();
+    return results.contains(ConnectivityResult.wifi);
+  }
+
+  Future<bool> get isMobileConnected async {
+    final results = await _connectivityService.checkConnectivity();
+    return results.contains(ConnectivityResult.mobile);
   }
 }

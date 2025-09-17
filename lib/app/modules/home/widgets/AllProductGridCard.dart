@@ -417,7 +417,7 @@ class AllProductGridCard extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.fromLTRB(8.0, 4.0, 8.0, 2.0), // Reduced padding
                 child: Text(
-                  product.name,
+                  (product.name.isNotEmpty ? product.name : product.fullName),
                   style: textTheme.bodyMedium?.copyWith(
                     color: AppColors.textDark,
                     fontWeight: FontWeight.w700,
@@ -427,6 +427,7 @@ class AllProductGridCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
+
               Padding(
                 padding: const EdgeInsets.fromLTRB(8.0, 2.0, 8.0, 8.0), // Reduced padding
                 child: Column(

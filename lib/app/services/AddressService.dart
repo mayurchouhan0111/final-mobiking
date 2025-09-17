@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart' as dio;
 import 'package:get_storage/get_storage.dart';
 import 'package:get/get.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 import '../data/AddressModel.dart';
 
@@ -39,6 +40,18 @@ class AddressService extends GetxService {
       print('AddressService: Authorization token not found in GetStorage.');
     }
     return token;
+  }
+
+  void _showToast(String message, {Color? backgroundColor, Color? textColor}) {
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      timeInSecForIosWeb: 1,
+      backgroundColor: backgroundColor ?? Colors.black,
+      textColor: textColor ?? Colors.white,
+      fontSize: 16.0,
+    );
   }
 
   Future<List<AddressModel>> fetchUserAddresses() async {
@@ -120,10 +133,7 @@ class AddressService extends GetxService {
         if (userData != null && userData['address'] is List && userData['address'].isNotEmpty) {
           final List addressList = userData['address'];
           final newAddressJson = addressList.last as Map<String, dynamic>;
-          Get.snackbar('Success', 'Address added successfully!',
-              snackPosition: SnackPosition.BOTTOM,
-              backgroundColor: Colors.green.shade600,
-              colorText: Colors.white);
+          _showToast('Address added successfully!', backgroundColor: Colors.green.shade600);
           print('AddressService: Address added successfully (parsed from list): ${newAddressJson['_id']}');
           return AddressModel.fromJson(newAddressJson);
         } else {
@@ -187,10 +197,7 @@ class AddressService extends GetxService {
         final Map<String, dynamic>? updatedAddressJson = body['data'] as Map<String, dynamic>?;
 
         if (updatedAddressJson != null) {
-          Get.snackbar('Success', body['message'] ?? 'Address updated successfully!',
-              snackPosition: SnackPosition.BOTTOM,
-              backgroundColor: Colors.green.shade600,
-              colorText: Colors.white);
+          _showToast(body['message'] ?? 'Address updated successfully!', backgroundColor: Colors.green.shade600);
           return AddressModel.fromJson(updatedAddressJson);
         } else {
           print('AddressService: Updated address data is null or not a Map: $body');
@@ -247,10 +254,7 @@ class AddressService extends GetxService {
       print('AddressService: DELETE ADDRESS RESPONSE BODY: $body');
 
       if (response.statusCode == 200 && body['success'] == true) {
-        Get.snackbar('Success', body['message'] ?? 'Address deleted successfully!',
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.green.shade600,
-            colorText: Colors.white);
+        _showToast(body['message'] ?? 'Address deleted successfully!', backgroundColor: Colors.green.shade600);
         return true;
       } else {
         String errorMessage = 'Failed to delete address.';

@@ -1,6 +1,7 @@
 // app/controllers/order_controller.dart
 
 import 'dart:async';
+import 'dart:convert';
 import 'package:mobiking/app/controllers/user_controller.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
@@ -802,13 +803,23 @@ class OrderController extends GetxController {
     debugPrint('Address parts: $parts');
     final String fullAddress = parts.where((part) => part != null && part.trim().isNotEmpty).join(', ');
     debugPrint('Full address: $fullAddress');
-    final String? addressId = _addressController.selectedAddress.value?.id;
+            final String? addressId = _addressController.selectedAddress.value?.id;
+    if (addressId == null) {
+      debugPrint('🛑 Address ID is null. Aborting order placement.');
+      _showModernSnackbar(
+        'Address Error',
+        'Address ID is missing. Please select an address again.',
+        isError: true,
+        icon: Icons.error_outline,
+      );
+      return null;
+    }
     final bool isCouponApplied = _couponController.isCouponApplied.value;
     final String? couponId = isCouponApplied ? _couponController.selectedCoupon.value?.id : null;
 
     debugPrint('✅ Order request built - Items: ${orderItems.length}, Total: ${totals.total}');
 
-    return CreateOrderRequestModel(
+    final orderRequest = CreateOrderRequestModel(
       userId: CreateUserReferenceRequestModel(
         id: userInfo.userId,
         email: userInfo.email,
@@ -829,6 +840,10 @@ class OrderController extends GetxController {
       addressId: addressId,
       couponId: couponId,
     );
+
+    debugPrint('Order Request Data: ${orderRequest.toJson()}');
+
+    return orderRequest;
   }
 
   // Calculate order totals
@@ -1121,7 +1136,7 @@ class OrderController extends GetxController {
   Future _processOnlineOrder(CreateOrderRequestModel orderRequest) async {
     try {
       debugPrint('🚀 === INITIATING ONLINE ORDER ===');
-      debugPrint('🚀 Order request: ${orderRequest.toJson()}');
+      debugPrint('🚀 Order request: ${jsonEncode(orderRequest.toJson())}');
 
       // Call the order service to create the order and get Razorpay details
       final dynamic rawResponse = await _orderService.initiateOnlineOrder(orderRequest);
@@ -1549,25 +1564,26 @@ class OrderController extends GetxController {
         fetchedOrders.sort((a, b) => b.createdAt?.compareTo(a.createdAt ?? DateTime(0)) ?? 0);
         orderHistory.assignAll(fetchedOrders.cast<OrderModel>());
         if (!isPoll) {
-          print('OrderController: Fetched ${orderHistory.length} orders successfully.');
+          debugPrint('OrderController: Fetched ${orderHistory.length} orders successfully.');
         }
       } else {
         orderHistory.clear();
-        orderHistoryErrorMessage.value = 'No order history found.';
       }
 
-    } on OrderServiceException catch (e) {
+    } on OrderServiceException catch (e, stackTrace) {
       orderHistory.clear();
       orderHistoryErrorMessage.value = e.message;
       if (!isPoll) {
-        print('OrderController: Order History Service Error: Status ${e.statusCode} - Message: ${e.message}');
+        debugPrint('OrderController: Order History Service Error: Status ${e.statusCode} - Message: ${e.message}');
+        debugPrint('Stack Trace: $stackTrace');
       }
 
-    } catch (e) {
+    } catch (e, stackTrace) {
       orderHistory.clear();
-      orderHistoryErrorMessage.value = 'An unexpected error occurred while processing orders: $e';
+      orderHistoryErrorMessage.value = 'An unexpected error occurred. Please try again later.';
       if (!isPoll) {
-        print('OrderController: Unexpected Exception in fetchOrderHistory: $e');
+        debugPrint('OrderController: Unexpected Exception in fetchOrderHistory: $e');
+        debugPrint('Stack Trace: $stackTrace');
       }
 
     } finally {

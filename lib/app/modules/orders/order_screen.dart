@@ -24,7 +24,7 @@ class OrderHistoryScreen extends StatefulWidget {
 class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   final QueryGetXController queryController = Get.find<QueryGetXController>();
   final ScrollController _scrollController = ScrollController();
-  final OrderController controller = Get.put(OrderController());
+  final OrderController controller = Get.find<OrderController>();
 
   Timer? _pollingTimer;
   bool _isScrolling = false;
@@ -136,7 +136,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
         children: [
           const Icon(Icons.error_outline, size: 70, color: AppColors.danger),
           const SizedBox(height: 24),
-          Text('Oops! Failed to load orders.',
+          Text('Oops! Something Went Wrong',
             textAlign: TextAlign.center,
             style: textTheme.headlineSmall?.copyWith(
               color: AppColors.textDark,
@@ -158,7 +158,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
               style: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600, color: AppColors.white),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.success,
+              backgroundColor: AppColors.primaryPurple,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               elevation: 2,
@@ -178,7 +178,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
           Icon(Icons.shopping_bag_outlined, size: 80, color: AppColors.textLight.withOpacity(0.6)),
           const SizedBox(height: 24),
           Text(
-            'No orders found yet!',
+            'No Orders Yet!',
             style: textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.w700,
               color: AppColors.textDark,
@@ -186,7 +186,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
           ),
           const SizedBox(height: 12),
           Text(
-            "Looks like you haven't placed any orders. Start shopping to fill this space!",
+            "You haven't placed any orders yet. Let's get you started!",
             textAlign: TextAlign.center,
             style: textTheme.bodyMedium?.copyWith(color: AppColors.textMedium),
           ),
@@ -194,14 +194,14 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
           ElevatedButton(
             onPressed: () => Get.offAll(() => HomeScreen()),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.success,
+              backgroundColor: AppColors.primaryPurple,
               foregroundColor: AppColors.white,
               padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               elevation: 2,
             ),
             child: Text(
-              'Start Shopping Now',
+              'Start Shopping',
               style: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600, color: AppColors.white),
             ),
           ),

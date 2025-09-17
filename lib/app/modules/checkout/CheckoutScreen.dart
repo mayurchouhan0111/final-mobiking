@@ -66,11 +66,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     if (defaultAddressData != null) {
       final defaultAddress = AddressModel.fromJson(defaultAddressData);
       addressController.selectAddress(defaultAddress);
-    } else if (addressController.addresses.length == 1) {
-      final singleAddress = addressController.addresses.first;
-      addressController.selectAddress(singleAddress);
+    } else if (addressController.addresses.isNotEmpty && addressController.selectedAddress.value == null) {
+      final firstAddress = addressController.addresses.first;
+      addressController.selectAddress(firstAddress);
       // Also save this single address as the default for next time
-      await _storage.write('default_address', singleAddress.toJson());
+      await _storage.write('default_address', firstAddress.toJson());
     }
 
     // Fetch coupons

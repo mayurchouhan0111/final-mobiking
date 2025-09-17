@@ -89,7 +89,7 @@ class CreateOrderRequestModel {
     required this.address,
     required this.method,
     required this.items,
-    this.addressId, // <--- existing optional field
+    required this.addressId, // <--- existing optional field
     this.isAppOrder = true, // <--- existing optional field with default
     this.couponId,       // <--- newly added
     this.couponCode,     // <--- newly added
@@ -111,7 +111,7 @@ class CreateOrderRequestModel {
       'address': address,
       'method': method,
       'items': items.map((item) => item.toJson()).toList(),
-      if (addressId != null) 'addressId': addressId,
+      'addressId': addressId,
       'isAppOrder': isAppOrder, // <--- existing field
 
       // New coupon fields only added if not null:
