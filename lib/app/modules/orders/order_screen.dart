@@ -478,6 +478,7 @@ class _OrderCard extends StatelessWidget {
   final QueryGetXController queryController;
 
   const _OrderCard({
+    super.key,
     required this.order,
     required this.controller,
     required this.queryController,
@@ -520,7 +521,7 @@ class _OrderCard extends StatelessWidget {
 
     String orderDate = 'N/A';
     if (order.createdAt != null) {
-      orderDate = DateFormat('dd MMM, hh:mm a').format(order.createdAt!.toLocal());
+      orderDate = DateFormat('dd MMM yyyy, hh:mm a').format(order.createdAt!.toLocal());
     }
 
     // Logic for Query Button: delivered & has order.id
@@ -587,8 +588,8 @@ class _OrderCard extends StatelessWidget {
                   : null;
               final String productName = item.productDetails?.fullName ?? 'N/A';
               final String variantText =
-              (item.variantName != null && item.variantName.isNotEmpty && item.variantName != 'Default')
-                  ? item.variantName : '';
+              (item.variantName != null && item.variantName!.isNotEmpty && item.variantName != 'Default')
+                  ? item.variantName! : '';
 
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 6),
@@ -691,7 +692,7 @@ class _OrderCard extends StatelessWidget {
               buildDetailRow(
                 context,
                 'Expected Delivery',
-                DateFormat('dd MMM, hh:mm a').format(
+                DateFormat('dd MMM yyyy, hh:mm a').format(
                   DateTime.tryParse(order.expectedDeliveryDate!) ?? DateTime.now(),
                 ),
               ),
@@ -699,7 +700,7 @@ class _OrderCard extends StatelessWidget {
               buildDetailRow(
                 context,
                 'Delivered On',
-                DateFormat('dd MMM, hh:mm a').format(
+                DateFormat('dd MMM yyyy, hh:mm a').format(
                   DateTime.tryParse(order.deliveredAt!) ?? DateTime.now(),
                 ),
               ),
@@ -707,7 +708,6 @@ class _OrderCard extends StatelessWidget {
             if (order.razorpayPaymentId != null && order.razorpayPaymentId!.isNotEmpty)
               buildDetailRow(context, 'Razorpay Payment ID', order.razorpayPaymentId!),
             const SizedBox(height: 16),
-
             // --- TRACK SHIPMENT AND PAYMENT TAG ROW ---
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -720,7 +720,7 @@ class _OrderCard extends StatelessWidget {
                     style: OutlinedButton.styleFrom(
                       side: BorderSide(color: AppColors.info),
                       foregroundColor: AppColors.info,
-                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
                       minimumSize: Size.zero,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       visualDensity: VisualDensity.compact,
@@ -754,14 +754,13 @@ class _OrderCard extends StatelessWidget {
             // --- ACTION BUTTONS: QUERY, CANCEL, RETURN ---
             Builder(
                 builder: (innerContext) {
-                  // Active/cancel/return stuff...
                   bool showAnyActionButton = controller.showCancelButton(order) || controller.showReturnButton(order) || controller.showReviewButton(order);
                   final activeRequests = order.requests?.where((req) {
                     final String status = req.status.toLowerCase();
                     return status != 'rejected' && status != 'resolved';
                   }).toList() ?? [];
 
-                  bool hasActiveOrResolvedQuery = order.requests != null && order.requests!.any((req) =>
+                  bool hasActiveOrResolvedQuery = order.requests?.any((req) =>
                   req.type.toLowerCase() == 'query' &&
                       (req.status.toLowerCase() != 'rejected' && req.status.toLowerCase() != 'cancelled')
                   ) ?? false;
@@ -776,7 +775,6 @@ class _OrderCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Divider(height: 24, thickness: 1, color: AppColors.neutralBackground),
-                      // Active request list (editable for your needs)...
                       if (activeRequests.isNotEmpty) ...[
                         Text(
                           'Active Requests:',
@@ -804,15 +802,14 @@ class _OrderCard extends StatelessWidget {
                       ],
                       if (activeRequests.isNotEmpty && (showAnyActionButton || canRaiseQuery || hasActiveOrResolvedQuery))
                         const Divider(height: 24, thickness: 1, color: AppColors.neutralBackground),
-                      // THE MAIN QUERY BUTTON!
+
                       if (order.id != null)
                         Obx(() {
-                          final String orderId = order.id;
+                          final String? orderId = order.id;
+                          if (orderId == null) return const SizedBox.shrink();
+
                           final bool hasQueryForThisOrder = queryController.myQueries.any(
-                                  (query) {
-                                print('Comparing query.orderId: ${query.orderId} with order.id: $orderId');
-                                return query.orderId != null && query.orderId == orderId;
-                              }
+                                  (query) => query.orderId != null && query.orderId == orderId
                           );
 
                           if (hasQueryForThisOrder) {
@@ -824,7 +821,7 @@ class _OrderCard extends StatelessWidget {
                                   onPressed: () {
                                     Get.to(() => QueryDetailScreen(order: order));
                                   },
-                                  icon: Icon(Icons.info_outline, size: 20, color: AppColors.white),
+                                  icon: const Icon(Icons.info_outline, size: 20, color: AppColors.white),
                                   label: Text(
                                     'View Query',
                                     style: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600, color: AppColors.white),
@@ -845,9 +842,9 @@ class _OrderCard extends StatelessWidget {
                                 width: double.infinity,
                                 child: ElevatedButton.icon(
                                   onPressed: () {
-                                    Get.dialog(RaiseQueryDialog(orderId: order.id));
+                                    Get.dialog(RaiseQueryDialog(orderId: order.id!));
                                   },
-                                  icon: Icon(Icons.chat_bubble_outline, size: 20, color: AppColors.white),
+                                  icon: const Icon(Icons.chat_bubble_outline, size: 20, color: AppColors.white),
                                   label: Text(
                                     'Raise Query',
                                     style: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600, color: AppColors.white),
@@ -865,7 +862,7 @@ class _OrderCard extends StatelessWidget {
                             return const SizedBox.shrink();
                           }
                         }),
-                      // Cancel and Return buttons as needed
+
                       if (controller.showCancelButton(order))
                         buildActionButton(
                           innerContext,
@@ -973,7 +970,7 @@ class _OrderCard extends StatelessWidget {
           return ElevatedButton.icon(
             onPressed: isLoading ? null : onPressed,
             icon: isLoading
-                ? SizedBox(
+                ? const SizedBox(
               width: 20,
               height: 20,
               child: CircularProgressIndicator(
@@ -988,6 +985,7 @@ class _OrderCard extends StatelessWidget {
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: color,
+              disabledBackgroundColor: color.withOpacity(0.5),
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               elevation: 2,
