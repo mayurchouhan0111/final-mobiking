@@ -117,24 +117,20 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
           Positioned(
-            top: 260.0, // Changed from bottom
-            left: 0,
-            right: 0,
-            child: Align(
-              alignment: Alignment.center,
-              child: Obx(() => AnimatedOpacity(
-                opacity: _showScrollToTopButton.value ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 300),
-                child: _showScrollToTopButton.value
-                    ? FloatingActionButton(
-                  mini: true,
-                  backgroundColor: AppColors.darkPurple,
-                  onPressed: _scrollToTop,
-                  child: const Icon(Icons.arrow_upward, color: Colors.white),
-                )
-                    : const SizedBox.shrink(),
-              )),
-            ),
+            bottom: 20.0,
+            right: 20.0,
+            child: Obx(() => AnimatedOpacity(
+              opacity: _showScrollToTopButton.value ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 300),
+              child: _showScrollToTopButton.value
+                  ? FloatingActionButton(
+                mini: true,
+                backgroundColor: AppColors.darkPurple,
+                onPressed: _scrollToTop,
+                child: const Icon(Icons.arrow_upward, color: Colors.white),
+              )
+                  : const SizedBox.shrink(),
+            )),
           ),
         ],
       ),

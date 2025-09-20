@@ -40,18 +40,18 @@ class CategoryModel extends HiveObject {
     if (json['subCategories'] != null) {
       subCategoryIds = List<String>.from(
         (json['subCategories'] as List).map(
-              (e) => e is String ? e : e['_id'] ?? '',
+              (e) => e is String ? e : e['_id']?.toString() ?? '',
         ),
       );
       subCategoryIds.removeWhere((id) => id.isEmpty);
     }
 
     return CategoryModel(
-      id: json['_id'] ?? '',
-      name: json['name'] ?? '',
-      slug: json['slug'] ?? '',
+      id: json['_id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      slug: json['slug']?.toString() ?? '',
       active: json['active'] ?? false,
-      image: json['image'] as String?,
+      image: json['image']?.toString(),
       subCategoryIds: subCategoryIds,
       deliveryCharge: (json['deliveryCharge'] as num?)?.toDouble() ?? 0.0,
     );

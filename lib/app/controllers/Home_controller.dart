@@ -4,9 +4,13 @@ import '../data/Home_model.dart';
 import '../data/group_model.dart';
 import '../services/home_service.dart';
 import 'package:mobiking/app/controllers/connectivity_controller.dart';
+import 'package:get_storage/get_storage.dart'; // Import GetStorage
+import 'package:flutter/widgets.dart'; // For precacheImage
+import 'package:cached_network_image/cached_network_image.dart'; // For CachedNetworkImageProvider
 
 class HomeController extends GetxController {
-  final HomeService _service = HomeService();
+  final GetStorage _box = GetStorage(); // GetStorage instance
+  late final HomeService _service = HomeService(_box); // Pass GetStorage to HomeService
   final ConnectivityController _connectivityController = Get.find();
 
   /// Only expose loading state when needed for UI
@@ -70,6 +74,19 @@ class HomeController extends GetxController {
       }
       print("📥 Home layout fetched: $result");
       _homeData.value = result;
+
+      // Pre-load banner images for all categories
+      if (result != null) {
+        for (var category in result.categories) {
+          if (category.upperBanner != null && category.upperBanner!.isNotEmpty) {
+            precacheImage(CachedNetworkImageProvider(category.upperBanner!), Get.context!); // Pre-cache upper banner
+          }
+          if (category.lowerBanner != null && category.lowerBanner!.isNotEmpty) {
+            precacheImage(CachedNetworkImageProvider(category.lowerBanner!), Get.context!); // Pre-cache lower banner
+          }
+        }
+        print("🖼️ All banner images pre-cached.");
+      }
     } catch (e) {
       print("❌ Error fetching home layout: $e");
     } finally {

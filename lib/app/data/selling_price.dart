@@ -29,11 +29,11 @@ class SellingPrice extends HiveObject {
 
   factory SellingPrice.fromJson(Map<String, dynamic> json) {
     return SellingPrice(
-      id: json['_id'] as String?,
+      id: json['_id']?.toString(),
       price: (json['price'] as num?)?.toInt() ?? 0,
-      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
-      updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
-      variantName: json['variantName'] as String?,
+      createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt'].toString()) : null,
+      updatedAt: json['updatedAt'] != null ? DateTime.tryParse(json['updatedAt'].toString()) : null,
+      variantName: json['variantName']?.toString(),
     );
   }
 

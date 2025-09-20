@@ -17,8 +17,8 @@ class KeyInformation extends HiveObject {
 
   factory KeyInformation.fromJson(Map<String, dynamic> json) {
     return KeyInformation(
-      title: json['title'] ?? '',
-      content: json['content'] ?? '',
+      title: json['title']?.toString() ?? '',
+      content: json['content']?.toString() ?? '',
     );
   }
 

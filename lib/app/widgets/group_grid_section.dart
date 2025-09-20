@@ -124,7 +124,7 @@ class GroupWithProductsSection extends StatelessWidget {
                         print('Navigating to all products for group: ${group.name}');
                       },
                       style: TextButton.styleFrom(
-                        foregroundColor: AppColors.primaryPurple,
+                        backgroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 6),
                         shape: RoundedRectangleBorder(

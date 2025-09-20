@@ -43,20 +43,20 @@ class QueryModel {
         createdAt = createdAt ?? DateTime.now();
 
   factory QueryModel.fromJson(Map<String, dynamic> json) {
-    String id = json['_id'] ?? json['id'] ?? '';
-    String title = json['title'] ?? '';
-    String message = json['message'] ?? json['description'] ?? '';
+    String id = json['_id']?.toString() ?? json['id']?.toString() ?? '';
+    String title = json['title']?.toString() ?? '';
+    String message = json['message']?.toString() ?? json['description']?.toString() ?? '';
 
     // Handle raisedBy (Map or String)
     String userEmail = '';
     if (json['raisedBy'] is Map<String, dynamic>) {
-      userEmail = json['raisedBy']['email'] ?? '';
+      userEmail = json['raisedBy']['email']?.toString() ?? '';
     } else {
-      userEmail = json['raisedBy'] ?? '';
+      userEmail = json['raisedBy']?.toString() ?? '';
     }
 
     final createdAt =
-        DateTime.tryParse(json['createdAt'] ?? '') ?? DateTime.now();
+        DateTime.tryParse(json['createdAt']?.toString() ?? '') ?? DateTime.now();
 
     final replies = (json['replies'] as List<dynamic>?)
         ?.map((e) => ReplyModel.fromJson(e))
@@ -65,7 +65,7 @@ class QueryModel {
 
     bool isRead = json['isRead'] ?? false;
 
-    String? status = json['status'];
+    String? status = json['status']?.toString();
     final isResolved = json['isResolved'];
     if (status == null && isResolved != null) {
       status = isResolved ? 'resolved' : 'open';
@@ -74,13 +74,13 @@ class QueryModel {
     String? assignedTo;
     if (json['assignedTo'] is Map<String, dynamic>) {
       final a = json['assignedTo'];
-      assignedTo = a['name'] ?? a['_id'] ?? a['id'];
+      assignedTo = a['name']?.toString() ?? a['_id']?.toString() ?? a['id']?.toString();
     } else {
-      assignedTo = json['assignedTo'];
+      assignedTo = json['assignedTo']?.toString();
     }
 
-    final raisedAt = DateTime.tryParse(json['raisedAt'] ?? '');
-    final resolvedAt = DateTime.tryParse(json['resolvedAt'] ?? '');
+    final raisedAt = DateTime.tryParse(json['raisedAt']?.toString() ?? '');
+    final resolvedAt = DateTime.tryParse(json['resolvedAt']?.toString() ?? '');
 
     int? rating;
     final rawRating = json['rating'];
@@ -95,10 +95,10 @@ class QueryModel {
     if (rawOrderId is String) {
       orderId = rawOrderId;
     } else if (rawOrderId is Map<String, dynamic>) {
-      orderId = rawOrderId['_id'] ?? rawOrderId['id'];
+      orderId = rawOrderId['_id']?.toString() ?? rawOrderId['id']?.toString();
     }
 
-    final review = json['review'];
+    final review = json['review']?.toString();
 
     return QueryModel(
       id: id,
@@ -179,14 +179,14 @@ class ReplyModel {
     String userId = '';
     if (json['messagedBy'] is Map<String, dynamic>) {
       final mb = json['messagedBy'];
-      userId = mb['_id'] ?? mb['id'] ?? '';
+      userId = mb['_id']?.toString() ?? mb['id']?.toString() ?? '';
     } else {
-      userId = json['messagedBy'] ?? '';
+      userId = json['messagedBy']?.toString() ?? '';
     }
 
-    final replyText = json['replyText'] ?? json['message'] ?? '';
+    final replyText = json['replyText']?.toString() ?? json['message']?.toString() ?? '';
     final timestamp =
-        DateTime.tryParse(json['messagedAt'] ?? '') ?? DateTime.now();
+        DateTime.tryParse(json['messagedAt']?.toString() ?? '') ?? DateTime.now();
 
     final bool isAdmin = json['isAdmin'] ??
         (json['messagedBy'] is Map<String, dynamic> &&
@@ -245,11 +245,11 @@ class MessageModel {
 
   factory MessageModel.fromMap(Map<String, dynamic> map) {
     return MessageModel(
-      id: map['id'] ?? '',
-      queryId: map['queryId'] ?? '',
-      sender: map['sender'] ?? '',
-      text: map['text'] ?? '',
-      timestamp: DateTime.tryParse(map['timestamp'] ?? '') ?? DateTime.now(),
+      id: map['id']?.toString() ?? '',
+      queryId: map['queryId']?.toString() ?? '',
+      sender: map['sender']?.toString() ?? '',
+      text: map['text']?.toString() ?? '',
+      timestamp: DateTime.tryParse(map['timestamp']?.toString() ?? '') ?? DateTime.now(),
     );
   }
 

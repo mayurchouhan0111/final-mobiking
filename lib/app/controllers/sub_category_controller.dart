@@ -48,25 +48,13 @@ class SubCategoryController extends GetxController {
 
       // Show success message only for forced refresh
       if (forceRefresh && data.isNotEmpty) {
-        Get.snackbar(
-          'Success',
-          'Subcategories refreshed successfully!',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green.shade600,
-          colorText: Colors.white,
-        );
+
       }
 
     } catch (e, stackTrace) {
       print('[SubCategoryController] Error loading subcategories: $e');
       print(stackTrace);
-      Get.snackbar(
-        'Error',
-        'Failed to load subcategories: $e',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.shade600,
-        colorText: Colors.white,
-      );
+
       await _service.clearCache(); // Clear cache on error
     } finally {
       isLoading.value = false;
@@ -121,13 +109,7 @@ class SubCategoryController extends GetxController {
   Future<void> clearCache() async {
     try {
       await _service.clearCache();
-      Get.snackbar(
-        'Success',
-        'Cache cleared successfully!',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.blue.shade600,
-        colorText: Colors.white,
-      );
+
     } catch (e) {
       print('[SubCategoryController] Error clearing cache: $e');
     }

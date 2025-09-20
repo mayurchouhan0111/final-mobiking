@@ -1,7 +1,7 @@
 // lib/screens/product_page.dart
 
 import 'dart:math';
-
+import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -55,540 +55,6 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
   final RxBool _productDetailsVisible = false.obs;
   static const double _horizontalPagePadding = 16.0;
 
-  // DECODE HTML ENTITIES
-  String _decodeHtmlEntities(String text) {
-    return text
-        .replaceAll('&lt;', '<')
-        .replaceAll('&gt;', '>')
-        .replaceAll('&amp;', '&')
-        .replaceAll('&quot;', '"')
-        .replaceAll('&#39;', "'")
-        .replaceAll('&nbsp;', ' ');
-  }
-
-  // PARSE MARKDOWN IMAGES
-  List<String> _extractMarkdownImages(String content) {
-    final imageRegex = RegExp(r'!\[.*?\]\((.*?)\)');
-    final matches = imageRegex.allMatches(content);
-    return matches.map((match) => match.group(1)!).toList();
-  }
-
-  // PARSE MARKDOWN TABLE
-  Map<String, dynamic>? _parseMarkdownTable(String content) {
-    final lines = content.split('\n').where((line) => line.trim().isNotEmpty).toList();
-
-    // Find table lines (contain |)
-    final tableLines = lines.where((line) => line.contains('|')).toList();
-    if (tableLines.length < 2) return null;
-
-    // Parse headers
-    final headerLine = tableLines.first.trim();
-    final headers = headerLine.split('|')
-        .map((h) => h.trim())
-        .where((h) => h.isNotEmpty)
-        .toList();
-
-    if (headers.isEmpty) return null;
-
-    // Skip separator line and parse data rows
-    final dataRows = <List<String>>[];
-    for (int i = 2; i < tableLines.length; i++) {
-      final row = tableLines[i].trim();
-      final cells = row.split('|')
-          .map((c) => c.trim())
-          .where((c) => c.isNotEmpty)
-          .toList();
-
-      if (cells.isNotEmpty) {
-        dataRows.add(cells);
-      }
-    }
-
-    return {
-      'headers': headers,
-      'rows': dataRows,
-    };
-  }
-
-  // ENHANCED CONTENT PARSER FOR BOTH HTML AND MARKDOWN
-  Widget _buildHtmlDescription(String content, BuildContext context) {
-    if (content.isEmpty) {
-      return Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: Colors.grey.shade50,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.grey.shade200),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        child: Text(
-          'No detailed description is available for this product.',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: AppColors.textMedium,
-            height: 1.5,
-          ),
-        ),
-      );
-    }
-
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: _parseContentToWidgets(content, context),
-      ),
-    );
-  }
-
-  // PARSE BOTH HTML AND MARKDOWN CONTENT
-  List<Widget> _parseContentToWidgets(String content, BuildContext context) {
-    List<Widget> widgets = [];
-
-    try {
-      final decodedContent = _decodeHtmlEntities(content);
-
-      // Check if it's HTML or Markdown
-      if (decodedContent.contains('<') && decodedContent.contains('>')) {
-        // Parse as HTML
-        widgets.addAll(_parseHtmlContent(decodedContent, context));
-      } else {
-        // Parse as Markdown/Plain text
-        widgets.addAll(_parseMarkdownContent(decodedContent, context));
-      }
-
-      // If no widgets were created, show plain text
-      if (widgets.isEmpty) {
-        widgets.add(Text(
-          decodedContent,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: AppColors.textMedium,
-            height: 1.5,
-          ),
-        ));
-      }
-    } catch (e) {
-      debugPrint('Error parsing content: $e');
-      widgets.add(Text(
-        content.replaceAll(RegExp(r'[<>]'), ''),
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-          color: AppColors.textMedium,
-          height: 1.5,
-        ),
-      ));
-    }
-
-    return widgets;
-  }
-
-  // PARSE HTML CONTENT
-  List<Widget> _parseHtmlContent(String htmlContent, BuildContext context) {
-    List<Widget> widgets = [];
-
-    try {
-      final document = html_parser.parse(htmlContent);
-      final body = document.body;
-
-      if (body != null) {
-        for (var element in body.children) {
-          widgets.addAll(_processHtmlElement(element, context));
-        }
-      }
-    } catch (e) {
-      debugPrint('Error parsing HTML: $e');
-    }
-
-    return widgets;
-  }
-
-  // PARSE MARKDOWN CONTENT
-  List<Widget> _parseMarkdownContent(String markdownContent, BuildContext context) {
-    List<Widget> widgets = [];
-
-    final lines = markdownContent.split('\n');
-    String currentContent = '';
-    bool inTable = false;
-    List<String> tableLines = [];
-
-    for (int i = 0; i < lines.length; i++) {
-      final line = lines[i].trim();
-
-      // Check for markdown images
-      if (line.contains('![') && line.contains('](')) {
-        // Add any accumulated text first
-        if (currentContent.trim().isNotEmpty) {
-          widgets.add(Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Text(
-              currentContent.trim(),
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.textMedium,
-                height: 1.5,
-              ),
-            ),
-          ));
-          currentContent = '';
-        }
-
-        // Extract and add images
-        final images = _extractMarkdownImages(line);
-        for (final imageUrl in images) {
-          widgets.add(_buildImageWidget(imageUrl, context));
-        }
-        continue;
-      }
-
-      // Check for table start/continuation
-      if (line.contains('|')) {
-        if (!inTable) {
-          // Add any accumulated text first
-          if (currentContent.trim().isNotEmpty) {
-            widgets.add(Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Text(
-                currentContent.trim(),
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textMedium,
-                  height: 1.5,
-                ),
-              ),
-            ));
-            currentContent = '';
-          }
-          inTable = true;
-        }
-        tableLines.add(line);
-        continue;
-      } else if (inTable) {
-        // End of table, process it
-        if (tableLines.isNotEmpty) {
-          final tableData = _parseMarkdownTable(tableLines.join('\n'));
-          if (tableData != null) {
-            widgets.add(_buildMarkdownTable(tableData, context));
-          }
-        }
-        tableLines.clear();
-        inTable = false;
-      }
-
-      // Regular text line
-      if (line.isNotEmpty) {
-        currentContent += line + '\n';
-      } else if (currentContent.trim().isNotEmpty) {
-        // Empty line, add accumulated content as paragraph
-        widgets.add(Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: Text(
-            currentContent.trim(),
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppColors.textMedium,
-              height: 1.5,
-            ),
-          ),
-        ));
-        currentContent = '';
-      }
-    }
-
-    // Handle remaining table at end
-    if (inTable && tableLines.isNotEmpty) {
-      final tableData = _parseMarkdownTable(tableLines.join('\n'));
-      if (tableData != null) {
-        widgets.add(_buildMarkdownTable(tableData, context));
-      }
-    }
-
-    // Add any remaining content
-    if (currentContent.trim().isNotEmpty) {
-      widgets.add(Text(
-        currentContent.trim(),
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-          color: AppColors.textMedium,
-          height: 1.5,
-        ),
-      ));
-    }
-
-    return widgets;
-  }
-
-  // BUILD IMAGE WIDGET
-  Widget _buildImageWidget(String imageUrl, BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.grey.shade300),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: Image.network(
-            imageUrl,
-            width: double.infinity,
-            fit: BoxFit.cover,
-            loadingBuilder: (context, child, loadingProgress) {
-              if (loadingProgress == null) return child;
-              return Container(
-                height: 200,
-                child: Center(
-                  child: CircularProgressIndicator(
-                    value: loadingProgress.expectedTotalBytes != null
-                        ? loadingProgress.cumulativeBytesLoaded /
-                        loadingProgress.expectedTotalBytes!
-                        : null,
-                  ),
-                ),
-              );
-            },
-            errorBuilder: (context, error, stackTrace) {
-              return Container(
-                height: 200,
-                color: Colors.grey.shade200,
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.broken_image,
-                          size: 48, color: Colors.grey.shade400),
-                      const SizedBox(height: 8),
-                      Text('Image failed to load',
-                          style: TextStyle(color: Colors.grey.shade600)),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ),
-    );
-  }
-
-  // BUILD MARKDOWN TABLE
-  Widget _buildMarkdownTable(Map<String, dynamic> tableData, BuildContext context) {
-    final List<String> headers = tableData['headers'];
-    final List<List<String>> rows = tableData['rows'];
-
-    if (headers.isEmpty || rows.isEmpty) return const SizedBox.shrink();
-
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 12),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade300, width: 1),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: Table(
-          border: TableBorder.all(
-            color: Colors.grey.shade300,
-            width: 1,
-          ),
-          columnWidths: const {
-            0: FlexColumnWidth(1),
-            1: FlexColumnWidth(2),
-          },
-          children: [
-            // Header row
-            TableRow(
-              decoration: BoxDecoration(color: Colors.grey.shade100),
-              children: headers.map((header) =>
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    child: Text(
-                      header,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textDark,
-                      ),
-                    ),
-                  ),
-              ).toList(),
-            ),
-            // Data rows
-            ...rows.map((row) =>
-                TableRow(
-                  children: row.map((cell) =>
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                        ),
-                        child: Text(
-                          cell,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppColors.textMedium,
-                          ),
-                        ),
-                      ),
-                  ).toList(),
-                ),
-            ).toList(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // PROCESS HTML ELEMENTS (keep existing method)
-  List<Widget> _processHtmlElement(dynamic element, BuildContext context) {
-    List<Widget> widgets = [];
-
-    if (element.localName == 'h1' || element.localName == 'h2' || element.localName == 'h3') {
-      widgets.add(Padding(
-        padding: const EdgeInsets.only(top: 16, bottom: 8),
-        child: Text(
-          element.text.trim(),
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: AppColors.textDark,
-          ),
-        ),
-      ));
-    } else if (element.localName == 'p') {
-      if (element.text.trim().isNotEmpty) {
-        widgets.add(Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: Text(
-            element.text.trim(),
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppColors.textMedium,
-              height: 1.5,
-            ),
-          ),
-        ));
-      }
-    } else if (element.localName == 'ul') {
-      for (var li in element.children) {
-        if (li.localName == 'li') {
-          widgets.add(Padding(
-            padding: const EdgeInsets.only(bottom: 4),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  margin: const EdgeInsets.only(top: 8, right: 8),
-                  width: 4,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.textDark,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    li.text.trim(),
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textMedium,
-                      height: 1.4,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ));
-        }
-      }
-    } else if (element.localName == 'img') {
-      final String? src = element.attributes['src'];
-      if (src != null && src.isNotEmpty) {
-        widgets.add(_buildImageWidget(src, context));
-      }
-    } else if (element.localName == 'table') {
-      widgets.add(_buildCustomTable(element, context));
-    }
-
-    return widgets;
-  }
-
-  // BUILD CUSTOM HTML TABLE (keep existing method)
-  Widget _buildCustomTable(dynamic tableElement, BuildContext context) {
-    List<TableRow> rows = [];
-
-    try {
-      var tableBody = tableElement.querySelector('tbody');
-      var tableRows = tableBody?.children ?? tableElement.children.where((e) => e.localName == 'tr').toList();
-
-      for (var row in tableRows) {
-        if (row.localName == 'tr') {
-          List<Widget> cells = [];
-          var cellElements = row.children.where((e) => e.localName == 'td' || e.localName == 'th').toList();
-
-          for (var cell in cellElements) {
-            bool isHeader = cell.localName == 'th';
-            cells.add(
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: isHeader ? Colors.grey.shade100 : Colors.white,
-                  border: Border.all(color: Colors.grey.shade300, width: 1),
-                ),
-                child: Text(
-                  cell.text.trim(),
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: isHeader ? FontWeight.bold : FontWeight.normal,
-                    color: isHeader ? AppColors.textDark : AppColors.textMedium,
-                  ),
-                ),
-              ),
-            );
-          }
-
-          if (cells.isNotEmpty) {
-            rows.add(TableRow(children: cells));
-          }
-        }
-      }
-    } catch (e) {
-      debugPrint('Error parsing table: $e');
-    }
-
-    if (rows.isEmpty) return const SizedBox.shrink();
-
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 12),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade300, width: 1),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: Table(
-          border: TableBorder.all(
-            color: Colors.grey.shade300,
-            width: 1,
-          ),
-          columnWidths: const {
-            0: FlexColumnWidth(1),
-            1: FlexColumnWidth(2),
-          },
-          children: rows,
-        ),
-      ),
-    );
-  }
-
-  String _convertHtmlToPlainText(String htmlText) {
-    if (htmlText.isEmpty) return htmlText;
-    try {
-      final decodedHtml = _decodeHtmlEntities(htmlText);
-      final document = html_parser.parse(decodedHtml);
-      String plainText = document.body?.text ?? htmlText;
-      plainText = plainText.replaceAll(RegExp(r'\s+'), ' ').trim();
-      return plainText;
-    } catch (e) {
-      debugPrint('Error parsing HTML: $e');
-      return htmlText;
-    }
-  }
-
-  // Keep all your existing methods for initState, dispose, build, etc. - they remain exactly the same
   @override
   void initState() {
     super.initState();
@@ -667,7 +133,6 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
 
     if (!isVariantOutOfStock) {
       setState(() {
-        // Find the index of the selected variant in the original product.variants.keys list
         selectedVariantIndex = widget.product.variants.keys.toList().indexOf(selectedVariantName);
         _currentSelectedVariantName.value = selectedVariantName;
         _syncVariantData();
@@ -694,10 +159,10 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
         selectedVariantIndex < widget.product.variants.length) {
       final variantKey = widget.product.variants.keys.elementAt(selectedVariantIndex);
       final variantStockValue = widget.product.variants[variantKey] ?? 0;
-      debugPrint('ProductPage: _syncVariantData - Variant: $variantKey, Stock: $variantStockValue'); // ADDED DEBUG PRINT
+      debugPrint('ProductPage: _syncVariantData - Variant: $variantKey, Stock: $variantStockValue');
       _currentVariantStock.value = variantStockValue;
     } else {
-      debugPrint('ProductPage: _syncVariantData - Using totalStock: ${widget.product.totalStock}'); // ADDED DEBUG PRINT
+      debugPrint('ProductPage: _syncVariantData - Using totalStock: ${widget.product.totalStock}');
       _currentVariantStock.value = widget.product.totalStock;
     }
   }
@@ -711,33 +176,6 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
     );
     if (cartController.isLoading.value || _currentVariantStock.value <= 0 ||
         _currentVariantStock.value <= quantityInCart) {
-      // if (_currentVariantStock.value <= 0) {
-      //   Get.snackbar(
-      //     'Out of Stock',
-      //     'The selected variant is currently out of stock.',
-      //     snackPosition: SnackPosition.BOTTOM,
-      //     backgroundColor: AppColors.danger.withOpacity(0.8),
-      //     colorText: Colors.white,
-      //     icon: const Icon(Icons.info_outline, color: Colors.white),
-      //     margin: const EdgeInsets.all(10),
-      //     borderRadius: 10,
-      //     animationDuration: const Duration(milliseconds: 300),
-      //     duration: const Duration(seconds: 3),
-      //   );
-      // } else if (_currentVariantStock.value <= quantityInCart) {
-      //   Get.snackbar(
-      //     'Limit Reached',
-      //     'You have reached the maximum available quantity for this variant.',
-      //     snackPosition: SnackPosition.BOTTOM,
-      //     backgroundColor: AppColors.danger.withOpacity(0.8),
-      //     colorText: Colors.white,
-      //     icon: const Icon(Icons.info_outline, color: Colors.white),
-      //     margin: const EdgeInsets.all(10),
-      //     borderRadius: 10,
-      //     animationDuration: const Duration(milliseconds: 300),
-      //     duration: const Duration(seconds: 3),
-      //   );
-      // }
       return;
     }
 
@@ -765,6 +203,248 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
     }
   }
 
+  // FIXED HTML conversion method
+  String _convertHtmlToPlainText(String htmlString) {
+    if (htmlString.isEmpty) return '';
+
+    try {
+      final document = html_parser.parse(htmlString);
+      String text = document.body?.text ?? '';
+
+      // Clean up extra whitespace
+      text = text.replaceAll(RegExp(r'\s+'), ' ').trim();
+
+      return text;
+    } catch (e) {
+      // Fallback: strip HTML tags manually
+      return htmlString
+          .replaceAll(RegExp(r'<[^>]*>'), '')
+          .replaceAll(RegExp(r'&nbsp;'), ' ')
+          .replaceAll(RegExp(r'&amp;'), '&')
+          .replaceAll(RegExp(r'&lt;'), '<')
+          .replaceAll(RegExp(r'&gt;'), '>')
+          .replaceAll(RegExp(r'&quot;'), '"')
+          .replaceAll(RegExp(r'\s+'), ' ')
+          .trim();
+    }
+  }
+
+  // COMPLETELY REWRITTEN HTML sanitization method
+  String _sanitizeHtml(String htmlString) {
+    if (htmlString.isEmpty) return htmlString;
+
+    // Debug print to see what we're working with
+    print("Original HTML (first 200 chars): ${htmlString.substring(0, min(200, htmlString.length))}...");
+
+    // Remove any script tags for security
+    htmlString = htmlString.replaceAll(RegExp(r'<script[^>]*>.*?</script>', caseSensitive: false, dotAll: true), '');
+
+    // Remove any style tags that might contain problematic CSS
+    htmlString = htmlString.replaceAll(RegExp(r'<style[^>]*>.*?</style>', caseSensitive: false, dotAll: true), '');
+
+    // Fix common HTML entities
+    htmlString = htmlString.replaceAll(RegExp(r'&nbsp;'), ' ');
+    htmlString = htmlString.replaceAll(RegExp(r'&amp;'), '&');
+    htmlString = htmlString.replaceAll(RegExp(r'&lt;'), '<');
+    htmlString = htmlString.replaceAll(RegExp(r'&gt;'), '>');
+    htmlString = htmlString.replaceAll(RegExp(r'&quot;'), '"');
+    htmlString = htmlString.replaceAll(RegExp(r'&#39;'), "'");
+
+    // Remove ALL inline styles to prevent CSS variable issues
+    htmlString = htmlString.replaceAll(RegExp(r'style="[^"]*"'), '');
+
+    // Remove class attributes that might reference unavailable CSS
+    htmlString = htmlString.replaceAll(RegExp(r'class="[^"]*"'), '');
+
+    // Clean up any remaining CSS variables or complex selectors
+    htmlString = htmlString.replaceAll(RegExp(r'var\([^)]*\)'), '');
+
+    // Remove any remaining problematic attributes
+    htmlString = htmlString.replaceAll(RegExp(r'(data-[^=]*="[^"]*")'), '');
+    htmlString = htmlString.replaceAll(RegExp(r'(id="[^"]*")'), '');
+
+    // Remove empty paragraphs and divs
+    htmlString = htmlString.replaceAll(RegExp(r'<p[^>]*>\s*</p>'), '');
+    htmlString = htmlString.replaceAll(RegExp(r'<div[^>]*>\s*</div>'), '');
+
+    // Clean up multiple consecutive whitespaces and line breaks
+    htmlString = htmlString.replaceAll(RegExp(r'\s+'), ' ').trim();
+
+    print("Sanitized HTML (first 200 chars): ${htmlString.substring(0, min(200, htmlString.length))}...");
+
+    return htmlString;
+  }
+
+  // COMPLETELY REWRITTEN Enhanced Product Description Widget
+  Widget _buildEnhancedProductDescription(String htmlDescription, TextTheme textTheme) {
+    if (htmlDescription.isEmpty) return const SizedBox.shrink();
+
+    String sanitizedHtml = _sanitizeHtml(htmlDescription);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Product Description',
+            style: textTheme.titleMedium?.copyWith(
+                color: AppColors.textDark,
+                fontWeight: FontWeight.w600
+            ),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade200),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.shade100,
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: _buildDescriptionContent(sanitizedHtml, textTheme),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // NEW method to handle description content with fallback
+  Widget _buildDescriptionContent(String htmlDescription, TextTheme textTheme) {
+    try {
+      // First try: Use Html widget with comprehensive styling
+      return Html(
+        data: htmlDescription,
+        style: {
+          // Base body styling
+          "body": Style(
+            fontSize: FontSize(14.0),
+            color: AppColors.textMedium,
+            lineHeight: LineHeight(1.6),
+            margin: Margins.zero,
+            padding: HtmlPaddings.zero,
+            fontFamily: 'Roboto',
+          ),
+
+          // Paragraph styling
+          "p": Style(
+            fontSize: FontSize(14.0),
+            color: AppColors.textMedium,
+            lineHeight: LineHeight(1.5),
+            margin: Margins.only(bottom: 12.0),
+            padding: HtmlPaddings.zero,
+          ),
+
+          // Div styling
+          "div": Style(
+            fontSize: FontSize(14.0),
+            color: AppColors.textMedium,
+            lineHeight: LineHeight(1.5),
+            margin: Margins.only(bottom: 8.0),
+          ),
+
+          // Heading styles
+          "h1": Style(
+            fontSize: FontSize(22.0),
+            fontWeight: FontWeight.bold,
+            color: AppColors.textDark,
+            margin: Margins.only(bottom: 16.0),
+          ),
+          "h2": Style(
+            fontSize: FontSize(20.0),
+            fontWeight: FontWeight.bold,
+            color: AppColors.textDark,
+            margin: Margins.only(bottom: 14.0),
+          ),
+          "h3": Style(
+            fontSize: FontSize(18.0),
+            fontWeight: FontWeight.w600,
+            color: AppColors.textDark,
+            margin: Margins.only(bottom: 12.0),
+          ),
+
+          // List styling
+          "ul": Style(
+            margin: Margins.only(bottom: 16.0, left: 16.0),
+            padding: HtmlPaddings.zero,
+          ),
+          "ol": Style(
+            margin: Margins.only(bottom: 16.0, left: 16.0),
+            padding: HtmlPaddings.zero,
+          ),
+          "li": Style(
+            fontSize: FontSize(14.0),
+            color: AppColors.textMedium,
+            lineHeight: LineHeight(1.6),
+            margin: Margins.only(bottom: 8.0),
+            display: Display.listItem,
+          ),
+
+          // Span styling
+          "span": Style(
+            fontSize: FontSize(14.0),
+            color: AppColors.textMedium,
+          ),
+
+          // Text formatting
+          "strong": Style(
+            fontWeight: FontWeight.bold,
+            color: AppColors.textDark,
+          ),
+          "b": Style(
+            fontWeight: FontWeight.bold,
+            color: AppColors.textDark,
+          ),
+          "em": Style(
+            fontStyle: FontStyle.italic,
+          ),
+          "i": Style(
+            fontStyle: FontStyle.italic,
+          ),
+
+          // Break tag
+          "br": Style(
+            fontSize: FontSize(8.0),
+          ),
+
+          // Override any problematic styles
+          "*": Style(
+            backgroundColor: Colors.transparent,
+          ),
+        },
+
+        // Remove problematic extensions
+        extensions: const [],
+
+        // Handle link taps
+        onLinkTap: (url, attributes, element) {
+          print("Link tapped: $url");
+        },
+
+        shrinkWrap: true,
+      );
+    } catch (e) {
+      print("HTML rendering failed: $e");
+
+      // Fallback: Use plain text with proper formatting
+      return Text(
+        _convertHtmlToPlainText(htmlDescription),
+        style: textTheme.bodyMedium?.copyWith(
+          color: AppColors.textMedium,
+          height: 1.6,
+          fontSize: 14.0,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final product = widget.product;
@@ -785,13 +465,11 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
       sellingPrice = 0.0;
     }
 
-
     final variantNames = product.variants.keys.toList();
     final inStockVariantNames = variantNames.where((name) {
       final variantStockValue = product.variants[name] ?? 0;
       return variantStockValue > 0;
     }).toList();
-
 
     return Scaffold(
       backgroundColor: AppColors.white,
@@ -893,27 +571,10 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
                               secondChild: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // ENHANCED PRODUCT DESCRIPTION WITH MARKDOWN SUPPORT
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'Product Description',
-                                          style: textTheme.titleMedium?.copyWith(
-                                              color: AppColors.textDark,
-                                              fontWeight: FontWeight.w600
-                                          ),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        // USE THE ENHANCED PARSING METHOD
-                                        _buildHtmlDescription(product.description, context),
-                                      ],
-                                    ),
-                                  ),
+                                  // FIXED ENHANCED PRODUCT DESCRIPTION
+                                  _buildEnhancedProductDescription(product.description, textTheme),
 
-                                  // Keep existing description points and key information sections
+                                  // Keep existing description points section
                                   if (product.descriptionPoints.isNotEmpty)
                                     Padding(
                                       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -921,7 +582,7 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            'Product Description Points',
+                                            'Product Features',
                                             style: textTheme.titleMedium?.copyWith(
                                               color: AppColors.textDark,
                                               fontWeight: FontWeight.w600,
@@ -931,24 +592,36 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
                                           Container(
                                             width: double.infinity,
                                             decoration: BoxDecoration(
-                                              color: Colors.grey.shade50,
-                                              borderRadius: BorderRadius.circular(8),
+                                              color: Colors.white,
+                                              borderRadius: BorderRadius.circular(12),
                                               border: Border.all(color: Colors.grey.shade200),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.grey.shade100,
+                                                  blurRadius: 4,
+                                                  offset: const Offset(0, 2),
+                                                ),
+                                              ],
                                             ),
-                                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+                                            padding: const EdgeInsets.all(16),
                                             child: Column(
                                               crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: product.descriptionPoints.map((point) {
-                                                return Padding(
-                                                  padding: const EdgeInsets.symmetric(vertical: 6.0),
+                                              children: product.descriptionPoints.asMap().entries.map((entry) {
+                                                int index = entry.key;
+                                                String point = entry.value;
+
+                                                return Container(
+                                                  margin: EdgeInsets.only(bottom: index == product.descriptionPoints.length - 1 ? 0 : 12),
                                                   child: Row(
                                                     crossAxisAlignment: CrossAxisAlignment.start,
                                                     children: [
-                                                      Text(
-                                                        '• ',
-                                                        style: textTheme.bodyMedium?.copyWith(
-                                                          color: AppColors.textDark,
-                                                          fontWeight: FontWeight.w500,
+                                                      Container(
+                                                        margin: const EdgeInsets.only(top: 6, right: 12),
+                                                        width: 8,
+                                                        height: 8,
+                                                        decoration: BoxDecoration(
+                                                          color: AppColors.success,
+                                                          borderRadius: BorderRadius.circular(4),
                                                         ),
                                                       ),
                                                       Expanded(
@@ -956,6 +629,7 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
                                                           _convertHtmlToPlainText(point),
                                                           style: textTheme.bodyMedium?.copyWith(
                                                             color: AppColors.textMedium,
+                                                            height: 1.4,
                                                           ),
                                                         ),
                                                       ),
@@ -969,13 +643,13 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
                                       ),
                                     ),
 
+                                  // Key information section
                                   if (product.keyInformation.isNotEmpty)
                                     Padding(
                                       padding: const EdgeInsets.symmetric(vertical: 8.0),
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          const SizedBox(height: 8),
                                           Text(
                                             'Highlights',
                                             style: textTheme.titleMedium?.copyWith(
@@ -987,15 +661,22 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
                                           Container(
                                             width: double.infinity,
                                             decoration: BoxDecoration(
-                                              color: Colors.grey.shade50,
-                                              borderRadius: BorderRadius.circular(8),
+                                              color: Colors.white,
+                                              borderRadius: BorderRadius.circular(12),
                                               border: Border.all(color: Colors.grey.shade200),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.grey.shade100,
+                                                  blurRadius: 4,
+                                                  offset: const Offset(0, 2),
+                                                ),
+                                              ],
                                             ),
-                                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                                            padding: const EdgeInsets.all(16),
                                             child: Column(
                                               children: product.keyInformation.map((info) {
                                                 return Padding(
-                                                  padding: const EdgeInsets.symmetric(vertical: 6.0),
+                                                  padding: const EdgeInsets.symmetric(vertical: 8.0),
                                                   child: Row(
                                                     crossAxisAlignment: CrossAxisAlignment.start,
                                                     children: [
@@ -1040,7 +721,9 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
                     ),
                   ),
 
-                  // Keep existing sections for variants, etc.
+                  const SizedBox(height: 24),
+
+                  // Variant selection section
                   if (inStockVariantNames.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: _horizontalPagePadding),
@@ -1051,31 +734,27 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
                           spacing: 8.0,
                           runSpacing: 8.0,
                           children: List.generate(inStockVariantNames.length, (index) {
-                            final isSelected = selectedVariantIndex == index;
                             final variantName = inStockVariantNames[index];
+                            final isSelected = _currentSelectedVariantName.value == variantName;
 
                             return ChoiceChip(
-                              // Set showCheckmark to false to remove the check icon
                               showCheckmark: false,
                               label: Text(variantName),
                               selected: isSelected,
                               onSelected: (selected) {
                                 if (selected) {
-                                  // Pass the variantName directly
                                   onVariantSelected(variantName);
                                 }
                               },
                               selectedColor: AppColors.success.withOpacity(0.1),
                               backgroundColor: Colors.white,
                               labelStyle: textTheme.labelMedium?.copyWith(
-                                // Make the text green when selected
                                 color: isSelected ? AppColors.success : AppColors.textDark.withOpacity(0.8),
                                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                               ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                                 side: BorderSide(
-                                  // Make the border green when selected
                                   color: isSelected ? AppColors.success : Colors.grey.shade300,
                                   width: 1,
                                 ),
@@ -1097,7 +776,7 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
                     final String? parentCategoryId = widget.product.category?.id;
                     final List<ProductModel> relatedProducts = productController.getProductsInSameParentCategory(
                       widget.product.id,
-                      parentCategoryId, // Corrected parameter
+                      parentCategoryId,
                     );
 
                     if (relatedProducts.isEmpty) {
@@ -1180,7 +859,7 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
         }).toList();
 
         return Container(
-          margin: const EdgeInsets.only(bottom: 70), // Adjust this value to position the FAB above the bottom bar
+          margin: const EdgeInsets.only(bottom: 70),
           child: FloatingCartButton(
             label: "View Cart",
             productImageUrls: imageUrls,
@@ -1195,7 +874,7 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
     );
   }
 
-  // Keep all your existing helper methods...
+  // Navigation helper methods
   void _navigateToRelatedProduct(ProductModel product, String heroTag) {
     try {
       HapticFeedback.lightImpact();
@@ -1290,7 +969,7 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
 
     return Obx(() {
       final quantityInCartForSelectedVariant = cartController.getVariantQuantity(
-        productId: product.id,
+        productId: product.id.toString(),
         variantName: _currentSelectedVariantName.value,
       );
       final bool isBusy = cartController.isLoading.value;

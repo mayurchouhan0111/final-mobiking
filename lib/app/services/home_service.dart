@@ -2,11 +2,16 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
+import 'package:get_storage/get_storage.dart'; // Import GetStorage
 import '../data/Home_model.dart';
 import '../data/group_model.dart';
 
 class HomeService {
   static const String _baseUrl = 'https://boxbudy.com/api/v1';
+  final GetStorage _box; // GetStorage instance
+
+  HomeService(this._box); // Constructor to receive GetStorage
+
 
   void _log(String message) {
     print('[HomeService] $message');
@@ -14,6 +19,32 @@ class HomeService {
 
   /// Get home layout with comprehensive error handling
   Future<HomeLayoutModel?> getHomeLayout() async {
+    const String cacheKey = 'homeLayoutCache';
+    const String timestampKey = 'homeLayoutTimestamp';
+    const Duration cacheDuration = Duration(minutes: 30); // Cache for 30 minutes
+
+    // 1. Try to load from cache first
+    final cachedData = _box.read(cacheKey);
+    final cachedTimestamp = _box.read(timestampKey);
+
+    if (cachedData != null && cachedTimestamp != null) {
+      final DateTime lastFetchTime = DateTime.parse(cachedTimestamp);
+      if (DateTime.now().difference(lastFetchTime) < cacheDuration) {
+        _log('✅ Loading home layout from cache.');
+        try {
+          return HomeLayoutModel.fromJson(jsonDecode(cachedData));
+        } catch (e) {
+          _log('❌ Error decoding cached home layout: $e');
+          // If cache is corrupted, proceed to fetch from network
+        }
+      } else {
+        _log('⏳ Cached home layout is stale. Fetching new data.');
+      }
+    } else {
+      _log('📦 No home layout in cache or timestamp missing. Fetching new data.');
+    }
+
+    // 2. Fetch from network if cache is not available or stale
     try {
       final url = Uri.parse('$_baseUrl/home/');
       _log('Fetching home layout from: $url');
@@ -68,12 +99,11 @@ class HomeService {
                 final homeLayout = HomeLayoutModel.fromJson(dataField);
                 _log('✅ Successfully parsed HomeLayoutModel');
 
-                // Show success message for successful home layout load
-               /* Get.snackbar('Success', 'Home content loaded successfully!',
-                    snackPosition: SnackPosition.BOTTOM,
-                    backgroundColor: Colors.green.shade600,
-                    colorText: Colors.white);
-*/
+                // 3. Store in cache
+                _box.write(cacheKey, jsonEncode(dataField));
+                _box.write(timestampKey, DateTime.now().toIso8601String());
+                _log('💾 Home layout saved to cache.');
+
                 return homeLayout;
               } catch (modelError) {
                 _log('❌ Error parsing HomeLayoutModel: $modelError');
@@ -94,7 +124,8 @@ class HomeService {
           }
           return null;
         }
-      } else {
+      }
+      else {
         _log('❌ Failed to load home layout. Status: ${response.statusCode} - ${response.reasonPhrase}');
         if (response.body.isNotEmpty) {
           try {

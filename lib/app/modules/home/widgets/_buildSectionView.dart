@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobiking/app/modules/Product_page/product_page.dart';
@@ -8,6 +9,7 @@ import '../../../data/group_model.dart';
 import '../../../data/product_model.dart';
 import '../../../data/sub_category_model.dart';
 import '../../../themes/app_theme.dart';
+import '../../../utils/image_utils.dart';
 import '../../../widgets/buildProductList.dart';
 import '../loading/ShimmerBanner.dart';
 import 'AllProductGridCard.dart';
@@ -138,28 +140,23 @@ class _ProductGridViewSectionState extends State<ProductGridViewSection> {
                 child: SizedBox(
                   height: 160,
                   width: double.infinity,
-                  child: Image.network(
-                    widget.bannerImageUrl,
+                  child: CachedNetworkImage(
+                    imageUrl: getResizedImageUrl(widget.bannerImageUrl, 600),
                     fit: BoxFit.cover,
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return const ShimmerBanner(
-                        width: double.infinity,
-                        height: 160,
-                        borderRadius: 12,
-                      );
-                    },
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        color: AppColors.neutralBackground,
-                        alignment: Alignment.center,
-                        child: const Icon(
-                          Icons.broken_image,
-                          color: AppColors.textLight,
-                          size: 40,
-                        ),
-                      );
-                    },
+                    placeholder: (context, url) => const ShimmerBanner(
+                      width: double.infinity,
+                      height: 160,
+                      borderRadius: 12,
+                    ),
+                    errorWidget: (context, url, error) => Container(
+                      color: AppColors.neutralBackground,
+                      alignment: Alignment.center,
+                      child: const Icon(
+                        Icons.broken_image,
+                        color: AppColors.textLight,
+                        size: 40,
+                      ),
+                    ),
                   ),
                 ),
               ),

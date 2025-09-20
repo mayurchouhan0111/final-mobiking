@@ -321,14 +321,7 @@ class OrderController extends GetxController {
       await _completeOrderSuccess(completeOrderData, 'Online');
 
       // Show success message
-      _showModernSnackbar(
-        'Payment Successful! 🎉',
-        'Your order #$extractedOrderId has been placed successfully.',
-        isError: false,
-        icon: Icons.check_circle_outline,
-        backgroundColor: Colors.green.shade600,
-        duration: const Duration(seconds: 10),
-      );
+
 
       // SIMPLIFIED: Navigate directly to confirmation screen
       debugPrint('🎉 Navigating to OrderConfirmationScreen with orderId: $extractedOrderId');

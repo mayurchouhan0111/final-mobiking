@@ -34,13 +34,7 @@ class CategoryController extends GetxController {
 
       // Show success message only for forced refresh
       if (forceRefresh && result.isNotEmpty) {
-        Get.snackbar(
-          'Success',
-          'Categories refreshed successfully!',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green.shade600,
-          colorText: Colors.white,
-        );
+
       }
 
     } catch (e) {
@@ -80,13 +74,7 @@ class CategoryController extends GetxController {
   Future<void> clearCache() async {
     try {
       await _service.clearAllCache();
-      Get.snackbar(
-        'Success',
-        'Cache cleared successfully!',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.blue.shade600,
-        colorText: Colors.white,
-      );
+
     } catch (e) {
       print('[CategoryController] Error clearing cache: $e');
     }

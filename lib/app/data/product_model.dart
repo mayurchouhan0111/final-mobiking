@@ -109,11 +109,11 @@ class ProductModel extends HiveObject {
     }
 
     return ProductModel(
-      id: json['_id'] ?? '',
-      name: json['name'] ?? '',
-      fullName: json['fullName'] ?? '',
-      slug: json['slug'] ?? '',
-      description: json['description'] ?? '',
+      id: json['_id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      fullName: json['fullName']?.toString() ?? '',
+      slug: json['slug']?.toString() ?? '',
+      description: json['description']?.toString() ?? '',
       active: json['active'] ?? false,
       newArrival: json['newArrival'] ?? false,
       liked: json['liked'] ?? false,
@@ -124,15 +124,15 @@ class ProductModel extends HiveObject {
           .toList(),
       category: categoryModel, // UPDATED
       stockIds: (json['stock'] as List<dynamic>? ?? [])
-          .map((e) => e is Map ? (e['_id'] as String? ?? '') : e.toString())
+          .map((e) => e is Map ? (e['_id']?.toString() ?? '') : e.toString())
           .where((id) => id.isNotEmpty)
           .toList(),
       orderIds: (json['orders'] as List<dynamic>? ?? [])
-          .map((e) => e is Map ? (e['_id'] as String? ?? '') : e.toString())
+          .map((e) => e is Map ? (e['_id']?.toString() ?? '') : e.toString())
           .where((id) => id.isNotEmpty)
           .toList(),
       groupIds: (json['groups'] as List<dynamic>? ?? [])
-          .map((e) => e is Map ? (e['_id'] as String? ?? '') : e.toString())
+          .map((e) => e is Map ? (e['_id']?.toString() ?? '') : e.toString())
           .where((id) => id.isNotEmpty)
           .toList(),
       totalStock: json['totalStock'] ?? 0,

@@ -17,12 +17,12 @@ class Scan {
 
   factory Scan.fromJson(Map<String, dynamic> json) {
     return Scan(
-      activity: json['activity'] as String,
-      date: json['date'] as String,
-      location: json['location'] as String,
-      srStatus: json['sr-status'] as String,
-      srStatusLabel: json['sr-status-label'] as String,
-      status: json['status'] as String,
+      activity: json['activity']?.toString() ?? '',
+      date: json['date']?.toString() ?? '',
+      location: json['location']?.toString() ?? '',
+      srStatus: json['sr-status']?.toString() ?? '',
+      srStatusLabel: json['sr-status-label']?.toString() ?? '',
+      status: json['status']?.toString() ?? '',
     );
   }
 

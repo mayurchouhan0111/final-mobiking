@@ -68,62 +68,93 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
         title: Text(
           'My Orders',
           style: textTheme.titleLarge?.copyWith(
-            color: AppColors.textDark, fontWeight: FontWeight.w700,
+            color: AppColors.textDark,
+            fontWeight: FontWeight.w700,
           ),
         ),
         backgroundColor: AppColors.white,
         elevation: 0.5,
         centerTitle: false,
         iconTheme: const IconThemeData(color: AppColors.textDark),
-        actions: [SizedBox(width: 8)],
+        actions: [
+          GetX<OrderController>(
+            builder: (_) {
+              if (controller.orderHistory.isNotEmpty && !controller.isLoadingOrderHistory.value) {
+                return IconButton(
+                  onPressed: () => controller.fetchOrderHistory(),
+                  icon: const Icon(Icons.refresh_rounded),
+                  tooltip: 'Refresh Orders',
+                );
+              }
+              return const SizedBox(width: 8);
+            },
+          ),
+        ],
       ),
       body: GetX<OrderController>(
         builder: (_) {
-          if (controller.isLoadingOrderHistory.value) {
-            return _buildLoadingView(textTheme);
-          } else if (controller.orderHistoryErrorMessage.isNotEmpty) {
+          if (controller.isLoadingOrderHistory.value && controller.orderHistory.isEmpty) {
+            return _buildInitialLoadingView(textTheme);
+          } else if (controller.orderHistoryErrorMessage.isNotEmpty && controller.orderHistory.isEmpty) {
             return _buildErrorView(textTheme);
-          } else if (controller.orderHistory.isEmpty) {
+          } else if (controller.orderHistory.isEmpty && !controller.isLoadingOrderHistory.value) {
             return _buildEmptyView(textTheme);
           } else {
-            return NotificationListener<ScrollNotification>(
-              onNotification: (scrollInfo) {
-                if (scrollInfo is ScrollStartNotification) _pausePolling();
-                else if (scrollInfo is ScrollEndNotification) _resumePolling();
-                return false;
-              },
-              child: RefreshIndicator(
-                onRefresh: () => controller.fetchOrderHistory(),
-                color: AppColors.success,
-                backgroundColor: AppColors.lightGreyBackground,
-                child: ListView.builder(
-                  controller: _scrollController,
-                  padding: const EdgeInsets.all(16.0),
-                  itemCount: controller.orderHistory.length,
-                  itemBuilder: (context, index) {
-                    final order = controller.orderHistory[index];
-                    return _OrderCard(
-                      order: order,
-                      controller: controller,
-                      queryController: queryController,
-                    );
-                  },
-                ),
-              ),
-            );
+            return _buildOrdersList(textTheme);
           }
         },
       ),
     );
   }
 
-  Widget _buildLoadingView(TextTheme textTheme) => Center(
+  Widget _buildInitialLoadingView(TextTheme textTheme) => Center(
     child: Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const CircularProgressIndicator(color: AppColors.success),
-        const SizedBox(height: 16),
-        Text('Loading your orders...', style: textTheme.bodyLarge?.copyWith(color: AppColors.textMedium)),
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.1),
+                spreadRadius: 1,
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(
+                width: 50,
+                height: 50,
+                child: CircularProgressIndicator(
+                  color: AppColors.primaryPurple,
+                  strokeWidth: 3,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Loading your orders...',
+                style: textTheme.bodyLarge?.copyWith(
+                  color: AppColors.textDark,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Please wait while we fetch your order history',
+                style: textTheme.bodySmall?.copyWith(
+                  color: AppColors.textMedium,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
       ],
     ),
   );
@@ -131,40 +162,120 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   Widget _buildErrorView(TextTheme textTheme) => Center(
     child: Padding(
       padding: const EdgeInsets.all(32.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.error_outline, size: 70, color: AppColors.danger),
-          const SizedBox(height: 24),
-          Text('Oops! Something Went Wrong',
-            textAlign: TextAlign.center,
-            style: textTheme.headlineSmall?.copyWith(
-              color: AppColors.textDark,
-              fontWeight: FontWeight.w700,
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              spreadRadius: 1,
+              blurRadius: 10,
+              offset: const Offset(0, 2),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            controller.orderHistoryErrorMessage.value,
-            textAlign: TextAlign.center,
-            style: textTheme.bodyMedium?.copyWith(color: AppColors.textMedium),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: () => controller.fetchOrderHistory(),
-            icon: const Icon(Icons.refresh_rounded, color: AppColors.white),
-            label: Text(
-              'Try Again',
-              style: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600, color: AppColors.white),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.danger.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(50),
+              ),
+              child: Icon(
+                Icons.wifi_off_rounded,
+                size: 48,
+                color: AppColors.danger,
+              ),
             ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryPurple,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              elevation: 2,
+            const SizedBox(height: 24),
+            Text(
+              'Unable to Load Orders',
+              textAlign: TextAlign.center,
+              style: textTheme.headlineSmall?.copyWith(
+                color: AppColors.textDark,
+                fontWeight: FontWeight.w700,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 12),
+            Text(
+              'We\'re having trouble connecting to our servers. Please check your internet connection and try again.',
+              textAlign: TextAlign.center,
+              style: textTheme.bodyMedium?.copyWith(
+                color: AppColors.textMedium,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 8),
+            if (controller.orderHistoryErrorMessage.value.isNotEmpty)
+              Container(
+                margin: const EdgeInsets.only(top: 8),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.neutralBackground,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: AppColors.danger.withOpacity(0.2),
+                    width: 1,
+                  ),
+                ),
+                child: Text(
+                  controller.orderHistoryErrorMessage.value,
+                  textAlign: TextAlign.center,
+                  style: textTheme.bodySmall?.copyWith(
+                    color: AppColors.textMedium,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => Get.back(),
+                    icon: const Icon(Icons.arrow_back_rounded),
+                    label: Text(
+                      'Go Back',
+                      style: textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.textMedium,
+                      side: BorderSide(color: AppColors.textMedium.withOpacity(0.3)),
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => controller.fetchOrderHistory(),
+                    icon: const Icon(Icons.refresh_rounded, color: AppColors.white),
+                    label: Text(
+                      'Try Again',
+                      style: textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.white,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryPurple,
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      elevation: 2,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     ),
   );
@@ -172,43 +283,192 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   Widget _buildEmptyView(TextTheme textTheme) => Center(
     child: Padding(
       padding: const EdgeInsets.all(32.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.shopping_bag_outlined, size: 80, color: AppColors.textLight.withOpacity(0.6)),
-          const SizedBox(height: 24),
-          Text(
-            'No Orders Yet!',
-            style: textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: AppColors.textDark,
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              spreadRadius: 1,
+              blurRadius: 10,
+              offset: const Offset(0, 2),
             ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            "You haven't placed any orders yet. Let's get you started!",
-            textAlign: TextAlign.center,
-            style: textTheme.bodyMedium?.copyWith(color: AppColors.textMedium),
-          ),
-          const SizedBox(height: 32),
-          ElevatedButton(
-            onPressed: () => Get.offAll(() => HomeScreen()),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryPurple,
-              foregroundColor: AppColors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              elevation: 2,
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppColors.primaryPurple.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(50),
+              ),
+              child: Icon(
+                Icons.shopping_bag_outlined,
+                size: 64,
+                color: AppColors.primaryPurple.withOpacity(0.7),
+              ),
             ),
-            child: Text(
-              'Start Shopping',
-              style: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600, color: AppColors.white),
+            const SizedBox(height: 24),
+            Text(
+              'No Orders Yet!',
+              style: textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: AppColors.textDark,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 12),
+            Text(
+              "You haven't placed any orders yet.\nStart exploring our products and make your first purchase!",
+              textAlign: TextAlign.center,
+              style: textTheme.bodyMedium?.copyWith(
+                color: AppColors.textMedium,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 32),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => Get.offAll(() => HomeScreen()),
+                icon: const Icon(Icons.shopping_cart_outlined, color: AppColors.white),
+                label: Text(
+                  'Start Shopping',
+                  style: textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.white,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryPurple,
+                  foregroundColor: AppColors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 2,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextButton.icon(
+              onPressed: () => controller.fetchOrderHistory(),
+              icon: Icon(
+                Icons.refresh_rounded,
+                size: 18,
+                color: AppColors.textMedium,
+              ),
+              label: Text(
+                'Refresh',
+                style: textTheme.bodySmall?.copyWith(
+                  color: AppColors.textMedium,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     ),
   );
+
+  Widget _buildOrdersList(TextTheme textTheme) {
+    return Column(
+      children: [
+        // Show connection status banner if there's an error but we have cached data
+        if (controller.orderHistoryErrorMessage.isNotEmpty && controller.orderHistory.isNotEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            color: AppColors.accentOrange.withOpacity(0.1),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.cloud_off_rounded,
+                  size: 20,
+                  color: AppColors.accentOrange,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Showing cached orders. Pull to refresh for latest updates.',
+                    style: textTheme.bodySmall?.copyWith(
+                      color: AppColors.accentOrange,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => controller.fetchOrderHistory(),
+                  icon: Icon(
+                    Icons.refresh_rounded,
+                    size: 20,
+                    color: AppColors.accentOrange,
+                  ),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                ),
+              ],
+            ),
+          ),
+        // Main orders list
+        Expanded(
+          child: NotificationListener<ScrollNotification>(
+            onNotification: (scrollInfo) {
+              if (scrollInfo is ScrollStartNotification) _pausePolling();
+              else if (scrollInfo is ScrollEndNotification) _resumePolling();
+              return false;
+            },
+            child: RefreshIndicator(
+              onRefresh: () => controller.fetchOrderHistory(),
+              color: AppColors.primaryPurple,
+              backgroundColor: AppColors.white,
+              child: ListView.builder(
+                controller: _scrollController,
+                padding: const EdgeInsets.all(16.0),
+                itemCount: controller.orderHistory.length + (controller.isLoadingOrderHistory.value ? 1 : 0),
+                itemBuilder: (context, index) {
+                  // Show loading indicator at the end when refreshing
+                  if (index == controller.orderHistory.length) {
+                    return Container(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              color: AppColors.primaryPurple,
+                              strokeWidth: 2,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Updating orders...',
+                            style: textTheme.bodySmall?.copyWith(
+                              color: AppColors.textMedium,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  final order = controller.orderHistory[index];
+                  return _OrderCard(
+                    order: order,
+                    controller: controller,
+                    queryController: queryController,
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 /// -- ORDER CARD ---
@@ -272,7 +532,15 @@ class _OrderCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.withOpacity(0.3), width: 1.0),
+        border: Border.all(color: Colors.grey.withOpacity(0.2), width: 1.0),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.08),
+            spreadRadius: 1,
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -444,7 +712,7 @@ class _OrderCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                if (order.status == "Accepted")
+                if (order.scans?.isNotEmpty == true)
                   OutlinedButton(
                     onPressed: () {
                       Get.to(() => ShippingDetailsScreen(order: order));
@@ -463,7 +731,7 @@ class _OrderCard extends StatelessWidget {
                       style: textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w600, color: AppColors.info),
                     ),
                   ),
-                if (order.status == "Accepted") const SizedBox(width: 12),
+                if (order.scans?.isNotEmpty == true) const SizedBox(width: 12),
                 if (order.status == "Accepted")
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -542,9 +810,9 @@ class _OrderCard extends StatelessWidget {
                           final String orderId = order.id;
                           final bool hasQueryForThisOrder = queryController.myQueries.any(
                                   (query) {
-                                    print('Comparing query.orderId: ${query.orderId} with order.id: $orderId');
-                                    return query.orderId != null && query.orderId == orderId;
-                                  }
+                                print('Comparing query.orderId: ${query.orderId} with order.id: $orderId');
+                                return query.orderId != null && query.orderId == orderId;
+                              }
                           );
 
                           if (hasQueryForThisOrder) {

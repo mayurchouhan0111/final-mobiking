@@ -10,7 +10,9 @@ import '../../../controllers/BottomNavController.dart';
 import '../../../controllers/cart_controller.dart';
 import '../../../data/product_model.dart';
 import '../../../themes/app_theme.dart';
+import '../../../utils/image_utils.dart';
 import 'app_star_rating.dart';
+
 import 'favorite_toggle_button.dart'; // Add this import
 
 import 'package:mobiking/app/modules/Product_page/product_page.dart';
@@ -287,7 +289,7 @@ class AllProductGridCard extends StatelessWidget {
                             color: AppColors.neutralBackground,
                             child: hasImage
                                 ? CachedNetworkImage(
-                              imageUrl: product.images[0],
+                              imageUrl: getResizedImageUrl(product.images[0], 200),
                               fit: BoxFit.contain,
                               placeholder: (context, url) => Center(
                                 child: CircularProgressIndicator(
@@ -417,14 +419,14 @@ class AllProductGridCard extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.fromLTRB(8.0, 4.0, 8.0, 2.0), // Reduced padding
                 child: Text(
-                  (product.name.isNotEmpty ? product.name : product.fullName),
+                  product.fullName,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
                   style: textTheme.bodyMedium?.copyWith(
                     color: AppColors.textDark,
                     fontWeight: FontWeight.w700,
                     fontSize: 10, // Smaller font size
                   ),
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ),
 
@@ -434,10 +436,36 @@ class AllProductGridCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (product.averageRating != null && product.reviewCount != null)
-                      AppStarRating(
-                        rating: product.averageRating!,
-                        ratingCount: product.reviewCount!,
-                        starSize: 10, // Smaller star size
+                      Row(
+                        children: [
+                          ...List.generate(5, (index) {
+                            double filled = product.averageRating! - index;
+                            IconData iconData;
+                            if (filled >= 1) {
+                              iconData = Icons.star;
+                            } else if (filled >= 0.5) {
+                              iconData = Icons.star_half;
+                            } else {
+                              iconData = Icons.star_border;
+                            }
+                            return Icon(iconData, color: Colors.yellow, size: 10);
+                          }),
+                          const SizedBox(width: 4),
+                          Text(
+                            product.averageRating!.toStringAsFixed(1),
+                            style: textTheme.labelSmall?.copyWith(
+                              color: AppColors.textDark,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(width: 2),
+                          Text(
+                            '(${product.reviewCount!})',
+                            style: textTheme.labelSmall?.copyWith(
+                              color: AppColors.textLight,
+                            ),
+                          ),
+                        ],
                       ),
                     const SizedBox(height: 2),
                     Row(
