@@ -117,41 +117,6 @@ class GroupWithProductsSection extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    TextButton(
-                      onPressed: () {
-                        Get.to(() => GroupProductsScreen(group: group));
-                        print('Navigating to all products for group: ${group.name}');
-                      },
-                      style: TextButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 6),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          side: const BorderSide(
-                              color: AppColors.success, width: 1),
-                        ),
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        minimumSize: Size.zero,
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'See More',
-                            style: textTheme.labelSmall?.copyWith(
-                              color: AppColors.success,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 11,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Icon(Icons.arrow_forward_ios,
-                              size: 12, color: AppColors.success),
-                        ],
-                      ),
-                    ),
                   ],
                 ),
 
@@ -168,7 +133,7 @@ class GroupWithProductsSection extends StatelessWidget {
 
                     // Calculate total height needed
                     final cardHeight = gridCardHeight;
-                    final mainAxisSpacing = 14.0;
+                    final mainAxisSpacing = 10.0;
                     final totalHeight = (cardHeight * rowCount) + (mainAxisSpacing * (rowCount - 1));
 
                     return SizedBox(
@@ -208,6 +173,49 @@ class GroupWithProductsSection extends StatelessWidget {
                     );
                   },
                 ),
+                SizedBox(
+                  width: double.infinity,
+                  child: TextButton(
+                    onPressed: () {
+                      Get.to(() => GroupProductsScreen(group: group));
+                      print('Navigating to all products for group: ${group.name}');
+                    },
+                    style: TextButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        side: const BorderSide(
+                          color: AppColors.success,
+                          width: 1,
+                        ),
+                      ),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      minimumSize: Size.zero,
+                      elevation: 0,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'See all products',
+                          style: textTheme.labelMedium?.copyWith(
+                            color: AppColors.success,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Icon(
+                          Icons.arrow_forward_ios,
+                          size: 14,
+                          color: AppColors.success,
+                        ),
+                      ],
+                    ),
+                  ),
+                )
                 // Corrected: The padding was moved here, but it's better to wrap the Column.
                 // const SizedBox(height: 16),
               ],

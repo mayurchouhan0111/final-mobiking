@@ -27,6 +27,9 @@ class LoginController extends GetxController {
   RxBool isResendingOtp = false.obs;
   RxString currentOtpPhoneNumber = ''.obs;
 
+  // Delete account related observables
+  RxBool isDeletingAccount = false.obs;
+
   // Timer for OTP resend countdown
   Timer? _otpResendTimer;
   RxInt otpTimeRemaining = 0.obs; // Countdown in seconds
@@ -99,9 +102,6 @@ class LoginController extends GetxController {
       }
     } catch (e) {
       print('LoginController: Error sending OTP: $e');
-
-      
-
       return false;
     } finally {
       isOtpLoading.value = false;
@@ -113,7 +113,6 @@ class LoginController extends GetxController {
     if (isOtpLoading.value) return false;
 
     if (phoneNumber.isEmpty || otpCode.isEmpty) {
-      
       return false;
     }
 
@@ -155,8 +154,6 @@ class LoginController extends GetxController {
         print('User data: ${box.read('user')}');
         print('Cart ID: ${box.read('cartId')}');
 
-        
-
         // Navigate to main app
         Get.offAll(() => MainContainerScreen());
         return true;
@@ -165,7 +162,6 @@ class LoginController extends GetxController {
       }
     } catch (e) {
       print('LoginController: Error verifying OTP: $e');
-      
       return false;
     } finally {
       isOtpLoading.value = false;
@@ -183,8 +179,6 @@ class LoginController extends GetxController {
       final response = await loginService.sendOtp(currentOtpPhoneNumber.value); // Re-use sendOtp
 
       if (response.statusCode == 200 && response.data['success'] == true) {
-        
-
         print('LoginController: OTP resent successfully');
         _startOtpResendTimer(); // Restart the countdown timer
         return true;
@@ -193,9 +187,6 @@ class LoginController extends GetxController {
       }
     } catch (e) {
       print('LoginController: Error resending OTP: $e');
-
-      
-
       return false;
     } finally {
       isResendingOtp.value = false;
@@ -231,6 +222,188 @@ class LoginController extends GetxController {
   // Check if OTP can be resent
   bool canResendOtp() {
     return !isResendingOtp.value && otpTimeRemaining.value == 0;
+  }
+
+  // DELETE ACCOUNT METHOD - NEW ADDITION
+  // DELETE ACCOUNT METHOD - UPDATED VERSION
+  Future<bool> deleteAccount({String? confirmationText}) async {
+    if (isDeletingAccount.value) return false;
+
+    isDeletingAccount.value = true;
+    try {
+      print('LoginController: Attempting to delete user account...');
+
+      // Check if user is logged in
+      if (currentUser.value == null || box.read('accessToken') == null) {
+        Get.snackbar(
+          'Error',
+          'Please log in to delete your account',
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        return false;
+      }
+
+      // If confirmation is required, validate it here in the controller
+      if (confirmationText != null) {
+        if (confirmationText.toUpperCase() != 'DELETE') {
+          Get.snackbar(
+            'Error',
+            'Please type "DELETE" to confirm account deletion',
+            snackPosition: SnackPosition.TOP,
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
+          );
+          return false;
+        }
+        print('LoginController: Confirmation validated. User typed: $confirmationText');
+      }
+
+      // Call the delete user API from LoginService (only the basic deleteUser method)
+      await loginService.deleteUser();
+
+      // Clear all data after successful deletion
+      await _clearAllUserData();
+
+      // Show success message
+      Get.snackbar(
+        'Success',
+        'Account deleted successfully',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+
+      print('LoginController: Account deleted successfully');
+
+      // Navigate to login screen and clear all navigation stack
+      Get.offAll(() => PhoneAuthScreen());
+
+      return true;
+    } catch (e) {
+      print('LoginController: Error deleting account: $e');
+
+      // Handle different types of errors based on LoginService exceptions
+      String errorMessage = 'Failed to delete account';
+
+      if (e.toString().contains('Access token not found')) {
+        errorMessage = 'Please log in again to delete your account';
+      } else if (e.toString().contains('Network error')) {
+        errorMessage = 'Network error. Please check your connection';
+      } else if (e.toString().contains('Access denied')) {
+        errorMessage = 'Access denied. Please log in again';
+      } else if (e.toString().contains('User account not found')) {
+        errorMessage = 'Account not found. It may have been already deleted';
+      } else if (e.toString().contains('Permission denied')) {
+        errorMessage = 'Cannot delete account. Please contact support';
+      } else if (e.toString().contains('Server error')) {
+        errorMessage = 'Server error occurred. Please try again later';
+      } else {
+        // Clean up the error message by removing the exception prefix
+        errorMessage = e.toString()
+            .replaceAll('LoginServiceException: ', '')
+            .replaceAll('[Status 401] ', '')
+            .replaceAll('[Status 403] ', '')
+            .replaceAll('[Status 404] ', '')
+            .replaceAll('[Status 500] ', '');
+      }
+
+      Get.snackbar(
+        'Error',
+        errorMessage,
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+
+      return false;
+    } finally {
+      isDeletingAccount.value = false;
+    }
+  }
+
+// SIMPLIFIED: Method to check if user can delete account (local validation only)
+  bool canDeleteAccount() {
+    // Simple local validation - just check if user is logged in and has valid tokens
+    final hasUser = currentUser.value != null;
+    final hasAccessToken = box.read('accessToken') != null;
+    final hasRefreshToken = box.read('refreshToken') != null;
+
+    print('LoginController: canDeleteAccount - User: $hasUser, AccessToken: $hasAccessToken, RefreshToken: $hasRefreshToken');
+
+    return hasUser && hasAccessToken && hasRefreshToken;
+  }
+
+// OPTIONAL: Method to validate account deletion eligibility with additional checks
+  Future<bool> validateAccountDeletion() async {
+    try {
+      // Basic validation first
+      if (!canDeleteAccount()) {
+        return false;
+      }
+
+      // Check if tokens are not expired
+      final tokenCreationTime = box.read('tokenCreationTime');
+      if (tokenCreationTime != null) {
+        final now = DateTime.now().millisecondsSinceEpoch;
+        final tokenAge = Duration(milliseconds: now - (tokenCreationTime as num).toInt());
+
+        // If token is expired (>24 hours), user needs to re-login
+        if (tokenAge.inHours >= 24) {
+          print('LoginController: Token expired, user needs to re-login for account deletion');
+          return false;
+        }
+      }
+
+      // Optional: Check service health before allowing deletion
+      final isHealthy = await loginService.checkServiceHealth();
+      if (!isHealthy) {
+        print('LoginController: Service is not healthy, account deletion not available');
+        return false;
+      }
+
+      return true;
+    } catch (e) {
+      print('LoginController: Error validating account deletion: $e');
+      return false;
+    }
+  }
+
+  // Clear all user data from storage and controllers
+  Future<void> _clearAllUserData() async {
+    try {
+      print('LoginController: Clearing all user data...');
+
+      // Cancel timers
+      _tokenRefreshTimer?.cancel();
+      _otpResendTimer?.cancel();
+
+      // Clear OTP data
+      _clearOtpData();
+
+      // Clear all stored data
+      box.remove('accessToken');
+      box.remove('refreshToken');
+      box.remove('user');
+      box.remove('cartId');
+      box.remove('tokenCreationTime');
+      box.remove('userPreferences');
+      box.remove('favorites');
+      box.remove('settings');
+      box.remove('last_login_phone');
+
+      // Reset controller state
+      currentUser.value = null;
+      phoneController.clear();
+
+      // Clear cart and wishlist data
+      _cartController.clearCartData();
+
+      print('LoginController: All user data cleared successfully');
+    } catch (e) {
+      print('LoginController: Error clearing user data: $e');
+    }
   }
 
   Future<void> _handleConnectionRestored() async {
@@ -332,7 +505,7 @@ class LoginController extends GetxController {
   }
 
   Future<void> _refreshToken() async {
-    print('LoginController: _refreshToken() called at \${DateTime.now()}'); // Added print statement
+    print('LoginController: _refreshToken() called at ${DateTime.now()}'); // Added print statement
     final refreshToken = box.read('refreshToken');
     if (refreshToken == null) {
       print('LoginController: No refresh token available. Logging out...');
@@ -378,12 +551,12 @@ class LoginController extends GetxController {
         _startTokenRefreshTimer();
 
       } else {
-        print('LoginController: Token refresh failed. Response: \${response.data}');
+        print('LoginController: Token refresh failed. Response: ${response.data}');
         _clearLoginData();
         Get.offAll(() => PhoneAuthScreen());
       }
     } catch (e) {
-      print('LoginController: Token refresh error: \$e');
+      print('LoginController: Token refresh error: $e');
 
       if (e is dio.DioException && (e.response?.statusCode == 401 || e.response?.statusCode == 403)) {
         print('LoginController: Refresh token expired or invalid. Logging out...');
@@ -414,12 +587,10 @@ class LoginController extends GetxController {
   Future<void> login() async {
     String phone = phoneController.text.trim();
     if (phone.isEmpty) {
-      
       return;
     }
 
     if (phone.length != 10 || !RegExp(r'^[0-9]+$').hasMatch(phone)) {
-      
       return;
     }
 
@@ -437,18 +608,11 @@ class LoginController extends GetxController {
 
       if (response.statusCode == 200 && response.data['success'] == true) {
         _clearLoginData();
-        
         Get.offAll(() => PhoneAuthScreen());
       } else {
-        
+        // Handle logout error
       }
     } catch (e) {
-      // Get.snackbar(
-      //   'Error',
-      //   'Logout failed: ${e.toString()}',
-      //   backgroundColor: Colors.red,
-      //   colorText: Colors.white,
-      // );
       print('Logout Error: $e');
     } finally {
       isLoading.value = false;

@@ -608,29 +608,6 @@ void _showVariantBottomSheet(BuildContext context, ProductModel product) {
                           padding: const EdgeInsets.all(12.0),
                           child: Row(
                             children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: Container(
-                                  height: 50,
-                                  width: 50,
-                                  color: AppColors.white,
-                                  child: CachedNetworkImage(
-                                    imageUrl: variantImageUrl,
-                                    width: 50,
-                                    height: 50,
-                                    fit: BoxFit.cover,
-                                    placeholder: (context, url) => Center(
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: AppColors.primaryPurple.withOpacity(0.5),
-                                      ),
-                                    ),
-                                    errorWidget: (context, url, error) =>
-                                    const Icon(Icons.error, color: AppColors.textLight),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,

@@ -54,6 +54,7 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
   late Animation<Offset> _slideAnimation;
   final RxBool _productDetailsVisible = false.obs;
   static const double _horizontalPagePadding = 16.0;
+  bool _animationCompleted = false;
 
   @override
   void initState() {
@@ -96,6 +97,14 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
 
     _slideAnimationController.forward();
     _scrollController.addListener(_scrollListener);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        setState(() {
+          _animationCompleted = true;
+        });
+      }
+    });
   }
 
   @override
@@ -276,7 +285,11 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
   }
 
   // COMPLETELY REWRITTEN Enhanced Product Description Widget
-  Widget _buildEnhancedProductDescription(String htmlDescription, TextTheme textTheme) {
+  Widget _buildEnhancedProductDescription(
+      String htmlDescription,
+      TextTheme textTheme,
+      bool isExpanded, // pass this state from parent
+      ) {
     if (htmlDescription.isEmpty) return const SizedBox.shrink();
 
     String sanitizedHtml = _sanitizeHtml(htmlDescription);
@@ -286,15 +299,9 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Product Description',
-            style: textTheme.titleMedium?.copyWith(
-                color: AppColors.textDark,
-                fontWeight: FontWeight.w600
-            ),
-          ),
           const SizedBox(height: 12),
-          Container(
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
             width: double.infinity,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -309,7 +316,9 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
                 ),
               ],
             ),
-            child: _buildDescriptionContent(sanitizedHtml, textTheme),
+            child: isExpanded
+                ? _buildDescriptionContent(sanitizedHtml, textTheme)
+                : const SizedBox.shrink(), // nothing shown when closing
           ),
         ],
       ),
@@ -471,7 +480,15 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
       return variantStockValue > 0;
     }).toList();
 
-    return Scaffold(
+    return WillPopScope(
+      onWillPop: () async {
+        setState(() {
+          _animationCompleted = false;
+        });
+        await Future.delayed(const Duration(milliseconds: 300));
+        return true;
+      },
+      child: Scaffold(
       backgroundColor: AppColors.white,
       body: Column(
         children: [
@@ -516,7 +533,11 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
                         ),
                       ),
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-                      child: Column(
+                      child: AnimatedOpacity(
+                        opacity: _animationCompleted ? 1.0 : 0.0,
+                        duration: const Duration(milliseconds: 500),
+                        curve: Curves.easeIn,
+                        child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           ProductTitleAndPrice(
@@ -572,7 +593,7 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   // FIXED ENHANCED PRODUCT DESCRIPTION
-                                  _buildEnhancedProductDescription(product.description, textTheme),
+                                  _buildEnhancedProductDescription(product.description, textTheme, _productDetailsVisible.value),
 
                                   // Keep existing description points section
                                   if (product.descriptionPoints.isNotEmpty)
@@ -717,7 +738,7 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
                             ),
                           ),
                         ],
-                      ),
+                      ),),
                     ),
                   ),
 
@@ -871,7 +892,7 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
         );
       }),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-    );
+    ),);
   }
 
   // Navigation helper methods

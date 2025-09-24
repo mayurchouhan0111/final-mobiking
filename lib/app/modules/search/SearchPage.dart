@@ -8,8 +8,6 @@ import 'dart:async';
 import '../../controllers/product_controller.dart';
 import '../../services/product_service.dart';
 import '../../themes/app_theme.dart';
-import 'Serach_product_card.dart';
-
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
 
@@ -669,34 +667,25 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin, 
 
       // Results grid
       return SliverPadding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 2),
         sliver: SliverGrid(
           delegate: SliverChildBuilderDelegate(
                 (context, index) {
               final product = _displayedProducts[index];
-              return RepaintBoundary(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    maxWidth: 120,
-                    maxHeight: 300,
-                  ),
-                  child: SearchProductCard(
-                    key: ValueKey('search-${product.id}-$index'),
-                    product: product,
-                    heroTag: 'search-product-image-${product.id}-$index',
-                  ),
-                ),
+              return AllProductGridCard(
+                key: ValueKey('search-${product.id}-$index'),
+                product: product,
+                heroTag: 'search-product-image-${product.id}-$index',
               );
             },
             childCount: _displayedProducts.length,
             addRepaintBoundaries: false,
           ),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            childAspectRatio: 0.45,
-            crossAxisSpacing: 8,
-            mainAxisSpacing: 12,
-            mainAxisExtent: 280,
+            crossAxisCount: 3, // Display 3 columns for subcategories
+            crossAxisSpacing:1.0,
+            mainAxisSpacing: 1.0,
+            childAspectRatio: 0.50,
           ),
         ),
       );

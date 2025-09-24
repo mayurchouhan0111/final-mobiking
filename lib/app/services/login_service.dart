@@ -36,17 +36,9 @@ class LoginService extends GetxService {
 
   final String _baseUrl = 'https://boxbudy.com/api/v1/users';
 
-  // UPDATED: SMS API Configuration for mylogin.co.in
-  
-
   void _log(String message) {
     print('[LoginService] $message');
   }
-
-  // ADD: Generate random 6-digit OTP
-  
-
-  
 
   // UPDATED: Send OTP Method with improved error handling and testing display
   Future<dio.Response> sendOtp(String phoneNumber) async {
@@ -97,8 +89,6 @@ class LoginService extends GetxService {
     }
   }
 
-  
-
   // UPDATED: Verify OTP Method with SMS status checking
   Future<dio.Response> verifyOtp(String phoneNumber, String enteredOtp) async {
     try {
@@ -136,9 +126,6 @@ class LoginService extends GetxService {
   Future<void> clearOtpData() async {
     _log('OTP data cleared');
   }
-
-  // Rest of your methods remain the same...
-  // (login, logout, refreshToken, etc. methods stay unchanged)
 
   // Enhanced Login Method
   Future<dio.Response> login(String phone, String otp) async {
@@ -240,6 +227,73 @@ class LoginService extends GetxService {
     }
   }
 
+  // Enhanced Delete User Method
+  Future<dio.Response> deleteUser() async {
+    try {
+      final accessToken = box.read('accessToken');
+
+      if (accessToken == null) {
+        _log('No access token found for user deletion. User must be logged in.');
+        throw LoginServiceException('Access token not found. Please log in first.');
+      }
+
+      _log('Attempting to delete user account...');
+
+      final response = await _dio.delete(
+        '$_baseUrl/delete',
+        options: dio.Options(
+          headers: {
+            'Authorization': 'Bearer $accessToken',
+            'Content-Type': 'application/json',
+          },
+          sendTimeout: const Duration(seconds: 30),
+          receiveTimeout: const Duration(seconds: 30),
+        ),
+      );
+
+      _log('Delete user response: Status ${response.statusCode}, Data: ${response.data}');
+
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        _log('User account deleted successfully from server.');
+
+        // Clear all local data after successful deletion
+        _clearAllTokenData();
+
+        // Optional: Clear any additional user-specific data
+        await _clearUserSpecificData();
+
+        return response;
+      } else {
+        final errorMessage = response.data?['message'] ?? 'Failed to delete user account.';
+        throw LoginServiceException(errorMessage, statusCode: response.statusCode);
+      }
+    } on dio.DioException catch (e) {
+      if (e.response != null) {
+        final statusCode = e.response?.statusCode;
+        final errorMessage = e.response?.data?['message'] ?? 'Server error during user deletion.';
+
+        _log('Dio error during user deletion: $statusCode - $errorMessage');
+
+        // Handle specific status codes
+        if (statusCode == 401) {
+          throw LoginServiceException('Access denied. Please log in again.', statusCode: statusCode);
+        } else if (statusCode == 404) {
+          throw LoginServiceException('User account not found.', statusCode: statusCode);
+        } else if (statusCode == 403) {
+          throw LoginServiceException('Permission denied. Cannot delete account.', statusCode: statusCode);
+        } else {
+          throw LoginServiceException(errorMessage, statusCode: statusCode);
+        }
+      } else {
+        _log('Network error during user deletion: ${e.message}');
+        throw LoginServiceException('Network error during user deletion: ${e.message}');
+      }
+    } catch (e) {
+      _log('Unexpected error during user deletion: $e');
+      throw LoginServiceException('An unexpected error occurred during user deletion: $e');
+    }
+  }
+
   // Comprehensive token data clearing (updated to include OTP data)
   void _clearAllTokenData() {
     box.remove('accessToken');
@@ -250,6 +304,25 @@ class LoginService extends GetxService {
     box.remove('cartId');
     box.remove('currentOtpData'); // Clear OTP data on logout
     _log('All authentication and user data cleared locally.');
+  }
+
+  // Helper method to clear user-specific data beyond tokens
+  Future<void> _clearUserSpecificData() async {
+    try {
+      // Clear additional user-related data
+      box.remove('last_login_phone');
+      box.remove('user_preferences');
+      box.remove('user_profile');
+      box.remove('cached_user_data');
+
+      // Clear any other app-specific user data
+      box.remove('favorites');
+      box.remove('settings');
+
+      _log('User-specific data cleared successfully.');
+    } catch (e) {
+      _log('Error clearing user-specific data: $e');
+    }
   }
 
   // Enhanced: refreshToken method with proper token storage

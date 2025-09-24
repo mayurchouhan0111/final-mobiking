@@ -354,7 +354,6 @@ class CartController extends GetxController {
     } finally {
       await _resetLocalCartData();
       print('🛒 CartController: Local cartData observable cleared.');
-      _showSnackbar('Cart Cleared', 'All items have been removed from your cart.', Colors.blue, Icons.delete_sweep_outlined);
     }
   }
 

@@ -220,7 +220,7 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Lottie.asset(
-              'assets/animations/order.json',
+              'assets/animations/Done.json',
               controller: _lottieController,
               onLoaded: (composition) {
                 if (mounted) {

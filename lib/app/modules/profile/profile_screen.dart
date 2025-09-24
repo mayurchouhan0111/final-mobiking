@@ -19,6 +19,7 @@ import '../../widgets/profile_reusable_widget.dart';
 import '../orders/order_screen.dart' show OrderHistoryScreen;
 import '../policy/logout_screen.dart';
 import '../policy/privacy_policy.dart';
+import '../policy/delete_account_screen.dart';
 import '../../controllers/login_controller.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -232,6 +233,32 @@ class ProfileScreen extends StatelessWidget {
                   ),
                   child: Text(
                     'Logout',
+                    style: textTheme.labelLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.white,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Delete Account Button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    showDeleteAccountDialog(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.textDark,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 2,
+                  ),
+                  child: Text(
+                    'Delete Account',
                     style: textTheme.labelLarge?.copyWith(
                       fontWeight: FontWeight.w600,
                       color: AppColors.white,

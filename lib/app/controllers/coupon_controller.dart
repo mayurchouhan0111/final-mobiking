@@ -1,4 +1,5 @@
 // controllers/coupon_controller.dart
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import '../data/coupon_model.dart';
@@ -54,7 +55,14 @@ class CouponController extends GetxController {
   void _showError(String message) {
     errorMessage.value = message;
     successMessage.value = '';
-    
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_LONG,
+      gravity: ToastGravity.BOTTOM,
+      backgroundColor: Colors.black,
+      textColor: Colors.white,
+      fontSize: 16.0,
+    );
   }
 
   // Show success message
@@ -75,6 +83,12 @@ class CouponController extends GetxController {
   Future<void> validateAndApplyCoupon(String code) async {
     if (code.trim().isEmpty) {
       _showError('Please enter a coupon code');
+      return;
+    }
+
+    // New: Check for spaces within the coupon code
+    if (code.trim().contains(' ')) {
+      _showError('Coupon code cannot contain spaces');
       return;
     }
 
@@ -115,10 +129,11 @@ class CouponController extends GetxController {
         _showSuccess('Coupon applied! You saved ₹${calculatedDiscount.toStringAsFixed(0)}');
 
       } else {
-        _showError('Invalid coupon code');
+        _showError('Invalid coupon');
+        _resetCouponState(); // Reset state if coupon is invalid
       }
     } catch (e) {
-      _showError(e.toString());
+      _showError('Coupon is not valid.');
       _resetCouponState();
     } finally {
       isLoading.value = false;
