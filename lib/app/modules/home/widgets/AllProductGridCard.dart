@@ -504,7 +504,7 @@ class AllProductGridCard extends StatelessWidget {
   }
 }
 
-class _AnimatedQuantityText extends StatelessWidget {
+class _AnimatedQuantityText extends StatefulWidget {
   final int quantity;
   final TextStyle? textStyle;
 
@@ -515,25 +515,51 @@ class _AnimatedQuantityText extends StatelessWidget {
   }) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween<double>(begin: 1.0, end: 1.0),
+  _AnimatedQuantityTextState createState() => _AnimatedQuantityTextState();
+}
+
+class _AnimatedQuantityTextState extends State<_AnimatedQuantityText> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+  late int _previousQuantity;
+
+  @override
+  void initState() {
+    super.initState();
+    _previousQuantity = widget.quantity;
+    _controller = AnimationController(
       duration: const Duration(milliseconds: 200),
-      key: ValueKey<int>(quantity),
-      builder: (BuildContext context, double scale, Widget? child) {
-        final curvedScale = Curves.easeOutBack.transform(scale);
-        return Transform.scale(
-          scale: scale == 1.0 ? 1.0 : (1.0 + (curvedScale * 0.2)),
-          child: Text(
-            '$quantity',
-            style: textStyle,
-            textAlign: TextAlign.center,
-          ),
-        );
-      },
-      onEnd: () {
-        // Optional: Perform any action when the animation ends
-      },
+      vsync: this,
+    );
+    _animation = Tween<double>(begin: 1.0, end: 1.2).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
+    );
+  }
+
+  @override
+  void didUpdateWidget(_AnimatedQuantityText oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.quantity != _previousQuantity) {
+      _controller.forward(from: 0.0);
+      _previousQuantity = widget.quantity;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ScaleTransition(
+      scale: _animation,
+      child: Text(
+        '${widget.quantity}',
+        style: widget.textStyle,
+        textAlign: TextAlign.center,
+      ),
     );
   }
 }

@@ -1,111 +1,119 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
 import 'package:mobiking/app/themes/app_theme.dart';
-
 import '../data/group_model.dart';
+import '../data/product_model.dart';
 import '../modules/Product_page/product_page.dart';
 import '../modules/home/widgets/GroupProductsScreen.dart';
-import '../modules/home/widgets/AllProductGridCard.dart'; // Import your new card
+import '../modules/home/widgets/AllProductGridCard.dart';
 
-class GroupWithProductsSection extends StatelessWidget {
+class GroupWithProductsSection extends StatefulWidget {
   final List<GroupModel> groups;
 
   const GroupWithProductsSection({super.key, required this.groups});
 
-  static const double horizontalContentPadding = 16.0; // Increased padding for better spacing
+  @override
+  State<GroupWithProductsSection> createState() => _GroupWithProductsSectionState();
+}
+
+class _GroupWithProductsSectionState extends State<GroupWithProductsSection>
+    with AutomaticKeepAliveClientMixin {
+
+  @override
+  bool get wantKeepAlive => true; // 🚀 Keep widget alive to prevent rebuilds
+
+  static const double horizontalContentPadding = 16.0;
   static const double gridCardHeight = 240.0;
+
+  // 🚀 Cache for expensive computations
+  final Map<String, List<ProductModel>> _inStockProductsCache = {};
+  final Map<String, Color?> _backgroundColorCache = {};
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
+
     final TextTheme textTheme = Theme.of(context).textTheme;
 
-    if (groups.isEmpty) return const SizedBox.shrink();
+    if (widget.groups.isEmpty) return const SizedBox.shrink();
 
-    return ListView.builder(
-      itemCount: groups.length,
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemBuilder: (context, index) {
-        final group = groups[index];
+    return RepaintBoundary( // 🚀 Isolate repaints
+      child: ListView.builder(
+        itemCount: widget.groups.length,
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        // 🚀 Performance optimizations
+        addAutomaticKeepAlives: true,
+        addRepaintBoundaries: true,
+        cacheExtent: 1000,
+        itemBuilder: (context, index) {
+          final group = widget.groups[index];
 
-        if (group.products.isEmpty) return const SizedBox.shrink();
+          if (group.products.isEmpty) return const SizedBox.shrink();
 
-        // Filter out products that are out of stock
-        final inStockProducts = group.products.where((product) {
-          // Check if product has any variant with stock > 0
-          return product.variants.entries.any((variant) => variant.value > 0);
-        }).toList();
+          // 🚀 Use cached in-stock products
+          final inStockProducts = _getInStockProducts(group);
+          if (inStockProducts.isEmpty) return const SizedBox.shrink();
 
-        // Don't show group if no products are in stock
-        if (inStockProducts.isEmpty) return const SizedBox.shrink();
+          // 🚀 Use cached background color
+          final sectionBackgroundColor = _getBackgroundColor(group);
 
-        // Background Color Logic
-        Color? sectionBackgroundColor;
-        if (group.isBackgroundColorVisible && group.backgroundColor != null) {
-          final tempBgColorString = group.backgroundColor!.trim();
-
-          if (tempBgColorString.isNotEmpty &&
-              tempBgColorString.toLowerCase() != "#ffffff") {
-            try {
-              final hex = tempBgColorString.replaceAll("#", "");
-              if (hex.length == 6) {
-                sectionBackgroundColor = Color(int.parse("FF$hex", radix: 16));
-              }
-            } catch (e) {
-              sectionBackgroundColor = null;
-            }
-          }
-        }
-
-        return Container(
-          color: sectionBackgroundColor,
-          padding: EdgeInsets.symmetric(
-              vertical: sectionBackgroundColor != null ? 6.0 : 0.0),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: horizontalContentPadding),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 10),
-                // Group Banner
-                if (group.isBannerVisible && group.banner != null && group.banner!.isNotEmpty)
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10.0),
-                    child: Container(
-                      height: 140,
-                      width: double.infinity,
-                      color: AppColors.neutralBackground,
-                      child: Image.network(
-                        group.banner!,
-                        fit: BoxFit.cover,
-                        loadingBuilder: (context, child, progress) {
-                          if (progress == null) return child;
-                          return Center(
-                            child: CircularProgressIndicator(
-                              color: AppColors.accentNeon.withOpacity(0.7),
-                              strokeWidth: 2,
-                            ),
-                          );
-                        },
-                        errorBuilder: (context, error, stackTrace) {
-                          return Center(
-                            child: Icon(Icons.broken_image,
-                                color: AppColors.textLight, size: 40),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-
-                if (group.isBannerVisible && group.banner != null && group.banner!.isNotEmpty)
-                  const SizedBox(height: 16),
-
-                // Group Title + See More
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          return RepaintBoundary( // 🚀 Isolate each group item
+            key: ValueKey('group_$index'), // 🚀 Stable key for performance
+            child: Container(
+              color: sectionBackgroundColor,
+              padding: EdgeInsets.symmetric(
+                  vertical: sectionBackgroundColor != null ? 6.0 : 0.0),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: horizontalContentPadding),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min, // 🚀 Minimize layout
                   children: [
-                    Expanded(
+                    const SizedBox(height: 10),
+
+                    // 🚀 Banner with RepaintBoundary
+                    if (group.isBannerVisible &&
+                        group.banner != null &&
+                        group.banner!.isNotEmpty)
+                      RepaintBoundary(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(10.0),
+                          child: Container(
+                            height: 140,
+                            width: double.infinity,
+                            color: AppColors.neutralBackground,
+                            child: CachedNetworkImage(
+                              imageUrl: group.banner!,
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) => const Center(
+                                child: CircularProgressIndicator(
+                                  color: AppColors.accentNeon,
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                              errorWidget: (context, url, error) => const Center(
+                                child: Icon(
+                                  Icons.broken_image,
+                                  color: AppColors.textLight,
+                                  size: 40,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                    if (group.isBannerVisible &&
+                        group.banner != null &&
+                        group.banner!.isNotEmpty)
+                      const SizedBox(height: 16),
+
+                    // 🚀 Title with RepaintBoundary
+                    RepaintBoundary(
                       child: Text(
                         group.name,
                         style: textTheme.bodyMedium?.copyWith(
@@ -117,112 +125,181 @@ class GroupWithProductsSection extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                  ],
-                ),
 
-                const SizedBox(height: 12),
+                    const SizedBox(height: 12),
 
-                // Product Grid (3x2) - Using filtered in-stock products
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    // Show maximum 6 in-stock products (3x2 grid)
-                    final productsToShow = inStockProducts.take(6).toList();
+                    // 🚀 Grid with RepaintBoundary and optimizations
+                    RepaintBoundary(
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final productsToShow = inStockProducts.take(6).toList();
+                          final rowCount = (productsToShow.length / 3).ceil().clamp(1, 2);
+                          final cardHeight = gridCardHeight;
+                          final mainAxisSpacing = 10.0;
+                          final totalHeight = (cardHeight * rowCount) +
+                              (mainAxisSpacing * (rowCount - 1));
 
-                    // Calculate the number of rows needed
-                    final rowCount = (productsToShow.length / 3).ceil().clamp(1, 2);
+                          return SizedBox(
+                            height: totalHeight,
+                            child: GridView.builder(
+                              physics: const NeverScrollableScrollPhysics(),
+                              padding:  EdgeInsets.zero,
+                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 3,
+                                crossAxisSpacing: 0,
+                                mainAxisSpacing: 0,
+                                childAspectRatio: 0.5,
+                              ),
+                              itemCount: productsToShow.length,
+                              // 🚀 Performance settings
+                              addAutomaticKeepAlives: true,
+                              addRepaintBoundaries: true,
+                              itemBuilder: (context, prodIndex) {
+                                final product = productsToShow[prodIndex];
+                                final String productHeroTag =
+                                    'product_image_group_section_${group.id}_${product.id}_$prodIndex';
 
-                    // Calculate total height needed
-                    final cardHeight = gridCardHeight;
-                    final mainAxisSpacing = 10.0;
-                    final totalHeight = (cardHeight * rowCount) + (mainAxisSpacing * (rowCount - 1));
-
-                    return SizedBox(
-                      height: totalHeight,
-                      child: GridView.builder(
-                        physics: const NeverScrollableScrollPhysics(),
-                        padding: EdgeInsets.zero,
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          crossAxisSpacing: 0, // No horizontal spacing
-                          mainAxisSpacing: 0, // No vertical spacing
-                          childAspectRatio: 0.5, // Wider and shorter cards for compact look
-                        ),
-                        itemCount: productsToShow.length,
-                        itemBuilder: (context, prodIndex) {
-                          final product = productsToShow[prodIndex];
-                          final String productHeroTag =
-                              'product_image_group_section_${group.id}_${product.id}_$prodIndex';
-
-                          return AllProductGridCard(
-                            product: product,
-                            heroTag: productHeroTag,
-                            onTap: (tappedProduct) {
-                              Get.to(
-                                    () => ProductPage(
-                                  product: tappedProduct,
+                                return AllProductGridCard(
+                                  product: product,
                                   heroTag: productHeroTag,
-                                ),
-                                transition: Transition.fadeIn,
-                                duration: const Duration(milliseconds: 300),
-                              );
-                              print('Navigating to product page for: ${tappedProduct.name}');
-                            },
+                                  onTap: (tappedProduct) {
+                                    Get.to(
+                                          () => ProductPage(
+                                        product: tappedProduct,
+                                        heroTag: productHeroTag,
+                                      ),
+                                      transition: Transition.fadeIn,
+                                      duration: const Duration(milliseconds: 300),
+                                    );
+                                  },
+                                );
+                              },
+                            ),
                           );
                         },
                       ),
-                    );
-                  },
-                ),
-                SizedBox(
-                  width: double.infinity,
-                  child: TextButton(
-                    onPressed: () {
-                      Get.to(() => GroupProductsScreen(group: group));
-                      print('Navigating to all products for group: ${group.name}');
-                    },
-                    style: TextButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        side: const BorderSide(
-                          color: AppColors.success,
-                          width: 1,
-                        ),
-                      ),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      minimumSize: Size.zero,
-                      elevation: 0,
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'See all products',
-                          style: textTheme.labelMedium?.copyWith(
-                            color: AppColors.success,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
+
+                    // 🚀 Button with RepaintBoundary
+                    RepaintBoundary(
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: TextButton(
+                          onPressed: () {
+                            Get.to(() => GroupProductsScreen(group: group));
+                          },
+                          style: TextButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              side: const BorderSide(
+                                color: AppColors.success,
+                                width: 1,
+                              ),
+                            ),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            minimumSize: Size.zero,
+                            elevation: 0,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'See all products',
+                                style: textTheme.labelMedium?.copyWith(
+                                  color: AppColors.success,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              const Icon(
+                                Icons.arrow_forward_ios,
+                                size: 14,
+                                color: AppColors.success,
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(width: 6),
-                        Icon(
-                          Icons.arrow_forward_ios,
-                          size: 14,
-                          color: AppColors.success,
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
-                )
-                // Corrected: The padding was moved here, but it's better to wrap the Column.
-                // const SizedBox(height: 16),
-              ],
+
+                    const SizedBox(height: 16),
+                  ],
+                ),
+              ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
+  }
+
+  // 🚀 Optimized in-stock product filtering with caching
+  List<ProductModel> _getInStockProducts(GroupModel group) {
+    final cacheKey = '${group.id}_${group.products.length}';
+
+    if (_inStockProductsCache.containsKey(cacheKey)) {
+      return _inStockProductsCache[cacheKey]!;
+    }
+
+    final inStockProducts = <ProductModel>[];
+
+    // 🚀 Early exit optimization
+    for (final product in group.products) {
+      bool hasStock = false;
+      for (final variant in product.variants.entries) {
+        if (variant.value > 0) {
+          hasStock = true;
+          break; // Exit variant loop early
+        }
+      }
+      if (hasStock) {
+        inStockProducts.add(product);
+      }
+    }
+
+    _inStockProductsCache[cacheKey] = inStockProducts;
+    return inStockProducts;
+  }
+
+  // 🚀 Optimized background color processing with caching
+  Color? _getBackgroundColor(GroupModel group) {
+    if (!group.isBackgroundColorVisible || group.backgroundColor == null) {
+      return null;
+    }
+
+    final colorKey = group.backgroundColor!;
+    if (_backgroundColorCache.containsKey(colorKey)) {
+      return _backgroundColorCache[colorKey];
+    }
+
+    Color? sectionBackgroundColor;
+    final tempBgColorString = group.backgroundColor!.trim();
+
+    if (tempBgColorString.isNotEmpty &&
+        tempBgColorString.toLowerCase() != "#ffffff") {
+      try {
+        final hex = tempBgColorString.replaceAll("#", "");
+        if (hex.length == 6) {
+          sectionBackgroundColor = Color(int.parse("FF$hex", radix: 16));
+        }
+      } catch (e) {
+        sectionBackgroundColor = null;
+      }
+    }
+
+    _backgroundColorCache[colorKey] = sectionBackgroundColor;
+    return sectionBackgroundColor;
+  }
+
+  @override
+  void dispose() {
+    // 🚀 Clear caches on dispose
+    _inStockProductsCache.clear();
+    _backgroundColorCache.clear();
+    super.dispose();
   }
 }

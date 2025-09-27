@@ -62,7 +62,6 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
 
   void _navigateToMainScreen() {
     _cartController.clearCartData();
-    Get.find<ProductController>().fetchInitialProducts();
     Get.offAll(() => MainContainerScreen());
   }
 

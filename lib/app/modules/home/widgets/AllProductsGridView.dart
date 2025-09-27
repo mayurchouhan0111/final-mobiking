@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../data/product_model.dart';
@@ -29,8 +30,19 @@ class AllProductsGridView extends StatefulWidget {
   State<AllProductsGridView> createState() => _AllProductsGridViewState();
 }
 
-class _AllProductsGridViewState extends State<AllProductsGridView> {
+class _AllProductsGridViewState extends State<AllProductsGridView>
+    with AutomaticKeepAliveClientMixin {
+
+  @override
+  bool get wantKeepAlive => true;
+
   bool _isLoadingTriggered = false;
+  ScrollController? _parentController;
+
+  // 🚀 OPTIMIZATION: Cached filtered products
+  List<ProductModel>? _cachedFilteredProducts;
+  int? _lastProductHashCode;
+  Timer? _scrollDebounceTimer;
 
   @override
   void initState() {
@@ -41,35 +53,39 @@ class _AllProductsGridViewState extends State<AllProductsGridView> {
   }
 
   void _attachToParentScroll() {
-    final ScrollController? parentController = PrimaryScrollController.of(context);
-    if (parentController != null) {
-      parentController.addListener(_onParentScroll);
+    _parentController = PrimaryScrollController.of(context);
+    if (_parentController != null) {
+      _parentController!.addListener(_debouncedScrollListener);
     }
   }
 
   @override
   void dispose() {
-    final ScrollController? parentController = PrimaryScrollController.of(context);
-    if (parentController != null) {
-      parentController.removeListener(_onParentScroll);
-    }
+    _scrollDebounceTimer?.cancel();
+    _parentController?.removeListener(_debouncedScrollListener);
     super.dispose();
   }
 
+  void _debouncedScrollListener() {
+    _scrollDebounceTimer?.cancel();
+    _scrollDebounceTimer = Timer(const Duration(milliseconds: 100), () {
+      if (mounted) {
+        _onParentScroll();
+      }
+    });
+  }
+
   void _onParentScroll() {
-    final ScrollController? parentController = PrimaryScrollController.of(context);
-    if (parentController == null || !parentController.hasClients) return;
+    if (_parentController == null || !_parentController!.hasClients) return;
 
-    final maxScroll = parentController.position.maxScrollExtent;
-    final currentScroll = parentController.position.pixels;
-
-    print("📍 Parent Scroll: ${currentScroll.toStringAsFixed(1)} / ${maxScroll.toStringAsFixed(1)}");
+    final maxScroll = _parentController!.position.maxScrollExtent;
+    final currentScroll = _parentController!.position.pixels;
 
     if (currentScroll < maxScroll * 0.7) {
       _isLoadingTriggered = false;
     }
 
-    if (currentScroll >= maxScroll * 0.85) {
+    if (currentScroll >= maxScroll * 0.85 && !_isLoadingTriggered) {
       _triggerLoadMore();
     }
   }
@@ -81,39 +97,60 @@ class _AllProductsGridViewState extends State<AllProductsGridView> {
         widget.onLoadMore == null) return;
 
     _isLoadingTriggered = true;
-    print("🚀 Infinite scroll triggered from parent scroll");
-    widget.onLoadMore!();
+
+    Future.delayed(const Duration(milliseconds: 200), () {
+      if (mounted) {
+        widget.onLoadMore!();
+      }
+    });
   }
 
   List<ProductModel> _getProductsToShow() {
     if (widget.products.isEmpty) return [];
 
-    // First, try to show in-stock products
-    final inStockProducts = widget.products.where((product) {
-      return product.variants.entries.any((variant) => variant.value > 0);
-    }).toList();
+    final currentHash = Object.hashAll(widget.products.map((p) => p.id));
 
-    // If no in-stock products, show all products (including out of stock)
-    if (inStockProducts.isEmpty) {
-      return widget.products;
+    if (_cachedFilteredProducts != null && _lastProductHashCode == currentHash) {
+      return _cachedFilteredProducts!;
     }
 
-    return inStockProducts;
+    final inStockProducts = <ProductModel>[];
+    for (final product in widget.products) {
+      bool hasStock = false;
+      for (final variant in product.variants.entries) {
+        if (variant.value > 0) {
+          hasStock = true;
+          break;
+        }
+      }
+      if (hasStock) {
+        inStockProducts.add(product);
+      }
+    }
+
+    final result = inStockProducts.isNotEmpty ? inStockProducts : widget.products;
+
+    _cachedFilteredProducts = result;
+    _lastProductHashCode = currentHash;
+
+    return result;
+  }
+
+  bool _isProductOutOfStock(ProductModel product) {
+    return !product.variants.entries.any((variant) => variant.value > 0);
   }
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
+
     final textTheme = Theme.of(context).textTheme;
     final productsToShow = _getProductsToShow();
 
-    print("📦 Total Products: ${widget.products.length}, Showing: ${productsToShow.length}");
-
-    // Only show empty state if there are absolutely no products at all
     if (widget.products.isEmpty && !widget.isLoadingMore) {
       return _buildEmptyState(context);
     }
 
-    // Show loading state if we're loading and have no products yet
     if (widget.products.isEmpty && widget.isLoadingMore) {
       return _buildLoadingState();
     }
@@ -124,152 +161,200 @@ class _AllProductsGridViewState extends State<AllProductsGridView> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Title Section
           if (widget.showTitle)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(8.0, 16.0, 8.0, 16.0),
-              child: Row(
-                children: [
-                  Text(
-                    widget.title,
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textDark,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 18,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryPurple.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      '${productsToShow.length}',
-                      style: textTheme.labelSmall?.copyWith(
-                        color: AppColors.primaryPurple,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            RepaintBoundary(
+              child: _buildTitleSection(textTheme, productsToShow.length),
             ),
 
-          // Products Grid
           Padding(
             padding: EdgeInsets.symmetric(horizontal: widget.horizontalPadding),
-            child: GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(2.0),
-              itemCount: productsToShow.length + (widget.isLoadingMore ? 3 : 0),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                crossAxisSpacing: 4.0, // Reduced horizontal spacing
-                mainAxisSpacing: 4.0, // Reduced vertical spacing
-                childAspectRatio: 0.52,
-              ),
-              itemBuilder: (context, index) {
-                // Show loading shimmer
-                if (index >= productsToShow.length) {
-                  return _buildShimmerCard();
-                }
-
-                final product = productsToShow[index];
-                final isOutOfStock = !product.variants.entries.any((variant) => variant.value > 0);
-
-                return GestureDetector(
-                  onTap: () => Get.to(ProductPage(
-                    product: product,
-                    heroTag: 'product_${product.id}_$index',
-                  )),
-                  child: Stack(
-                    children: [
-                      AllProductGridCard(
-                        product: product,
-                        heroTag: 'product_${product.id}_$index',
-                      ),
-                      // Out of stock overlay
-                      if (isOutOfStock)
-                        Positioned.fill(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.6),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Center(
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: Colors.red,
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  'Out of Stock',
-                                  style: textTheme.labelSmall?.copyWith(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 10,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                );
-              },
-            ),
+            child: _buildProductGrid(productsToShow, textTheme),
           ),
 
-          // Loading Indicator
-          if (widget.isLoadingMore)
-            Container(
-              padding: const EdgeInsets.all(16.0),
-              alignment: Alignment.center,
-              child: const CircularProgressIndicator(
+          if (widget.isLoadingMore) _buildLoadingIndicator(),
+
+          if (!widget.hasMoreProducts && productsToShow.isNotEmpty)
+            _buildEndMessage(textTheme),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTitleSection(TextTheme textTheme, int productCount) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8.0, 16.0, 8.0, 16.0),
+      child: Row(
+        children: [
+          Text(
+            widget.title,
+            style: textTheme.bodyMedium?.copyWith(
+              color: AppColors.textDark,
+              fontWeight: FontWeight.w700,
+              fontSize: 18,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+              color: AppColors.primaryPurple.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              '$productCount',
+              style: textTheme.labelSmall?.copyWith(
                 color: AppColors.primaryPurple,
-                strokeWidth: 2,
+                fontWeight: FontWeight.w600,
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
 
-          // End Message
-          if (!widget.hasMoreProducts && productsToShow.isNotEmpty)
-            Container(
-              padding: const EdgeInsets.all(16.0),
-              alignment: Alignment.center,
-              child: Text(
-                '✨ You\'ve seen all products!',
-                style: textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textLight,
-                  fontStyle: FontStyle.italic,
+  Widget _buildProductGrid(List<ProductModel> products, TextTheme textTheme) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(2.0),
+      itemCount: products.length + (widget.isLoadingMore ? 3 : 0),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 4.0,
+        mainAxisSpacing: 4.0,
+        childAspectRatio: 0.52,
+      ),
+      cacheExtent: 1200,
+      addAutomaticKeepAlives: true,
+      itemBuilder: (context, index) {
+        if (index >= products.length) {
+          return RepaintBoundary(child: _buildShimmerCard());
+        }
+
+        final product = products[index];
+        final isOutOfStock = _isProductOutOfStock(product);
+        final heroTag = 'product_${product.id}_$index';
+
+        return RepaintBoundary(
+          child: GestureDetector(
+            onTap: () => Get.to(
+                  () => ProductPage(product: product, heroTag: heroTag),
+              transition: Transition.fadeIn,
+              duration: const Duration(milliseconds: 200),
+            ),
+            child: _buildProductCard(product, isOutOfStock, heroTag, textTheme),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildProductCard(
+      ProductModel product,
+      bool isOutOfStock,
+      String heroTag,
+      TextTheme textTheme
+      ) {
+    return Stack(
+      children: [
+        AllProductGridCard(
+          product: product,
+          heroTag: heroTag,
+        ),
+
+        if (isOutOfStock)
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.6),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade600,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    'Out of Stock',
+                    style: textTheme.labelSmall?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 10,
+                    ),
+                  ),
                 ),
               ),
             ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildLoadingIndicator() {
+    return const Padding(
+      padding: EdgeInsets.all(16.0),
+      child: Center(
+        child: SizedBox(
+          width: 20,
+          height: 20,
+          child: CircularProgressIndicator(
+            color: AppColors.primaryPurple,
+            strokeWidth: 2,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEndMessage(TextTheme textTheme) {
+    return Container(
+      padding: const EdgeInsets.all(16.0),
+      alignment: Alignment.center,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.check_circle,
+            color: AppColors.primaryPurple,
+            size: 16,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            'You have seen all products!',
+            style: textTheme.bodyMedium?.copyWith(
+              color: AppColors.textLight,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildLoadingState() {
-    return Container(
+    return const SizedBox(
       height: 200,
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const CircularProgressIndicator(
-              color: AppColors.primaryPurple,
-              strokeWidth: 2,
+            SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(
+                color: AppColors.primaryPurple,
+                strokeWidth: 2,
+              ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 12),
             Text(
               'Loading products...',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              style: TextStyle(
                 color: AppColors.textLight,
+                fontSize: 14,
               ),
             ),
           ],
@@ -292,21 +377,30 @@ class _AllProductsGridViewState extends State<AllProductsGridView> {
             child: Container(
               margin: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AppColors.textLight.withOpacity(0.2),
+                color: AppColors.textLight.withOpacity(0.15),
                 borderRadius: BorderRadius.circular(6),
+              ),
+              child: Center(
+                child: Icon(
+                  Icons.image,
+                  color: AppColors.textLight.withOpacity(0.3),
+                  size: 24,
+                ),
               ),
             ),
           ),
+
           Expanded(
             flex: 1,
             child: Padding(
               padding: const EdgeInsets.all(8),
               child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Container(
                     height: 8,
                     decoration: BoxDecoration(
-                      color: AppColors.textLight.withOpacity(0.2),
+                      color: AppColors.textLight.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
@@ -315,7 +409,7 @@ class _AllProductsGridViewState extends State<AllProductsGridView> {
                     height: 6,
                     width: 50,
                     decoration: BoxDecoration(
-                      color: AppColors.textLight.withOpacity(0.2),
+                      color: AppColors.textLight.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(3),
                     ),
                   ),
@@ -330,7 +424,7 @@ class _AllProductsGridViewState extends State<AllProductsGridView> {
 
   Widget _buildEmptyState(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    return Container(
+    return SizedBox(
       height: 300,
       child: Center(
         child: Padding(

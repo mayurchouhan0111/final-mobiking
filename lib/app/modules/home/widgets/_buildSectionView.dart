@@ -12,6 +12,8 @@ import '../../../themes/app_theme.dart';
 import '../../../utils/image_utils.dart';
 import '../../../widgets/buildProductList.dart';
 import '../loading/ShimmerBanner.dart';
+import '../loading/ShimmerGroupSection.dart';
+import '../loading/ShimmerProductGrid.dart';
 import 'AllProductGridCard.dart';
 
 class ProductGridViewSection extends StatefulWidget {
@@ -100,6 +102,130 @@ class _ProductGridViewSectionState extends State<ProductGridViewSection> {
     });
   }
 
+  Widget _buildShimmerCard() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.neutralBackground,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.textLight.withOpacity(0.1)),
+      ),
+      child: Column(
+        children: [
+          Expanded(
+            flex: 3,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 1000),
+              margin: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.textLight.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(6),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 1,
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                children: [
+                  Container(
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: AppColors.textLight.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Container(
+                    height: 6,
+                    width: 50,
+                    decoration: BoxDecoration(
+                      color: AppColors.textLight.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context, TextTheme textTheme) {
+    return Container(
+      height: 400,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryPurple.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.inventory_2_outlined,
+                  size: 48,
+                  color: AppColors.primaryPurple,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'No Products Available',
+                style: textTheme.headlineSmall?.copyWith(
+                  color: AppColors.textDark,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'All products are currently out of stock.\nCheck back later for new arrivals!',
+                textAlign: TextAlign.center,
+                style: textTheme.bodyMedium?.copyWith(
+                  color: AppColors.textLight,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInitialLoadingState() {
+    return SingleChildScrollView(
+      physics: const NeverScrollableScrollPhysics(),
+      child: Column(
+        children: [
+          const ShimmerBanner(
+            width: double.infinity,
+            height: 160,
+            borderRadius: 12,
+          ),
+          const SizedBox(height: 8),
+          const ShimmerGroupSection(),
+          const ShimmerProductGrid(),
+        ],
+      ),
+    );
+  }
+
+  List<ProductModel> _getOptimizedInStockProducts(List<ProductModel> products) {
+    return products.where((product) {
+      // Fast check - return early if any variant has stock
+      for (final variant in product.variants.entries) {
+        if (variant.value > 0) return true;
+      }
+      return false;
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     final TextTheme textTheme = Theme.of(context).textTheme;
@@ -175,12 +301,7 @@ class _ProductGridViewSectionState extends State<ProductGridViewSection> {
               final hasMoreProducts = widget.productController.hasMoreProducts.value;
 
               if (isLoading && products.isEmpty) {
-                return const SizedBox(
-                  height: 300,
-                  child: Center(
-                    child: CircularProgressIndicator(color: AppColors.primaryPurple),
-                  ),
-                );
+                return _buildInitialLoadingState();
               } else if (products.isEmpty && !isLoading) {
                 return const SizedBox(
                   height: 300,
@@ -194,9 +315,7 @@ class _ProductGridViewSectionState extends State<ProductGridViewSection> {
                 );
               } else {
                 // Filter in-stock products
-                final inStockProducts = products.where((product) {
-                  return product.variants.entries.any((variant) => variant.value > 0);
-                }).toList();
+                final inStockProducts = _getOptimizedInStockProducts(products);
 
                 if (inStockProducts.isEmpty && !isLoadingMore) {
                   return _buildEmptyState(context, textTheme);
@@ -369,104 +488,8 @@ class _ProductGridViewSectionState extends State<ProductGridViewSection> {
   }
 }
 
-  Widget _buildShimmerCard() {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.neutralBackground,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.textLight.withOpacity(0.1)),
-      ),
-      child: Column(
-        children: [
-          Expanded(
-            flex: 3,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 1000),
-              margin: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppColors.textLight.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(6),
-              ),
-            ),
-          ),
-          Expanded(
-            flex: 1,
-            child: Padding(
-              padding: const EdgeInsets.all(8),
-              child: Column(
-                children: [
-                  Container(
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: AppColors.textLight.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Container(
-                    height: 6,
-                    width: 50,
-                    decoration: BoxDecoration(
-                      color: AppColors.textLight.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(3),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyState(BuildContext context, TextTheme textTheme) {
-    return Container(
-      height: 400,
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryPurple.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.inventory_2_outlined,
-                  size: 48,
-                  color: AppColors.primaryPurple,
-                ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'No Products Available',
-                style: textTheme.headlineSmall?.copyWith(
-                  color: AppColors.textDark,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'All products are currently out of stock.\nCheck back later for new arrivals!',
-                textAlign: TextAlign.center,
-                style: textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textLight,
-                  height: 1.4,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
 
-// ✅ Updated function to use the new integrated widget
 Widget buildSectionView({
   required String bannerImageUrl,
   required List<SubCategory> subCategories,
