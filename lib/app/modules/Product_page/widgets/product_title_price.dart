@@ -15,8 +15,14 @@ class ProductTitleAndPrice extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    debugPrint('ProductTitleAndPrice: originalPrice: \$originalPrice, discountedPrice: \$discountedPrice');
+    debugPrint(
+        'ProductTitleAndPrice: originalPrice: $originalPrice, discountedPrice: $discountedPrice');
     final textTheme = Theme.of(context).textTheme;
+    final bool hasDiscount =
+        originalPrice > discountedPrice && discountedPrice > 0;
+    final double discountPercentage = hasDiscount
+        ? ((originalPrice - discountedPrice) / originalPrice) * 100
+        : 0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -27,38 +33,66 @@ class ProductTitleAndPrice extends StatelessWidget {
           style: textTheme.titleSmall?.copyWith(
             color: AppColors.textDark,
             fontWeight: FontWeight.w600,
-            fontSize: 16, // Blinkit usually uses compact font
+            fontSize: 16,
             height: 1.3,
           ),
           maxLines: 3,
           overflow: TextOverflow.ellipsis,
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
 
         // 💰 Prices
         Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Discounted Price
+            // Final Selling Price
             Text(
               '₹${discountedPrice.toStringAsFixed(0)}',
-              style: textTheme.titleMedium?.copyWith(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textDark,
+              style: textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+                fontSize: 20,
               ),
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: 8),
 
-            // Original Price with Strikethrough (if applicable)
-            if (originalPrice > discountedPrice && originalPrice > 0)
+            // MRP with Strikethrough
+            if (hasDiscount) ...[
+              Text(
+                'MRP ',
+                style: textTheme.bodyMedium?.copyWith(
+                  color: Colors.grey[700],
+                  fontSize: 14,
+                ),
+              ),
               Text(
                 '₹${originalPrice.toStringAsFixed(0)}',
-                style: textTheme.bodySmall?.copyWith(
-                  color: AppColors.textLight,
+                style: textTheme.bodyMedium?.copyWith(
+                  color: Colors.grey[600],
+                  fontSize: 14,
                   decoration: TextDecoration.lineThrough,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+
+            const Spacer(),
+
+            // Discount Badge
+            if (hasDiscount)
+              Container(
+                padding:
+                const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.lightBlue.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  '${discountPercentage.round()}% OFF',
+                  style: textTheme.labelMedium?.copyWith(
+                    color: Colors.blue[800],
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                  ),
                 ),
               ),
           ],

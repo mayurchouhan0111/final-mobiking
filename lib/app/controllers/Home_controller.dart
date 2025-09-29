@@ -63,20 +63,9 @@ class HomeController extends GetxController {
       _isLoading.value = true;
       final result = await _service.getHomeLayout();
       if (result != null) {
-        final productController = Get.find<ProductController>();
-        for (var group in result.groups) {
-          for (var product in group.products) {
-            if (!productController.allProducts.any((p) => p.id == product.id)) {
-              productController.allProducts.add(product);
-            }
-          }
-        }
-      }
-      print("📥 Home layout fetched: $result");
-      _homeData.value = result;
+        _homeData.value = result;
 
-      // Pre-load banner images for all categories
-      if (result != null) {
+        // Pre-load banner images for all categories
         for (var category in result.categories) {
           if (category.upperBanner != null && category.upperBanner!.isNotEmpty) {
             precacheImage(CachedNetworkImageProvider(category.upperBanner!), Get.context!); // Pre-cache upper banner
@@ -116,15 +105,6 @@ class HomeController extends GetxController {
       _groupErrors[categoryId] = null; // Clear previous errors
 
       final groups = await _service.getGroupsByCategory(categoryId);
-
-      final productController = Get.find<ProductController>();
-      for (var group in groups) {
-        for (var product in group.products) {
-          if (!productController.allProducts.any((p) => p.id == product.id)) {
-            productController.allProducts.add(product);
-          }
-        }
-      }
 
       // ✅ Store the fetched groups
       _categoryGroups[categoryId] = groups;

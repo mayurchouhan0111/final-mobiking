@@ -5,9 +5,13 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:mobiking/app/modules/home/widgets/AllProductGridCard.dart';
 import 'dart:async';
 
+import '../../controllers/SearchPageController.dart';
 import '../../controllers/product_controller.dart';
 import '../../services/product_service.dart';
 import '../../themes/app_theme.dart';
+
+// ✅ Separated controller for better state management
+
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
 
@@ -15,262 +19,107 @@ class SearchPage extends StatefulWidget {
   State<SearchPage> createState() => _SearchPageState();
 }
 
-class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin, WidgetsBindingObserver {
-  final TextEditingController _searchPageController = TextEditingController();
-  final FocusNode _searchFocusNode = FocusNode();
-  final ScrollController _scrollController = ScrollController();
-
-  final RxList<String> _recentSearches = <String>[].obs;
-  final RxBool _showClearButton = false.obs;
-  final ProductController controller = Get.find<ProductController>();
-  final RxString _validationMessage = ''.obs;
-
-  // ✅ Pagination variables
-  final RxList<dynamic> _displayedProducts = <dynamic>[].obs;
-  final RxBool _isLoadingMore = false.obs;
-  final RxBool _hasMoreProducts = true.obs;
-  static const int _productsPerPage = 20;
-  int _currentPage = 0;
-
-  // ✅ Optimized debounce
-  Timer? _debounceTimer;
-  static const Duration _debounceDuration = Duration(milliseconds: 500);
-
-  // ✅ Performance optimization flags
-  bool _isSearching = false;
-  String _lastSearchQuery = '';
-
-  // ✅ Animation controllers for smooth transitions
-  late AnimationController _fadeController;
-  late Animation<double> _fadeAnimation;
-
-  // ✅ Keyboard optimization flags
-  bool _keyboardVisible = false;
-  bool _isKeyboardAnimating = false;
+class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
+  late final SearchPageController searchController;
+  late final TextEditingController textController;
+  late final FocusNode focusNode;
+  late final ScrollController scrollController;
+  late final AnimationController fadeController;
+  late final Animation<double> fadeAnimation;
 
   @override
   void initState() {
     super.initState();
+    _initializeControllers();
     _initializeAnimations();
-    _initializeSearch();
+    _setupListeners();
+  }
 
-    // ✅ Add observer for keyboard detection
-    WidgetsBinding.instance.addObserver(this);
+  void _initializeControllers() {
+    searchController = Get.put(SearchPageController());
+    textController = TextEditingController();
+    focusNode = FocusNode();
+    scrollController = ScrollController();
   }
 
   void _initializeAnimations() {
-    _fadeController = AnimationController(
+    fadeController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeInOut,
-    ));
-    _fadeController.forward();
+    fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: fadeController, curve: Curves.easeInOut),
+    );
+    fadeController.forward();
   }
 
-  void _initializeSearch() {
-    _searchPageController.addListener(_onSearchPageControllerChanged);
-    _scrollController.addListener(_onScrollChanged);
+  void _setupListeners() {
+    textController.addListener(() {
+      searchController.onSearchChanged(textController.text);
+    });
 
-    // ✅ No auto-focus to prevent keyboard lag - user taps to focus
-  }
-
-  // ✅ CORRECTED: Proper keyboard detection
-  @override
-  void didChangeMetrics() {
-    super.didChangeMetrics();
-
-    final bottomInset = WidgetsBinding.instance.window.viewInsets.bottom;
-    final newKeyboardVisible = bottomInset > 0.0;
-
-    if (newKeyboardVisible != _keyboardVisible) {
-      setState(() {
-        _keyboardVisible = newKeyboardVisible;
-        _isKeyboardAnimating = true;
-      });
-
-      // Reset animation flag after keyboard animation completes
-      Future.delayed(const Duration(milliseconds: 300), () {
-        if (mounted) {
-          setState(() {
-            _isKeyboardAnimating = false;
-          });
-        }
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    // ✅ Remove observer
-    WidgetsBinding.instance.removeObserver(this);
-
-    _searchPageController.removeListener(_onSearchPageControllerChanged);
-    _scrollController.removeListener(_onScrollChanged);
-    _searchPageController.dispose();
-    _searchFocusNode.dispose();
-    _scrollController.dispose();
-    _debounceTimer?.cancel();
-    _fadeController.dispose();
-    super.dispose();
-  }
-
-  void _onSearchPageControllerChanged() {
-    final hasText = _searchPageController.text.isNotEmpty;
-    if (_showClearButton.value != hasText) {
-      _showClearButton.value = hasText;
-    }
-    _onSearchInputChanged(_searchPageController.text);
-  }
-
-  void _onScrollChanged() {
-    // Auto-load more when near bottom
-    if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 200) {
-      _loadMoreProducts();
-    }
-  }
-
-  void _onSearchInputChanged(String query) {
-    final trimmedQuery = query.trim();
-
-    // ✅ Prevent unnecessary processing
-    if (_isSearching || trimmedQuery == _lastSearchQuery) return;
-
-    _debounceTimer?.cancel();
-
-    if (trimmedQuery.isEmpty) {
-      _resetSearch();
-      return;
-    }
-
-    if (trimmedQuery.length < 2) {
-      _displayedProducts.clear();
-      _validationMessage.value = 'Please enter at least 2 characters to search.';
-      return;
-    }
-
-    _validationMessage.value = '';
-
-    // ✅ Optimized debouncing
-    _debounceTimer = Timer(_debounceDuration, () {
-      if (mounted && !_isSearching) {
-        _performSearch(trimmedQuery);
+    scrollController.addListener(() {
+      if (scrollController.position.pixels >=
+          scrollController.position.maxScrollExtent - 200) {
+        searchController.loadMoreProducts();
       }
     });
   }
 
-  void _resetSearch() {
-    _displayedProducts.clear();
-    _currentPage = 0;
-    _hasMoreProducts.value = true;
-    _validationMessage.value = 'Start typing to search for products.';
-    _lastSearchQuery = '';
-  }
-
-  Future<void> _performSearch(String query) async {
-    if (_isSearching) return;
-
-    _isSearching = true;
-    _lastSearchQuery = query;
-    _currentPage = 0;
-    _hasMoreProducts.value = true;
-
-    try {
-      await controller.searchProducts(query);
-      _updateDisplayedProducts();
-    } finally {
-      _isSearching = false;
-    }
-  }
-
-  void _updateDisplayedProducts() {
-    final allResults = controller.searchResults;
-    final startIndex = _currentPage * _productsPerPage;
-    final endIndex = (startIndex + _productsPerPage).clamp(0, allResults.length);
-
-    if (_currentPage == 0) {
-      _displayedProducts.clear();
-    }
-
-    if (startIndex < allResults.length) {
-      _displayedProducts.addAll(allResults.getRange(startIndex, endIndex));
-      _hasMoreProducts.value = endIndex < allResults.length;
-    } else {
-      _hasMoreProducts.value = false;
-    }
-  }
-
-  Future<void> _loadMoreProducts() async {
-    if (_isLoadingMore.value || !_hasMoreProducts.value || _isSearching) return;
-
-    _isLoadingMore.value = true;
-
-    try {
-      await Future.delayed(const Duration(milliseconds: 100));
-      _currentPage++;
-      _updateDisplayedProducts();
-    } finally {
-      _isLoadingMore.value = false;
-    }
-  }
-
-  void _addRecentSearch(String query) {
-    final cleanQuery = query.trim();
-    if (cleanQuery.isNotEmpty && cleanQuery.length >= 2) {
-      _recentSearches.remove(cleanQuery);
-      _recentSearches.insert(0, cleanQuery);
-      if (_recentSearches.length > 5) _recentSearches.removeLast();
-    }
-  }
-
-  // ✅ OPTIMIZED: Handle search field tap with haptic feedback
-  void _handleSearchFieldTap() {
-    HapticFeedback.lightImpact();
-    if (!_searchFocusNode.hasFocus) {
-      _searchFocusNode.requestFocus();
-    }
+  @override
+  void dispose() {
+    textController.dispose();
+    focusNode.dispose();
+    scrollController.dispose();
+    fadeController.dispose();
+    Get.delete<SearchPageController>();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth = MediaQuery.of(context).size.width;
-    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
-
     return Scaffold(
       backgroundColor: AppColors.white,
-      // ✅ CRITICAL: Dynamic resize behavior
       resizeToAvoidBottomInset: true,
-      body: SizedBox(
-        height: screenHeight,
-        width: screenWidth,
-        child: FadeTransition(
-          opacity: _fadeAnimation,
-          child: Column(
-            children: [
-              // ✅ Fixed header with keyboard awareness
-              _buildOptimizedHeader(textTheme, context),
-              // ✅ Dynamic body that adapts to keyboard
-              Expanded(
-                child: _buildKeyboardAwareBody(textTheme, context, keyboardHeight),
+      body: FadeTransition(
+        opacity: fadeAnimation,
+        child: Column(
+          children: [
+            _SearchHeader(
+              textController: textController,
+              focusNode: focusNode,
+              searchController: searchController,
+            ),
+            Expanded(
+              child: _SearchBody(
+                scrollController: scrollController,
+                searchController: searchController,
+                textController: textController,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
+}
 
-  // ✅ OPTIMIZED header with better keyboard handling
-  Widget _buildOptimizedHeader(TextTheme textTheme, BuildContext context) {
+// ✅ Separated header widget for better performance
+class _SearchHeader extends StatelessWidget {
+  const _SearchHeader({
+    required this.textController,
+    required this.focusNode,
+    required this.searchController,
+  });
+
+  final TextEditingController textController;
+  final FocusNode focusNode;
+  final SearchPageController searchController;
+
+  @override
+  Widget build(BuildContext context) {
     final statusBarHeight = MediaQuery.of(context).viewPadding.top;
+    final textTheme = Theme.of(context).textTheme;
 
     return Container(
       height: statusBarHeight + 80,
@@ -304,7 +153,14 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin, 
                   ),
                 ),
                 const SizedBox(width: 8),
-                Expanded(child: _buildOptimizedSearchField(textTheme)),
+                Expanded(
+                  child: _SearchField(
+                    textController: textController,
+                    focusNode: focusNode,
+                    searchController: searchController,
+                    textTheme: textTheme,
+                  ),
+                ),
               ],
             ),
           ),
@@ -312,21 +168,53 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin, 
       ),
     );
   }
+}
 
-  // ✅ HIGHLY OPTIMIZED search field for smooth keyboard interaction
-  Widget _buildOptimizedSearchField(TextTheme textTheme) {
+// ✅ Optimized search field widget
+class _SearchField extends StatelessWidget {
+  const _SearchField({
+    required this.textController,
+    required this.focusNode,
+    required this.searchController,
+    required this.textTheme,
+  });
+
+  final TextEditingController textController;
+  final FocusNode focusNode;
+  final SearchPageController searchController;
+  final TextTheme textTheme;
+
+  void _handleTap() {
+    HapticFeedback.lightImpact();
+    if (!focusNode.hasFocus) {
+      focusNode.requestFocus();
+    }
+  }
+
+  void _handleClear() {
+    HapticFeedback.lightImpact();
+    textController.clear();
+  }
+
+  void _handleSubmit(String query) {
+    searchController.addRecentSearch(query);
+    HapticFeedback.selectionClick();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: _handleSearchFieldTap,
+      onTap: _handleTap,
       child: Container(
         height: 48,
         decoration: BoxDecoration(
           color: AppColors.white,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: _searchFocusNode.hasFocus
+            color: focusNode.hasFocus
                 ? AppColors.primaryPurple.withOpacity(0.9)
                 : AppColors.lightPurple.withOpacity(0.2),
-            width: _searchFocusNode.hasFocus ? 2.0 : 1.0,
+            width: focusNode.hasFocus ? 2.0 : 1.0,
           ),
           boxShadow: [
             BoxShadow(
@@ -337,18 +225,9 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin, 
           ],
         ),
         child: TextField(
-          controller: _searchPageController,
-          focusNode: _searchFocusNode,
-          onSubmitted: (query) {
-            _addRecentSearch(query);
-            HapticFeedback.selectionClick();
-          },
-          onChanged: (value) {
-            // ✅ Light haptic feedback on typing
-            if (value.length == 1) {
-              HapticFeedback.selectionClick();
-            }
-          },
+          controller: textController,
+          focusNode: focusNode,
+          onSubmitted: _handleSubmit,
           style: textTheme.bodyMedium?.copyWith(
             color: AppColors.textDark,
             fontWeight: FontWeight.w500,
@@ -359,11 +238,10 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin, 
           enableSuggestions: false,
           maxLines: 1,
           textAlignVertical: TextAlignVertical.center,
-          // ✅ CRITICAL: Optimize keyboard type and input formatting
           keyboardType: TextInputType.text,
           textCapitalization: TextCapitalization.none,
           inputFormatters: [
-            FilteringTextInputFormatter.deny(RegExp(r'\n')), // Prevent line breaks
+            FilteringTextInputFormatter.deny(RegExp(r'\n')),
           ],
           decoration: InputDecoration(
             hintText: 'Search for products...',
@@ -372,137 +250,142 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin, 
               fontWeight: FontWeight.w400,
             ),
             border: InputBorder.none,
-            prefixIcon: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              child: Icon(
+            prefixIcon: AnimatedBuilder(
+              animation: focusNode,
+              builder: (context, _) => Icon(
                 Icons.search_rounded,
-                color: _searchFocusNode.hasFocus
+                color: focusNode.hasFocus
                     ? AppColors.primaryPurple
                     : AppColors.textLight,
                 size: 20,
               ),
             ),
-            suffixIcon: Obx(() => _showClearButton.value
-                ? SizedBox(
-              width: 40,
-              height: 40,
-              child: IconButton(
-                icon: const Icon(Icons.clear_rounded,
-                    color: AppColors.textLight, size: 20),
-                onPressed: () {
-                  HapticFeedback.lightImpact();
-                  _searchPageController.clear();
-                  _resetSearch();
-                },
+            suffixIcon: Obx(() => searchController.showClearButton.value
+                ? IconButton(
+              icon: const Icon(
+                Icons.clear_rounded,
+                color: AppColors.textLight,
+                size: 20,
               ),
+              onPressed: _handleClear,
             )
-                : const SizedBox(width: 40, height: 40)),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            isDense: true,
-            isCollapsed: false,
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ✅ OPTIMIZED body with keyboard-aware scrolling
-  Widget _buildKeyboardAwareBody(TextTheme textTheme, BuildContext context, double keyboardHeight) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOutCubic,
-      child: CustomScrollView(
-        controller: _scrollController,
-        // ✅ Optimized physics for smooth scrolling even with keyboard
-        physics: _isKeyboardAnimating
-            ? const NeverScrollableScrollPhysics()
-            : const AlwaysScrollableScrollPhysics(
-          parent: BouncingScrollPhysics(),
-        ),
-        slivers: [
-          // ✅ Keyboard-aware spacing
-          if (keyboardHeight > 0)
-            const SliverToBoxAdapter(child: SizedBox(height: 8)),
-
-          // Recent Searches
-          _buildOptimizedRecentSearches(textTheme),
-
-          // Search Results Header
-          _buildOptimizedSearchResultsHeader(textTheme),
-
-          // Search Results Content
-          _buildOptimizedSearchResults(textTheme),
-
-          // Load More Button
-          _buildOptimizedLoadMoreButton(textTheme),
-
-          // Dynamic bottom padding based on keyboard
-          SliverToBoxAdapter(
-            child: SizedBox(
-              height: keyboardHeight > 0 ? 20 : 100,
+                : const SizedBox.shrink()),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
             ),
+            isDense: true,
           ),
-        ],
+        ),
       ),
     );
   }
+}
 
-  Widget _buildOptimizedRecentSearches(TextTheme textTheme) {
+// ✅ Main search body widget
+class _SearchBody extends StatelessWidget {
+  const _SearchBody({
+    required this.scrollController,
+    required this.searchController,
+    required this.textController,
+  });
+
+  final ScrollController scrollController;
+  final SearchPageController searchController;
+  final TextEditingController textController;
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomScrollView(
+      controller: scrollController,
+      physics: const AlwaysScrollableScrollPhysics(
+        parent: BouncingScrollPhysics(),
+      ),
+      slivers: [
+        _RecentSearches(
+          searchController: searchController,
+          textController: textController,
+        ),
+        _SearchResultsHeader(searchController: searchController),
+        _SearchResults(
+          searchController: searchController,
+          textController: textController,
+        ),
+        _LoadMoreButton(searchController: searchController),
+        const SliverToBoxAdapter(child: SizedBox(height: 100)),
+      ],
+    );
+  }
+}
+
+// ✅ Recent searches widget
+class _RecentSearches extends StatelessWidget {
+  const _RecentSearches({
+    required this.searchController,
+    required this.textController,
+  });
+
+  final SearchPageController searchController;
+  final TextEditingController textController;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
     return SliverToBoxAdapter(
       child: Obx(() {
-        if (_recentSearches.isEmpty) return const SizedBox.shrink();
+        if (searchController.recentSearches.isEmpty) {
+          return const SizedBox.shrink();
+        }
 
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOutCubic,
-          constraints: const BoxConstraints(
-            minHeight: 0,
-            maxHeight: 200,
-          ),
+        return Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           child: Column(
-            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(
-                height: 40,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Recent Searches',
-                      style: textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textDark,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Recent Searches',
+                    style: textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textDark,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: searchController.clearRecentSearches,
+                    child: Text(
+                      'Clear All',
+                      style: textTheme.labelMedium?.copyWith(
+                        color: AppColors.primaryPurple,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                    TextButton(
-                      onPressed: () {
-                        HapticFeedback.lightImpact();
-                        _recentSearches.clear();
-                      },
-                      child: Text(
-                        'Clear All',
-                        style: textTheme.labelMedium?.copyWith(
-                          color: AppColors.primaryPurple,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
               const SizedBox(height: 12),
-              Flexible(
-                child: SingleChildScrollView(
-                  child: Wrap(
-                    spacing: 8.0,
-                    runSpacing: 8.0,
-                    children: _recentSearches
-                        .map((search) => _buildOptimizedRecentSearchChip(search, textTheme))
-                        .toList(),
-                  ),
-                ),
+              Wrap(
+                spacing: 8.0,
+                runSpacing: 8.0,
+                children: searchController.recentSearches
+                    .map((search) => _RecentSearchChip(
+                  search: search,
+                  textTheme: textTheme,
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    textController.text = search;
+                  },
+                  onRemove: () {
+                    HapticFeedback.lightImpact();
+                    searchController.removeRecentSearch(search);
+                    if (textController.text == search) {
+                      textController.clear();
+                    }
+                  },
+                ))
+                    .toList(),
               ),
             ],
           ),
@@ -510,24 +393,31 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin, 
       }),
     );
   }
+}
 
-  Widget _buildOptimizedRecentSearchChip(String search, TextTheme textTheme) {
+// ✅ Individual recent search chip
+class _RecentSearchChip extends StatelessWidget {
+  const _RecentSearchChip({
+    required this.search,
+    required this.textTheme,
+    required this.onTap,
+    required this.onRemove,
+  });
+
+  final String search;
+  final TextTheme textTheme;
+  final VoidCallback onTap;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () {
-          HapticFeedback.selectionClick();
-          _searchPageController.text = search;
-          _performSearch(search);
-        },
+        onTap: onTap,
         borderRadius: BorderRadius.circular(16),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          constraints: const BoxConstraints(
-            maxWidth: 200,
-            minHeight: 32,
-            maxHeight: 40,
-          ),
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 200),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
             color: AppColors.neutralBackground,
@@ -554,20 +444,16 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin, 
                 ),
               ),
               const SizedBox(width: 6),
-              SizedBox(
-                width: 20,
-                height: 20,
-                child: InkWell(
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    _recentSearches.remove(search);
-                    if (_searchPageController.text == search) {
-                      _searchPageController.clear();
-                      _resetSearch();
-                    }
-                  },
-                  borderRadius: BorderRadius.circular(10),
-                  child: Icon(Icons.close, size: 14, color: AppColors.textLight),
+              InkWell(
+                onTap: onRemove,
+                borderRadius: BorderRadius.circular(10),
+                child: Padding(
+                  padding: const EdgeInsets.all(2),
+                  child: Icon(
+                    Icons.close,
+                    size: 14,
+                    color: AppColors.textLight,
+                  ),
                 ),
               ),
             ],
@@ -576,8 +462,18 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin, 
       ),
     );
   }
+}
 
-  Widget _buildOptimizedSearchResultsHeader(TextTheme textTheme) {
+// ✅ Search results header
+class _SearchResultsHeader extends StatelessWidget {
+  const _SearchResultsHeader({required this.searchController});
+
+  final SearchPageController searchController;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
     return SliverToBoxAdapter(
       child: Container(
         height: 50,
@@ -594,27 +490,20 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin, 
             ),
             const SizedBox(width: 8),
             Obx(() {
-              if (_displayedProducts.isNotEmpty) {
-                return AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  constraints: const BoxConstraints(
-                    minWidth: 24,
-                    maxWidth: 60,
-                    minHeight: 20,
-                    maxHeight: 24,
-                  ),
+              if (searchController.displayedProducts.isNotEmpty) {
+                return Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
                     color: AppColors.primaryPurple.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    '${_displayedProducts.length}${_hasMoreProducts.value ? '+' : ''}',
+                    '${searchController.displayedProducts.length}'
+                        '${searchController.hasMoreProducts.value ? '+' : ''}',
                     style: textTheme.labelSmall?.copyWith(
                       color: AppColors.primaryPurple,
                       fontWeight: FontWeight.w600,
                     ),
-                    overflow: TextOverflow.ellipsis,
                   ),
                 );
               }
@@ -625,43 +514,58 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin, 
       ),
     );
   }
+}
 
-  Widget _buildOptimizedSearchResults(TextTheme textTheme) {
+// ✅ Search results content
+class _SearchResults extends StatelessWidget {
+  const _SearchResults({
+    required this.searchController,
+    required this.textController,
+  });
+
+  final SearchPageController searchController;
+  final TextEditingController textController;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final productController = searchController.productController;
+
     return Obx(() {
       // Validation message
-      if (_validationMessage.isNotEmpty) {
-        return _buildOptimizedMessageState(
+      if (searchController.validationMessage.isNotEmpty) {
+        return _MessageState(
           icon: Icons.info_outline_rounded,
           iconColor: AppColors.primaryPurple,
-          title: _validationMessage.value,
-          subtitle: null,
+          title: searchController.validationMessage.value,
         );
       }
 
       // Loading state
-      if (controller.isLoading.value && _displayedProducts.isEmpty) {
-        return _buildOptimizedLoadingState(textTheme);
+      if (productController.isLoading.value &&
+          searchController.displayedProducts.isEmpty) {
+        return _LoadingState(textTheme: textTheme);
       }
 
       // No results
-      if (_displayedProducts.isEmpty &&
-          _searchPageController.text.isNotEmpty &&
-          !controller.isLoading.value) {
-        return _buildOptimizedMessageState(
+      if (searchController.displayedProducts.isEmpty &&
+          textController.text.isNotEmpty &&
+          !productController.isLoading.value) {
+        return _MessageState(
           icon: Icons.search_off_rounded,
           iconColor: AppColors.textLight,
           title: 'No results found',
-          subtitle: 'We couldn\'t find any products matching "${_searchPageController.text}"',
+          subtitle: 'We couldn\'t find any products matching "${textController.text}"',
         );
       }
 
       // Empty state
-      if (_displayedProducts.isEmpty && _searchPageController.text.isEmpty) {
-        return _buildOptimizedMessageState(
+      if (searchController.displayedProducts.isEmpty &&
+          textController.text.isEmpty) {
+        return _MessageState(
           icon: Icons.search_rounded,
           iconColor: AppColors.textLight,
           title: 'Start typing to search for products',
-          subtitle: null,
         );
       }
 
@@ -671,19 +575,20 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin, 
         sliver: SliverGrid(
           delegate: SliverChildBuilderDelegate(
                 (context, index) {
-              final product = _displayedProducts[index];
-              return AllProductGridCard(
-                key: ValueKey('search-${product.id}-$index'),
-                product: product,
-                heroTag: 'search-product-image-${product.id}-$index',
+              final product = searchController.displayedProducts[index];
+              return RepaintBoundary(
+                child: AllProductGridCard(
+                  key: ValueKey('search-${product.id}-$index'),
+                  product: product,
+                  heroTag: 'search-product-image-${product.id}-$index',
+                ),
               );
             },
-            childCount: _displayedProducts.length,
-            addRepaintBoundaries: false,
+            childCount: searchController.displayedProducts.length,
           ),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3, // Display 3 columns for subcategories
-            crossAxisSpacing:1.0,
+            crossAxisCount: 3,
+            crossAxisSpacing: 1.0,
             mainAxisSpacing: 1.0,
             childAspectRatio: 0.50,
           ),
@@ -691,76 +596,73 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin, 
       );
     });
   }
+}
 
-  Widget _buildOptimizedLoadMoreButton(TextTheme textTheme) {
+// ✅ Load more button
+class _LoadMoreButton extends StatelessWidget {
+  const _LoadMoreButton({required this.searchController});
+
+  final SearchPageController searchController;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
     return SliverToBoxAdapter(
       child: Obx(() {
-        if (!_hasMoreProducts.value || _displayedProducts.isEmpty) {
+        if (!searchController.hasMoreProducts.value ||
+            searchController.displayedProducts.isEmpty) {
           return const SizedBox.shrink();
         }
 
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
+        return Container(
           height: 80,
           padding: const EdgeInsets.all(16),
           child: Center(
-            child: _isLoadingMore.value
-                ? Container(
-              constraints: const BoxConstraints(
-                maxWidth: 200,
-                maxHeight: 48,
-              ),
-              padding: const EdgeInsets.all(12),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: AppColors.primaryPurple,
-                    ),
+            child: searchController.isLoadingMore.value
+                ? Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppColors.primaryPurple,
                   ),
-                  const SizedBox(width: 12),
-                  Flexible(
-                    child: Text(
-                      'Loading more...',
-                      style: textTheme.bodyMedium?.copyWith(
-                        color: AppColors.textLight,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Loading more...',
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: AppColors.textLight,
                   ),
-                ],
-              ),
+                ),
+              ],
             )
-                : ConstrainedBox(
-              constraints: const BoxConstraints(
-                maxWidth: 200,
-                maxHeight: 48,
+                : ElevatedButton.icon(
+              onPressed: () {
+                HapticFeedback.lightImpact();
+                searchController.loadMoreProducts();
+              },
+              icon: Icon(Icons.expand_more, color: AppColors.white),
+              label: Text(
+                'Load More',
+                style: textTheme.labelLarge?.copyWith(
+                  color: AppColors.white,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  HapticFeedback.lightImpact();
-                  _loadMoreProducts();
-                },
-                icon: Icon(Icons.expand_more, color: AppColors.white),
-                label: Text(
-                  'Load More',
-                  style: textTheme.labelLarge?.copyWith(
-                    color: AppColors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryPurple,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
                 ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryPurple,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
+                elevation: 2,
               ),
             ),
           ),
@@ -768,79 +670,86 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin, 
       }),
     );
   }
+}
 
-  Widget _buildOptimizedMessageState({
-    required IconData icon,
-    required Color iconColor,
-    required String title,
-    String? subtitle,
-  }) {
+// ✅ Reusable message state widget
+class _MessageState extends StatelessWidget {
+  const _MessageState({
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    this.subtitle,
+  });
+
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final String? subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
     return SliverToBoxAdapter(
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        constraints: const BoxConstraints(
-          minHeight: 200,
-          maxHeight: 400,
-        ),
+      child: Container(
+        height: 300,
+        padding: const EdgeInsets.all(32.0),
         child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(32.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  width: 80,
-                  height: 80,
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: iconColor.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(icon, size: 40, color: iconColor),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 80,
+                height: 80,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: iconColor.withOpacity(0.1),
+                  shape: BoxShape.circle,
                 ),
-                const SizedBox(height: 16),
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 300),
-                  child: Text(
-                    title,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textDark,
-                    ),
-                    textAlign: TextAlign.center,
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 2,
-                  ),
+                child: Icon(icon, size: 40, color: iconColor),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                title,
+                style: textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textDark,
                 ),
-                if (subtitle != null) ...[
-                  const SizedBox(height: 8),
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 300),
-                    child: Text(
-                      subtitle,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.textLight,
-                        height: 1.4,
-                      ),
-                      textAlign: TextAlign.center,
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 3,
-                    ),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              if (subtitle != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  subtitle!,
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: AppColors.textLight,
+                    height: 1.4,
                   ),
-                ],
+                  textAlign: TextAlign.center,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ],
-            ),
+            ],
           ),
         ),
       ),
     );
   }
+}
 
-  Widget _buildOptimizedLoadingState(TextTheme textTheme) {
+// ✅ Loading state widget
+class _LoadingState extends StatelessWidget {
+  const _LoadingState({required this.textTheme});
+
+  final TextTheme textTheme;
+
+  @override
+  Widget build(BuildContext context) {
     return SliverToBoxAdapter(
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
+      child: Container(
         height: 200,
         child: Center(
           child: Column(

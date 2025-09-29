@@ -37,6 +37,9 @@ class CartItemTile extends StatelessWidget {
       imageUrl = product.images[0];
     }
 
+    final bool hasDiscount = originalPrice != null && originalPrice > displayPrice && displayPrice > 0;
+    final double discountPercentage = hasDiscount ? ((originalPrice - displayPrice) / originalPrice) * 100 : 0;
+
     return Container(
       // Improved padding for better horizontal spacing
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
@@ -107,7 +110,7 @@ class CartItemTile extends StatelessWidget {
                         fontSize: 12,
                       ),
                     ),
-                    if (originalPrice != null && originalPrice > displayPrice)
+                    if (hasDiscount)
                       Padding(
                         padding: const EdgeInsets.only(left: 6.0),
                         child: Text(
@@ -121,6 +124,16 @@ class CartItemTile extends StatelessWidget {
                       ),
                   ],
                 ),
+                if (hasDiscount)
+                  const SizedBox(height: 4),
+                if (hasDiscount)
+                  Text(
+                    '${discountPercentage.round()}% OFF',
+                    style: textTheme.labelSmall?.copyWith(
+                      color: AppColors.success,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
               ],
             ),
           ),

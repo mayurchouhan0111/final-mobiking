@@ -1,7 +1,10 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:mobiking/app/controllers/category_controller.dart';
+import 'package:mobiking/app/controllers/sub_category_controller.dart';
 import 'package:mobiking/app/modules/Product_page/product_page.dart';
+import 'package:mobiking/app/modules/home/widgets/HomeCategoriesSection.dart';
 import 'package:mobiking/app/modules/home/widgets/sub_category_screen.dart';
 import 'package:mobiking/app/widgets/group_grid_section.dart';
 import '../../../controllers/product_controller.dart';
@@ -23,6 +26,8 @@ class ProductGridViewSection extends StatefulWidget {
   final List<GroupModel> groups;
   final int index;
   final ProductController productController;
+  final CategoryController categoryController;
+  final SubCategoryController subCategoryController;
   final String? categoryId;
 
   const ProductGridViewSection({
@@ -33,6 +38,8 @@ class ProductGridViewSection extends StatefulWidget {
     required this.groups,
     required this.index,
     required this.productController,
+    required this.categoryController,
+    required this.subCategoryController,
     this.categoryId,
   });
 
@@ -79,7 +86,7 @@ class _ProductGridViewSectionState extends State<ProductGridViewSection> {
     }
 
     // ✅ Enhanced trigger condition: 75% scroll + scrolling up + user gesture
-    if (currentScroll >= maxScroll * 0.75 && _isScrollingUp) {
+    if (currentScroll >= maxScroll * 0.5 && _isScrollingUp) {
       _triggerLoadMore();
     }
   }
@@ -238,7 +245,7 @@ class _ProductGridViewSectionState extends State<ProductGridViewSection> {
           final double scrollPercentage = metrics.pixels / metrics.maxScrollExtent;
 
           // ✅ Trigger at 75% with smooth detection
-          if (scrollPercentage >= 0.75 &&
+          if (scrollPercentage >= 0.5 &&
               notification.scrollDelta! > 0 && // Positive delta = scrolling down/up
               !_isLoadingTriggered &&
               widget.productController.hasMoreProducts.value &&
@@ -288,6 +295,12 @@ class _ProductGridViewSectionState extends State<ProductGridViewSection> {
               ),
 
             const SizedBox(height: 8),
+
+            // Categories Section
+            HomeCategoriesSection(
+              categoryController: widget.categoryController,
+              subCategoryController: widget.subCategoryController,
+            ),
 
             // Group Sections (if available)
             if (widget.groups.isNotEmpty)
@@ -497,6 +510,8 @@ Widget buildSectionView({
   required List<GroupModel> groups,
   required int index,
   required ProductController productController,
+  required CategoryController categoryController,
+  required SubCategoryController subCategoryController,
   String? categoryId,
 }) {
   return ProductGridViewSection(
@@ -506,6 +521,8 @@ Widget buildSectionView({
     groups: groups,
     index: index,
     productController: productController,
+    categoryController: categoryController,
+    subCategoryController: subCategoryController,
     categoryId: categoryId,
   );
 }

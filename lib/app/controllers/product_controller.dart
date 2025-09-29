@@ -265,6 +265,32 @@ class ProductController extends GetxController {
     return relatedProducts;
   }
 
+  /// 🚀 LAZY LOADING: Get related products by group
+  List<ProductModel> getProductsInSameGroup(String currentProductId, List<String> groupIds) {
+    print("DEBUG: currentProductId = $currentProductId");
+    print("DEBUG: groupIds = $groupIds");
+    print("DEBUG: allProducts.length = ${allProducts.length}");
+
+    if (groupIds.isEmpty) {
+      return [];
+    }
+
+    final relatedProducts = allProducts.where((product) {
+      if (product.id == currentProductId) {
+        return false;
+      }
+      if (product.groupIds.isEmpty) {
+        return false;
+      }
+      // Check if there is any intersection between the product's groups and the current product's groups.
+      return product.groupIds.any((groupId) => groupIds.contains(groupId));
+    }).take(6).toList();
+
+    print("DEBUG: found ${relatedProducts.length} related products");
+    print("🔗 Found ${relatedProducts.length} related products for groups $groupIds");
+    return relatedProducts;
+  }
+
   /// 🚀 OPTIMIZATION: Force refresh data
   Future<void> refreshProducts() async {
     print("🔄 Refreshing all products...");

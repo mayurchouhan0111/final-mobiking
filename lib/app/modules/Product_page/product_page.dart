@@ -16,7 +16,7 @@ import '../../controllers/wishlist_controller.dart';
 import '../../data/product_model.dart';
 import '../home/widgets/app_star_rating.dart';
 import 'widgets/product_image_banner.dart';
-import 'widgets/product_title_price.dart';
+// REMOVED: import 'widgets/product_title_price.dart';
 import 'widgets/featured_product_banner.dart';
 import 'widgets/collapsible_section.dart';
 import 'widgets/animated_cart_button.dart';
@@ -489,410 +489,411 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
         return true;
       },
       child: Scaffold(
-      backgroundColor: AppColors.white,
-      body: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              controller: _scrollController,
-              padding: const EdgeInsets.only(bottom: 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Product Image Banner
-                  Obx(() {
-                    final isFavorite = wishlistController.wishlist.any((p) => p.id == product.id);
-                    return ProductImageBanner(
-                      productRating: product.averageRating,
-                      reviewCount: product.reviewCount,
-                      productId: product.id.toString(),
-                      imageUrls: product.images,
-                      badgeText: discountBadgeText.isNotEmpty ? discountBadgeText : null,
-                      isFavorite: isFavorite,
-                      onBack: () => Get.back(),
-                      onFavorite: () {
-                        if (isFavorite) {
-                          wishlistController.removeFromWishlist(product.id);
-                        } else {
-                          wishlistController.addToWishlist(product.id.toString());
-                        }
-                      },
-                      heroTag: widget.heroTag,
-                    );
-                  }),
+        backgroundColor: AppColors.white,
+        body: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                padding: const EdgeInsets.only(bottom: 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Product Image Banner
+                    Obx(() {
+                      final isFavorite = wishlistController.wishlist.any((p) => p.id == product.id);
+                      return ProductImageBanner(
+                        productRating: product.averageRating,
+                        reviewCount: product.reviewCount,
+                        productId: product.id.toString(),
+                        imageUrls: product.images,
+                        badgeText: null,
+                        isFavorite: isFavorite,
+                        onBack: () => Get.back(),
+                        onFavorite: () {
+                          if (isFavorite) {
+                            wishlistController.removeFromWishlist(product.id);
+                          } else {
+                            wishlistController.addToWishlist(product.id.toString());
+                          }
+                        },
+                        heroTag: widget.heroTag,
+                      );
+                    }),
 
-                  // Product Title & Price Card with Toggle Button
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: AppColors.neutralBackground,
-                        borderRadius: const BorderRadius.only(
-                          bottomLeft: Radius.circular(12),
-                          bottomRight: Radius.circular(12),
-                        ),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-                      child: AnimatedOpacity(
-                        opacity: _animationCompleted ? 1.0 : 0.0,
-                        duration: const Duration(milliseconds: 500),
-                        curve: Curves.easeIn,
-                        child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          ProductTitleAndPrice(
-                            title: product.fullName,
-                            originalPrice: originalPrice ?? sellingPrice,
-                            discountedPrice: sellingPrice,
+                    // MODIFIED: Product Title & Price Card with Toggle Button
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.neutralBackground,
+                          borderRadius: const BorderRadius.only(
+                            bottomLeft: Radius.circular(12),
+                            bottomRight: Radius.circular(12),
                           ),
-                          const SizedBox(height: 8),
-                          SizedBox(
-                            width: double.maxFinite,
-                            height: 36,
-                            child: Obx(() => ElevatedButton.icon(
-                              onPressed: () {
-                                _productDetailsVisible.value = !_productDetailsVisible.value;
-                                debugPrint('View product details tapped! Visible: ${_productDetailsVisible.value}');
-                              },
-                              icon: Icon(
-                                _productDetailsVisible.value
-                                    ? Icons.arrow_drop_up
-                                    : Icons.arrow_drop_down,
-                                color: AppColors.success,
-                                size: 16,
+                        ),
+                        padding: const EdgeInsets.fromLTRB(12, 16, 12, 12), // Adjusted padding
+                        child: AnimatedOpacity(
+                          opacity: _animationCompleted ? 1.0 : 0.0,
+                          duration: const Duration(milliseconds: 500),
+                          curve: Curves.easeIn,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // NEW: Replaced ProductTitleAndPrice with enhanced widget
+                              ProductDetailsCard(
+                                title: product.fullName,
+                                originalPrice: originalPrice ?? sellingPrice,
+                                discountedPrice: sellingPrice,
                               ),
-                              label: Text(
-                                _productDetailsVisible.value
-                                    ? 'Hide product details'
-                                    : 'View product details',
-                                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                                  color: AppColors.success,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 12,
+                              const SizedBox(height: 12), // Adjusted spacing
+                              SizedBox(
+                                width: double.maxFinite,
+                                height: 36,
+                                child: Obx(() => ElevatedButton.icon(
+                                  onPressed: () {
+                                    _productDetailsVisible.value = !_productDetailsVisible.value;
+                                    debugPrint('View product details tapped! Visible: ${_productDetailsVisible.value}');
+                                  },
+                                  icon: Icon(
+                                    _productDetailsVisible.value
+                                        ? Icons.arrow_drop_up
+                                        : Icons.arrow_drop_down,
+                                    color: AppColors.success,
+                                    size: 16,
+                                  ),
+                                  label: Text(
+                                    _productDetailsVisible.value
+                                        ? 'Hide product details'
+                                        : 'View product details',
+                                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                                      color: AppColors.success,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.success.withOpacity(0.1),
+                                    foregroundColor: AppColors.success,
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    elevation: 0,
+                                    shadowColor: Colors.transparent,
+                                    minimumSize: Size.zero,
+                                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                )),
+                              ),
+                              const SizedBox(height: 8),
+                              Obx(
+                                    () => AnimatedCrossFade(
+                                  firstChild: const SizedBox.shrink(),
+                                  secondChild: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      // FIXED ENHANCED PRODUCT DESCRIPTION
+                                      _buildEnhancedProductDescription(product.description, textTheme, _productDetailsVisible.value),
+
+                                      // Keep existing description points section
+                                      if (product.descriptionPoints.isNotEmpty)
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Product Features',
+                                                style: textTheme.titleMedium?.copyWith(
+                                                  color: AppColors.textDark,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 12),
+                                              Container(
+                                                width: double.infinity,
+                                                decoration: BoxDecoration(
+                                                  color: Colors.white,
+                                                  borderRadius: BorderRadius.circular(12),
+                                                  border: Border.all(color: Colors.grey.shade200),
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: Colors.grey.shade100,
+                                                      blurRadius: 4,
+                                                      offset: const Offset(0, 2),
+                                                    ),
+                                                  ],
+                                                ),
+                                                padding: const EdgeInsets.all(16),
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: product.descriptionPoints.asMap().entries.map((entry) {
+                                                    int index = entry.key;
+                                                    String point = entry.value;
+
+                                                    return Container(
+                                                      margin: EdgeInsets.only(bottom: index == product.descriptionPoints.length - 1 ? 0 : 12),
+                                                      child: Row(
+                                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                                        children: [
+                                                          Container(
+                                                            margin: const EdgeInsets.only(top: 6, right: 12),
+                                                            width: 8,
+                                                            height: 8,
+                                                            decoration: BoxDecoration(
+                                                              color: AppColors.success,
+                                                              borderRadius: BorderRadius.circular(4),
+                                                            ),
+                                                          ),
+                                                          Expanded(
+                                                            child: Text(
+                                                              _convertHtmlToPlainText(point),
+                                                              style: textTheme.bodyMedium?.copyWith(
+                                                                color: AppColors.textMedium,
+                                                                height: 1.4,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    );
+                                                  }).toList(),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+
+                                      // Key information section
+                                      if (product.keyInformation.isNotEmpty)
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Highlights',
+                                                style: textTheme.titleMedium?.copyWith(
+                                                  color: AppColors.textDark,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 12),
+                                              Container(
+                                                width: double.infinity,
+                                                decoration: BoxDecoration(
+                                                  color: Colors.white,
+                                                  borderRadius: BorderRadius.circular(12),
+                                                  border: Border.all(color: Colors.grey.shade200),
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: Colors.grey.shade100,
+                                                      blurRadius: 4,
+                                                      offset: const Offset(0, 2),
+                                                    ),
+                                                  ],
+                                                ),
+                                                padding: const EdgeInsets.all(16),
+                                                child: Column(
+                                                  children: product.keyInformation.map((info) {
+                                                    return Padding(
+                                                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                                      child: Row(
+                                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                                        children: [
+                                                          SizedBox(
+                                                            width: 110,
+                                                            child: Text(
+                                                              info.title,
+                                                              style: textTheme.bodyMedium?.copyWith(
+                                                                color: Colors.black,
+                                                                fontWeight: FontWeight.w600,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          Expanded(
+                                                            child: Text(
+                                                              _convertHtmlToPlainText(info.content),
+                                                              style: textTheme.bodyMedium?.copyWith(
+                                                                color: Colors.grey.shade700,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    );
+                                                  }).toList(),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                  crossFadeState: _productDetailsVisible.value
+                                      ? CrossFadeState.showSecond
+                                      : CrossFadeState.showFirst,
+                                  duration: const Duration(milliseconds: 300),
+                                  alignment: Alignment.topLeft,
                                 ),
                               ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.success.withOpacity(0.1),
-                                foregroundColor: AppColors.success,
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            ],
+                          ),),
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Variant selection section
+                    if (inStockVariantNames.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: _horizontalPagePadding),
+                        child: CollapsibleSection(
+                          title: 'Select Variant',
+                          initiallyExpanded: true,
+                          content: Wrap(
+                            spacing: 8.0,
+                            runSpacing: 8.0,
+                            children: List.generate(inStockVariantNames.length, (index) {
+                              final variantName = inStockVariantNames[index];
+                              final isSelected = _currentSelectedVariantName.value == variantName;
+
+                              return ChoiceChip(
+                                showCheckmark: false,
+                                label: Text(variantName),
+                                selected: isSelected,
+                                onSelected: (selected) {
+                                  if (selected) {
+                                    onVariantSelected(variantName);
+                                  }
+                                },
+                                selectedColor: AppColors.success.withOpacity(0.1),
+                                backgroundColor: Colors.white,
+                                labelStyle: textTheme.labelMedium?.copyWith(
+                                  color: isSelected ? AppColors.success : AppColors.textDark.withOpacity(0.8),
+                                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
+                                  side: BorderSide(
+                                    color: isSelected ? AppColors.success : Colors.grey.shade300,
+                                    width: 1,
+                                  ),
                                 ),
-                                elevation: 0,
-                                shadowColor: Colors.transparent,
-                                minimumSize: Size.zero,
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              ),
-                            )),
+                              );
+                            }),
                           ),
-                          const SizedBox(height: 8),
-                          Obx(
-                                () => AnimatedCrossFade(
-                              firstChild: const SizedBox.shrink(),
-                              secondChild: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // FIXED ENHANCED PRODUCT DESCRIPTION
-                                  _buildEnhancedProductDescription(product.description, textTheme, _productDetailsVisible.value),
+                        ),
+                      ),
 
-                                  // Keep existing description points section
-                                  if (product.descriptionPoints.isNotEmpty)
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(vertical: 8.0),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'Product Features',
-                                            style: textTheme.titleMedium?.copyWith(
-                                              color: AppColors.textDark,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 12),
-                                          Container(
-                                            width: double.infinity,
-                                            decoration: BoxDecoration(
-                                              color: Colors.white,
-                                              borderRadius: BorderRadius.circular(12),
-                                              border: Border.all(color: Colors.grey.shade200),
-                                              boxShadow: [
-                                                BoxShadow(
-                                                  color: Colors.grey.shade100,
-                                                  blurRadius: 4,
-                                                  offset: const Offset(0, 2),
-                                                ),
-                                              ],
-                                            ),
-                                            padding: const EdgeInsets.all(16),
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: product.descriptionPoints.asMap().entries.map((entry) {
-                                                int index = entry.key;
-                                                String point = entry.value;
+                    const SizedBox(height: 24),
 
-                                                return Container(
-                                                  margin: EdgeInsets.only(bottom: index == product.descriptionPoints.length - 1 ? 0 : 12),
-                                                  child: Row(
-                                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                                    children: [
-                                                      Container(
-                                                        margin: const EdgeInsets.only(top: 6, right: 12),
-                                                        width: 8,
-                                                        height: 8,
-                                                        decoration: BoxDecoration(
-                                                          color: AppColors.success,
-                                                          borderRadius: BorderRadius.circular(4),
-                                                        ),
-                                                      ),
-                                                      Expanded(
-                                                        child: Text(
-                                                          _convertHtmlToPlainText(point),
-                                                          style: textTheme.bodyMedium?.copyWith(
-                                                            color: AppColors.textMedium,
-                                                            height: 1.4,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                );
-                                              }).toList(),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
+                    // Related products section
+                    Obx(() {
+                      if (productController.allProducts.isEmpty) {
+                        return const SizedBox.shrink();
+                      }
 
-                                  // Key information section
-                                  if (product.keyInformation.isNotEmpty)
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(vertical: 8.0),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'Highlights',
-                                            style: textTheme.titleMedium?.copyWith(
-                                              color: AppColors.textDark,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 12),
-                                          Container(
-                                            width: double.infinity,
-                                            decoration: BoxDecoration(
-                                              color: Colors.white,
-                                              borderRadius: BorderRadius.circular(12),
-                                              border: Border.all(color: Colors.grey.shade200),
-                                              boxShadow: [
-                                                BoxShadow(
-                                                  color: Colors.grey.shade100,
-                                                  blurRadius: 4,
-                                                  offset: const Offset(0, 2),
-                                                ),
-                                              ],
-                                            ),
-                                            padding: const EdgeInsets.all(16),
-                                            child: Column(
-                                              children: product.keyInformation.map((info) {
-                                                return Padding(
-                                                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                                                  child: Row(
-                                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                                    children: [
-                                                      SizedBox(
-                                                        width: 110,
-                                                        child: Text(
-                                                          info.title,
-                                                          style: textTheme.bodyMedium?.copyWith(
-                                                            color: Colors.black,
-                                                            fontWeight: FontWeight.w600,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      Expanded(
-                                                        child: Text(
-                                                          _convertHtmlToPlainText(info.content),
-                                                          style: textTheme.bodyMedium?.copyWith(
-                                                            color: Colors.grey.shade700,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                );
-                                              }).toList(),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                ],
+                      final List<String> groupIds = widget.product.groupIds;
+                      final List<ProductModel> relatedProducts = productController.getProductsInSameGroup(
+                        widget.product.id,
+                        groupIds,
+                      );
+
+                      if (relatedProducts.isEmpty) {
+                        return const SizedBox.shrink();
+                      }
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: _horizontalPagePadding),
+                            child: Text(
+                              'You might also like',
+                              style: textTheme.headlineSmall?.copyWith(
+                                color: AppColors.textDark,
+                                fontWeight: FontWeight.w700,
                               ),
-                              crossFadeState: _productDetailsVisible.value
-                                  ? CrossFadeState.showSecond
-                                  : CrossFadeState.showFirst,
-                              duration: const Duration(milliseconds: 300),
-                              alignment: Alignment.topLeft,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            height: 240,
+                            child: ListView.builder(
+                              padding: const EdgeInsets.symmetric(horizontal: _horizontalPagePadding),
+                              scrollDirection: Axis.horizontal,
+                              itemCount: relatedProducts.length,
+                              itemBuilder: (context, index) {
+                                final relatedProduct = relatedProducts[index];
+                                final String productHeroTag = 'product_image_related_${relatedProduct.id}_$index';
+                                return Container(
+                                  width: 110,
+                                  margin: const EdgeInsets.only(right: 12),
+                                  child: AllProductGridCard(
+                                    product: relatedProduct,
+                                    heroTag: productHeroTag,
+                                    onTap: (tappedProduct) {
+                                      _navigateToRelatedProduct(tappedProduct, productHeroTag);
+                                    },
+                                  ),
+                                );
+                              },
                             ),
                           ),
                         ],
-                      ),),
-                    ),
-                  ),
+                      );
+                    }),
 
-                  const SizedBox(height: 24),
-
-                  // Variant selection section
-                  if (inStockVariantNames.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: _horizontalPagePadding),
-                      child: CollapsibleSection(
-                        title: 'Select Variant',
-                        initiallyExpanded: true,
-                        content: Wrap(
-                          spacing: 8.0,
-                          runSpacing: 8.0,
-                          children: List.generate(inStockVariantNames.length, (index) {
-                            final variantName = inStockVariantNames[index];
-                            final isSelected = _currentSelectedVariantName.value == variantName;
-
-                            return ChoiceChip(
-                              showCheckmark: false,
-                              label: Text(variantName),
-                              selected: isSelected,
-                              onSelected: (selected) {
-                                if (selected) {
-                                  onVariantSelected(variantName);
-                                }
-                              },
-                              selectedColor: AppColors.success.withOpacity(0.1),
-                              backgroundColor: Colors.white,
-                              labelStyle: textTheme.labelMedium?.copyWith(
-                                color: isSelected ? AppColors.success : AppColors.textDark.withOpacity(0.8),
-                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                side: BorderSide(
-                                  color: isSelected ? AppColors.success : Colors.grey.shade300,
-                                  width: 1,
-                                ),
-                              ),
-                            );
-                          }),
-                        ),
-                      ),
-                    ),
-
-                  const SizedBox(height: 24),
-
-                  // Related products section
-                  Obx(() {
-                    if (productController.allProducts.isEmpty) {
-                      return const SizedBox.shrink();
-                    }
-
-                    final String? parentCategoryId = widget.product.category?.id;
-                    final List<ProductModel> relatedProducts = productController.getProductsInSameParentCategory(
-                      widget.product.id,
-                      parentCategoryId,
-                    );
-
-                    if (relatedProducts.isEmpty) {
-                      return const SizedBox.shrink();
-                    }
-
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: _horizontalPagePadding),
-                          child: Text(
-                            'You might also like',
-                            style: textTheme.headlineSmall?.copyWith(
-                              color: AppColors.textDark,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        SizedBox(
-                          height: 240,
-                          child: ListView.builder(
-                            padding: const EdgeInsets.symmetric(horizontal: _horizontalPagePadding),
-                            scrollDirection: Axis.horizontal,
-                            itemCount: relatedProducts.length,
-                            itemBuilder: (context, index) {
-                              final relatedProduct = relatedProducts[index];
-                              final String productHeroTag = 'product_image_related_${relatedProduct.id}_$index';
-                              return Container(
-                                width: 110,
-                                margin: const EdgeInsets.only(right: 12),
-                                child: AllProductGridCard(
-                                  product: relatedProduct,
-                                  heroTag: productHeroTag,
-                                  onTap: (tappedProduct) {
-                                    _navigateToRelatedProduct(tappedProduct, productHeroTag);
-                                  },
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ],
-                    );
-                  }),
-
-                  const SizedBox(height: 70),
-                ],
+                    const SizedBox(height: 70),
+                  ],
+                ),
               ),
             ),
-          ),
-          _buildBottomCartBar(context)
-        ],
-      ),
-      floatingActionButton: Obx(() {
-        final totalItemsInCart = cartController.totalCartItemsCount;
-        if (totalItemsInCart == 0) {
-          return const SizedBox.shrink();
-        }
-
-        final List<String> imageUrls = cartController.cartItems.take(3).map((item) {
-          final product = item['productId'];
-          String? imageUrl;
-
-          if (product is Map) {
-            final imagesData = product['images'];
-            if (imagesData is List && imagesData.isNotEmpty) {
-              final firstImage = imagesData[0];
-              if (firstImage is String) {
-                imageUrl = firstImage;
-              } else if (firstImage is Map) {
-                imageUrl = firstImage['url'] as String?;
-              }
-            } else if (imagesData is String) {
-              imageUrl = imagesData;
-            }
+            _buildBottomCartBar(context)
+          ],
+        ),
+        floatingActionButton: Obx(() {
+          final totalItemsInCart = cartController.totalCartItemsCount;
+          if (totalItemsInCart == 0) {
+            return const SizedBox.shrink();
           }
-          return imageUrl ?? 'https://placehold.co/50x50/cccccc/ffffff?text=No+Img';
-        }).toList();
 
-        return Container(
-          margin: const EdgeInsets.only(bottom: 70),
-          child: FloatingCartButton(
-            label: "View Cart",
-            productImageUrls: imageUrls,
-            itemCount: totalItemsInCart,
-            onTap: () {
-              Get.to(() => CheckoutScreen());
-            },
-          ),
-        );
-      }),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-    ),);
+          final List<String> imageUrls = cartController.cartItems.take(3).map((item) {
+            final product = item['productId'];
+            String? imageUrl;
+
+            if (product is Map) {
+              final imagesData = product['images'];
+              if (imagesData is List && imagesData.isNotEmpty) {
+                final firstImage = imagesData[0];
+                if (firstImage is String) {
+                  imageUrl = firstImage;
+                } else if (firstImage is Map) {
+                  imageUrl = firstImage['url'] as String?;
+                }
+              } else if (imagesData is String) {
+                imageUrl = imagesData;
+              }
+            }
+            return imageUrl ?? 'https://placehold.co/50x50/cccccc/ffffff?text=No+Img';
+          }).toList();
+
+          return Container(
+            margin: const EdgeInsets.only(bottom: 70),
+            child: FloatingCartButton(
+              label: "View Cart",
+              productImageUrls: imageUrls,
+              itemCount: totalItemsInCart,
+              onTap: () {
+                Get.to(() => CheckoutScreen());
+              },
+            ),
+          );
+        }),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      ),);
   }
 
   // Navigation helper methods
@@ -1054,5 +1055,171 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
         ),
       );
     });
+  }
+}
+
+// NEW: Enhanced widget for product title, price, and features
+class ProductDetailsCard extends StatelessWidget {
+  final String title;
+  final double originalPrice;
+  final double discountedPrice;
+
+  const ProductDetailsCard({
+    super.key,
+    required this.title,
+    required this.originalPrice,
+    required this.discountedPrice,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme textTheme = Theme.of(context).textTheme;
+    final bool hasDiscount = originalPrice > discountedPrice;
+    final int discountPercentage = hasDiscount
+        ? (((originalPrice - discountedPrice) / originalPrice) * 100).round()
+        : 0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Product Title
+        Text(
+          title,
+          style: textTheme.headlineSmall?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: AppColors.textDark,
+          ),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+        const SizedBox(height: 8),
+
+        // Price Row
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // ✅ Selling Price
+            Text(
+              '₹${discountedPrice.toStringAsFixed(0)}',
+              style: textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: AppColors.textDark,
+              ),
+            ),
+            const SizedBox(width: 8),
+
+            // ✅ MRP with strikethrough
+            if (hasDiscount) ...[
+              Text(
+                'MRP ',
+                style: textTheme.bodyMedium?.copyWith(
+                  color: AppColors.textMedium,
+                ),
+              ),
+              Text(
+                '₹${originalPrice.toStringAsFixed(0)}',
+                style: textTheme.bodyMedium?.copyWith(
+                  decoration: TextDecoration.lineThrough,
+                  color: AppColors.textMedium,
+                ),
+              ),
+            ],
+            const SizedBox(width: 8),
+
+            // ✅ Discount badge
+            if (hasDiscount)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppColors.success.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  '${discountPercentage.round()}% OFF', // rounded value
+                  style: textTheme.labelSmall?.copyWith(
+                    color: AppColors.success,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+          ],
+        )
+,
+        const SizedBox(height: 16),
+
+        // Feature Boxes Row
+        const Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _FeatureInfoBox(
+              icon: Icons.delivery_dining_outlined,
+              label: 'COD Available',
+            ),
+            SizedBox(width: 8),
+            _FeatureInfoBox(
+              icon: Icons.swap_horiz_rounded,
+              label: 'Easy Replacement',
+            ),
+            SizedBox(width: 8),
+            _FeatureInfoBox(
+              icon: Icons.verified_outlined,
+              label: 'Quality Assured',
+            ),
+            SizedBox(width: 8),
+            _FeatureInfoBox(
+              icon: Icons.headset_mic_outlined,
+              label: 'Customer Support',
+            ),
+          ],
+        )
+      ],
+    );
+  }
+}
+
+// NEW: Helper widget for a single feature box
+class _FeatureInfoBox extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _FeatureInfoBox({
+    required this.icon,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8F9FA),
+          borderRadius: BorderRadius.circular(8.0),
+          border: Border.all(color: Colors.grey.shade200, width: 1.0),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              color: Colors.grey.shade700,
+              size: 20,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Colors.grey.shade800,
+                fontWeight: FontWeight.w500,
+                fontSize: 10,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
+import 'package:mobiking/app/controllers/category_controller.dart';
 import 'package:mobiking/app/controllers/product_controller.dart';
 
 import '../controllers/Home_controller.dart';
@@ -263,6 +264,7 @@ class CustomTabBarViewSection extends StatelessWidget {
   final HomeController homeController = Get.find<HomeController>();
   final SubCategoryController subCategoryController = Get.find<SubCategoryController>();
   final ProductController productController = Get.find<ProductController>();
+  final CategoryController categoryController = Get.find<CategoryController>();
 
   CustomTabBarViewSection({super.key});
 
@@ -312,7 +314,8 @@ class CustomTabBarViewSection extends StatelessWidget {
                 bannerImageUrl: bannerImageUrlToUse,
                 categoryGridItems: subCategoryController.subCategories,
                 subCategories: subCategoryController.subCategories,
-
+                categoryController: categoryController,
+                subCategoryController: subCategoryController,
               ),
             ),
           );

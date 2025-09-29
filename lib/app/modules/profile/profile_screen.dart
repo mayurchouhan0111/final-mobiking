@@ -10,7 +10,8 @@ import 'package:mobiking/app/modules/profile/wishlist/Aboout_screen.dart';
 
 import 'package:mobiking/app/modules/profile/wishlist/Support_Screen.dart';
 import 'package:mobiking/app/modules/profile/wishlist/Wish_list_screen.dart';
-import 'package:mobiking/app/themes/app_theme.dart';
+import '../../themes/app_theme.dart';
+
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -31,7 +32,7 @@ class ProfileScreen extends StatelessWidget {
     final TextTheme textTheme = Theme.of(context).textTheme;
     final UserController userController = Get.find<UserController>();
 
-      return Scaffold(
+    return Scaffold(
       backgroundColor: AppColors.neutralBackground,
       appBar: AppBar(
         title: Text(
@@ -54,7 +55,7 @@ class ProfileScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // User Info Section (Blinkit style)
+              // User Info Section
               Obx(() {
                 final userName = userController.userName.value;
                 final userMap = loginController.currentUser.value;
@@ -81,7 +82,7 @@ class ProfileScreen extends StatelessWidget {
               }),
               const SizedBox(height: 24),
 
-              // ✅ Updated Top 4 Action Boxes: Your Orders, Support, Address, Wishlist
+              // ✅ Updated Top Action Boxes: Your Orders, Address, Wishlist, User
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -98,16 +99,6 @@ class ProfileScreen extends StatelessWidget {
                       },
                     ),
                   ),
-                  /*const SizedBox(width: 12),
-                  Expanded(
-                    child: InfoBox(
-                      icon: Icons.headset_mic_outlined,
-                      title: 'Support',
-                      onPressed: () {
-                        Get.to(() => const QueriesScreen());
-                      },
-                    ),
-                  ),*/
                   const SizedBox(width: 12),
                   Expanded(
                     child: InfoBox(
@@ -136,12 +127,22 @@ class ProfileScreen extends StatelessWidget {
                       },
                     ),
                   ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: InfoBox(
+                      icon: Icons.person_outline,
+                      title: 'User',
+                      onPressed: () {
+                        _showUserBottomSheet(context);
+                      },
+                    ),
+                  ),
                 ],
               ),
 
               const SizedBox(height: 32),
 
-              // ✅ Updated YOUR INFORMATION Section (removed Address and Wishlist)
+              // ✅ YOUR INFORMATION Section
               Text(
                 'YOUR INFORMATION',
                 style: textTheme.labelSmall?.copyWith(
@@ -165,7 +166,7 @@ class ProfileScreen extends StatelessWidget {
 
               const SizedBox(height: 24),
 
-              // ✅ POLICIES Section (consolidated into single tile)
+              // ✅ POLICIES Section
               Text(
                 'POLICIES',
                 style: textTheme.labelSmall?.copyWith(
@@ -241,38 +242,85 @@ class ProfileScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 20),
-
-              // Delete Account Button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    showDeleteAccountDialog(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.textDark,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 2,
-                  ),
-                  child: Text(
-                    'Delete Account',
-                    style: textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.white,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
             ],
           ),
         ),
       ),
     );
   }
+
+  // ✅ User Settings Bottom Sheet
+  void _showUserBottomSheet(BuildContext context) {
+    final TextTheme textTheme = Theme.of(context).textTheme;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Handle bar
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.textLight.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            Text(
+              'User Settings',
+              style: textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: AppColors.textDark,
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Delete Account Button (Styled as per original theme)
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context); // Close bottom sheet first
+                  showDeleteAccountDialog(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.textDark,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 2,
+                ),
+                child: Text(
+                  'Delete Account',
+                  style: textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.white,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
 
   // ✅ Policies Bottom Sheet
   void _showPoliciesBottomSheet(BuildContext context) {
@@ -453,7 +501,8 @@ class ProfileScreen extends StatelessWidget {
     try {
       if (await canLaunchUrl(Uri.parse(whatsappUrl))) {
         await launchUrl(Uri.parse(whatsappUrl), mode: LaunchMode.externalApplication);
-      } else {/*
+      } else {
+        /*
         Get.snackbar(
           'Error',
           'WhatsApp is not installed on your device',
@@ -471,31 +520,3 @@ class ProfileScreen extends StatelessWidget {
     }
   }
 }
-
-  void _launchWhatsApp() async {
-    const phoneNumber = "+1234567890"; // Replace with your WhatsApp number
-    const message = "Hello! I need help with Mobiking app.";
-
-    final whatsappUrl = "https://wa.me/$phoneNumber?text=${Uri.encodeComponent(message)}";
-
-    try {
-      if (await canLaunchUrl(Uri.parse(whatsappUrl))) {
-        await launchUrl(Uri.parse(whatsappUrl), mode: LaunchMode.externalApplication);
-      } else {/*
-        Get.snackbar(
-          'Error',
-          'WhatsApp is not installed on your device',
-          backgroundColor: AppColors.danger,
-          colorText: AppColors.white,
-        );*/
-      }
-    } catch (e) {
-      /*Get.snackbar(
-        'Error',
-        'Could not open WhatsApp',
-        backgroundColor: AppColors.danger,
-        colorText: AppColors.white,
-      );*/
-    }
-  }
-

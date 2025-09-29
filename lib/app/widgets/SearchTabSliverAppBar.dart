@@ -1,8 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
-import 'package:flutter/scheduler.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobiking/app/controllers/sub_category_controller.dart';
@@ -27,50 +24,33 @@ class SearchTabSliverAppBar extends StatefulWidget {
   _SearchTabSliverAppBarState createState() => _SearchTabSliverAppBarState();
 }
 
-class _SearchTabSliverAppBarState extends State<SearchTabSliverAppBar>
-    with SingleTickerProviderStateMixin, AutomaticKeepAliveClientMixin {
-
-  @override
-  bool get wantKeepAlive => true; // 🚀 Prevent unnecessary rebuilds
-
-  // 🚀 OPTIMIZATION: Reduced hint texts for better performance
-  static const List<String> _hintTexts = [
-    'Search products...',
-    'Find electronics...',
-    'Discover deals...',
+class _SearchTabSliverAppBarState extends State<SearchTabSliverAppBar> {
+  final List<String> _hintTexts = [
+    'Search "20w bulb"',
+    'Search "LED strip lights"',
+    'Search "solar panel"',
+    'Search "smart plug"',
+    'Search "rechargeable battery"',
   ];
-
-  static const Duration _hintDuration = Duration(seconds: 4);
 
   late final RxInt _currentHintIndex;
   Timer? _hintTextTimer;
 
-  // 🚀 OPTIMIZATION: Late final controllers to prevent repeated lookups
-  late final TabControllerGetX _tabController;
-  late final HomeController _homeController;
+  final TabControllerGetX tabController = Get.put(TabControllerGetX());
+  final SubCategoryController subCategoryController = Get.put(SubCategoryController());
+  final HomeController homeController = Get.find<HomeController>();
 
   @override
   void initState() {
     super.initState();
-
-    // Initialize controllers once
-    _tabController = Get.find<TabControllerGetX>();
-    _homeController = Get.find<HomeController>();
-
     _currentHintIndex = 0.obs;
-    _startHintAnimation();
+    _startHintTextAnimation();
   }
 
-  void _startHintAnimation() {
-    _hintTextTimer = Timer.periodic(_hintDuration, (timer) {
-      if (mounted) {
-        // 🚀 Use SchedulerBinding for smoother animations
-        SchedulerBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
-            _currentHintIndex.value = (_currentHintIndex.value + 1) % _hintTexts.length;
-          }
-        });
-      }
+  void _startHintTextAnimation() {
+    _hintTextTimer?.cancel();
+    _hintTextTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
+      _currentHintIndex.value = (_currentHintIndex.value + 1) % _hintTexts.length;
     });
   }
 
@@ -82,176 +62,160 @@ class _SearchTabSliverAppBarState extends State<SearchTabSliverAppBar>
 
   @override
   Widget build(BuildContext context) {
-    super.build(context); // Required for AutomaticKeepAliveClientMixin
-
     return SliverPersistentHeader(
       pinned: true,
-      delegate: _UltraOptimizedDelegate(
+      delegate: _StickySearchAndTabBarDelegate(
+        searchController: widget.searchController,
+        onSearchChanged: widget.onSearchChanged,
         hintTexts: _hintTexts,
         currentHintIndex: _currentHintIndex,
-        tabController: _tabController,
-        homeController: _homeController,
-        onSearchTap: _handleSearchTap,
+        tabController: tabController,
+        subCategoryController: subCategoryController,
+        homeController: homeController,
       ),
     );
   }
-
-  void _handleSearchTap() {
-    HapticFeedback.lightImpact(); // Better UX
-    Get.to(() => const SearchPage(), transition: Transition.fadeIn);
-  }
 }
 
-// 🚀 ULTRA-OPTIMIZED DELEGATE: Maximum performance
-class _UltraOptimizedDelegate extends SliverPersistentHeaderDelegate {
+class _StickySearchAndTabBarDelegate extends SliverPersistentHeaderDelegate {
+  final TextEditingController? searchController;
+  final void Function(String)? onSearchChanged;
   final List<String> hintTexts;
   final RxInt currentHintIndex;
   final TabControllerGetX tabController;
+  final SubCategoryController subCategoryController;
   final HomeController homeController;
-  final VoidCallback onSearchTap;
 
-  // 🚀 OPTIMIZATION: Aggressive caching with size limits
-  static final Map<String, String> _imageCache = <String, String>{};
-  static final Map<String, BoxDecoration> _decorationCache = <String, BoxDecoration>{};
-  static const int _maxCacheSize = 15; // Prevent memory bloat
-
-  // 🚀 OPTIMIZATION: Pre-computed constants
-  static const double _maxExtent = 230;
-  static const double _minExtent = 180;
-  static const double _extentRange = _maxExtent - _minExtent;
-
-  const _UltraOptimizedDelegate({
+  _StickySearchAndTabBarDelegate({
+    required this.searchController,
+    required this.onSearchChanged,
     required this.hintTexts,
     required this.currentHintIndex,
     required this.tabController,
+    required this.subCategoryController,
     required this.homeController,
-    required this.onSearchTap,
   });
 
   @override
-  double get maxExtent => _maxExtent;
+  double get maxExtent => 230; // Reduced from 240
+
   @override
-  double get minExtent => _minExtent;
+  double get minExtent => 180; // Reduced from 220
 
-  // 🚀 OPTIMIZATION: Lightning-fast image processing
-  String? _getOptimizedBackgroundImage() {
-    final selectedIndex = tabController.selectedIndex.value;
-    final homeData = homeController.homeData;
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    // Calculate animation progress (0.0 to 1.0)
+    final double animationProgress = (shrinkOffset / (maxExtent - minExtent)).clamp(0.0, 1.0);
+    final bool isCollapsed = animationProgress > 0.5;
+    final TextStyle? appThemeHintStyle = Theme.of(context).inputDecorationTheme.hintStyle;
 
-    if (homeData == null || selectedIndex >= homeData.categories.length) {
-      return null;
+    String? backgroundImage;
+    final int selectedTabIndex = tabController.selectedIndex.value;
+    final homeLayout = homeController.homeData;
+
+    if (homeLayout != null &&
+        homeLayout.categories.length > selectedTabIndex &&
+        homeLayout.categories[selectedTabIndex].upperBanner != null &&
+        homeLayout.categories[selectedTabIndex].upperBanner!.isNotEmpty) {
+      backgroundImage = homeLayout.categories[selectedTabIndex].upperBanner!;
     }
 
-    final upperBanner = homeData.categories[selectedIndex].upperBanner;
-    if (upperBanner == null || upperBanner.isEmpty) return null;
-
-    // Use cached result
-    if (_imageCache.containsKey(upperBanner)) {
-      return _imageCache[upperBanner];
-    }
-
-    // Process image URL - Convert GIF to WebP for better performance
-    String processedUrl = upperBanner;
-    if (upperBanner.toLowerCase().contains('.gif')) {
-      processedUrl = upperBanner.replaceAll('.gif', '.webp') + '?q=60&w=800&h=400';
-    }
-
-    // Cache with size limit
-    if (_imageCache.length < _maxCacheSize) {
-      _imageCache[upperBanner] = processedUrl;
-    }
-
-    return processedUrl;
-  }
-
-  // 🚀 OPTIMIZATION: Cached decoration creation
-  BoxDecoration _getBoxDecoration(String? imageUrl, bool isCollapsed) {
-    final cacheKey = '${imageUrl ?? 'null'}_$isCollapsed';
-
-    return _decorationCache.putIfAbsent(cacheKey, () {
-      if (imageUrl == null) {
-        return BoxDecoration(color: isCollapsed ? Colors.black45 : null);
-      }
-
-      return BoxDecoration(
+    return Container(
+      padding: const EdgeInsets.only(top: 4),
+      decoration: BoxDecoration(
         color: isCollapsed ? Colors.black45 : null,
-        image: DecorationImage(
-          image: CachedNetworkImageProvider(
-            imageUrl,
-            maxWidth: 800,
-            maxHeight: 400,
-            cacheKey: imageUrl,
-          ),
+        image: backgroundImage != null
+            ? DecorationImage(
+          image: CachedNetworkImageProvider(backgroundImage),
           fit: BoxFit.cover,
           colorFilter: isCollapsed
               ? const ColorFilter.mode(Colors.black45, BlendMode.darken)
               : null,
-        ),
-      );
-    });
-  }
-
-  @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    // 🚀 Pre-compute all values at once
-    final progress = (shrinkOffset / _extentRange).clamp(0.0, 1.0);
-    final isCollapsed = progress > 0.5;
-    final titleOpacity = (1.0 - progress).clamp(0.0, 1.0);
-    final titleHeight = titleOpacity * 50;
-
-    // Get optimized background
-    final backgroundImage = _getOptimizedBackgroundImage();
-    final decoration = _getBoxDecoration(backgroundImage, isCollapsed);
-
-    return Container(
-      padding: const EdgeInsets.only(top: 4),
-      decoration: decoration,
+        )
+            : null,
+      ),
       child: Column(
-        mainAxisSize: MainAxisSize.min, // 🚀 Minimize layout calculations
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 🚀 Conditional title - only render when visible
-          if (titleHeight > 5)
-            SizedBox(
-              height: titleHeight,
-              child: SafeArea(
-                child: Opacity(
-                  opacity: titleOpacity,
-                  child: const Padding(
-                    padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
-                    child: Text(
-                      'Mobiking Wholesale',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        shadows: [
-                          Shadow(
-                            offset: Offset(1, 1),
-                            blurRadius: 2,
-                            color: Colors.black26,
-                          ),
-                        ],
-                      ),
+          // --- Collapsible Title Section ---
+          SafeArea(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              height: (1.0 - animationProgress) * 50, // Shrinks from 50 to 0
+              child: Opacity(
+                opacity: 1.0 - animationProgress, // Fades out as it shrinks
+                child: const Padding(
+                  padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
+                  child: Text(
+                    'Mobiking Wholesale',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
               ),
             ),
-
-          // 🚀 Optimized search bar
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            child: _SearchBar(
-              onTap: onSearchTap,
-              isCollapsed: isCollapsed,
-              hintTexts: hintTexts,
-              currentHintIndex: currentHintIndex,
-            ),
           ),
 
-          // 🚀 Category tabs
-           CustomTabBarSection(),
+          // --- Search Bar (Always Visible) ---
+          Padding(
+            padding: EdgeInsets.only(
+              left: 16,
+              right: 16,
+              top: 10.0,
+            ),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(10),
+              onTap: () => Get.to(() => const SearchPage()),
+              child: Container(
+                height: 48,
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.search,
+                      color: isCollapsed ? Colors.black : AppColors.textMedium,
+                    ),
+                    SizedBox(width: 8),
+                    Obx(() {
+                      return AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 500),
+                        transitionBuilder: (child, animation) {
+                          final offsetAnimation = Tween<Offset>(
+                            begin: const Offset(0, 1),
+                            end: Offset.zero,
+                          ).animate(animation);
+                          return ClipRect(
+                            child: SlideTransition(
+                              position: offsetAnimation,
+                              child: FadeTransition(
+                                opacity: animation,
+                                child: child,
+                              ),
+                            ),
+                          );
+                        },
+                        child: Text(
+                          hintTexts[currentHintIndex.value],
+                          key: ValueKey<int>(currentHintIndex.value),
+                          style: appThemeHintStyle,
+                        ),
+                      );
+                    }),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 7),
+          // --- Category Tab Section (Always Visible) ---
+          CustomTabBarSection(),
         ],
       ),
     );
@@ -259,106 +223,6 @@ class _UltraOptimizedDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) {
-    // 🚀 More specific rebuild conditions
-    if (identical(this, oldDelegate)) return false;
-    if (oldDelegate is! _UltraOptimizedDelegate) return true;
-
-    return oldDelegate.currentHintIndex.value != currentHintIndex.value ||
-        oldDelegate.tabController.selectedIndex.value != tabController.selectedIndex.value;
-  }
-
-  // 🚀 Disable unnecessary configurations
-  @override
-  FloatingHeaderSnapConfiguration? get snapConfiguration => null;
-  @override
-  OverScrollHeaderStretchConfiguration? get stretchConfiguration => null;
-  @override
-  PersistentHeaderShowOnScreenConfiguration? get showOnScreenConfiguration => null;
-}
-
-// 🚀 OPTIMIZATION: Separate SearchBar widget
-class _SearchBar extends StatelessWidget {
-  final VoidCallback onTap;
-  final bool isCollapsed;
-  final List<String> hintTexts;
-  final RxInt currentHintIndex;
-
-  const _SearchBar({
-    required this.onTap,
-    required this.isCollapsed,
-    required this.hintTexts,
-    required this.currentHintIndex,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: Container(
-        height: 48,
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(10),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x1A000000), // Direct color for performance
-              blurRadius: 4,
-              offset: Offset(0, 2),
-            ),
-          ],
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Row(
-          children: [
-            Icon(
-              Icons.search,
-              color: isCollapsed ? Colors.black : AppColors.textMedium,
-              size: 20,
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _HintText(
-                hintTexts: hintTexts,
-                currentHintIndex: currentHintIndex,
-                isCollapsed: isCollapsed,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// 🚀 OPTIMIZATION: Dedicated HintText widget
-class _HintText extends StatelessWidget {
-  final List<String> hintTexts;
-  final RxInt currentHintIndex;
-  final bool isCollapsed;
-
-  const _HintText({
-    required this.hintTexts,
-    required this.currentHintIndex,
-    required this.isCollapsed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final hintStyle = Theme.of(context).inputDecorationTheme.hintStyle;
-
-    return Obx(() => AnimatedSwitcher(
-      duration: const Duration(milliseconds: 150), // Faster animation
-      child: Text(
-        hintTexts[currentHintIndex.value],
-        key: ValueKey(currentHintIndex.value),
-        style: hintStyle?.copyWith(
-          overflow: TextOverflow.ellipsis,
-          color: isCollapsed ? Colors.black87 : hintStyle?.color,
-        ),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-    ));
+    return true;
   }
 }
