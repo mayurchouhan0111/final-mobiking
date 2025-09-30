@@ -438,13 +438,13 @@ class LoginController extends GetxController {
       final tokenAge = Duration(milliseconds: now - (tokenCreationTime as num).toInt());
 
       if (tokenAge >= _tokenValidityPeriod) {
-        print('LoginController: Token expired (${tokenAge.inHours} hours old). Logging out...');
-        _clearLoginData();
+        print('LoginController: Token expired (\${tokenAge.inHours} hours old). Refreshing...');
+        await _refreshToken();
       } else if (tokenAge >= _refreshInterval) {
-        print('LoginController: Token needs refresh (${tokenAge.inHours} hours old). Refreshing...');
+        print('LoginController: Token needs refresh (\${tokenAge.inHours} hours old). Refreshing...');
         await _refreshToken();
       } else {
-        print('LoginController: Access token is valid (${tokenAge.inHours} hours old).');
+        print('LoginController: Access token is valid (\${tokenAge.inHours} hours old).');
       }
     } else {
       print('LoginController: No access token, refresh token, or creation time found.');
@@ -504,8 +504,8 @@ class LoginController extends GetxController {
     }
   }
 
-  Future<void> _refreshToken() async {
-    print('LoginController: _refreshToken() called at ${DateTime.now()}'); // Added print statement
+  Future<void> _refreshToken({int retryCount = 0}) async {
+    print('LoginController: _refreshToken() called at ${DateTime.now()}');
     final refreshToken = box.read('refreshToken');
     if (refreshToken == null) {
       print('LoginController: No refresh token available. Logging out...');
@@ -515,7 +515,6 @@ class LoginController extends GetxController {
 
     try {
       print('LoginController: Refreshing access token...');
-
       dio.Response response = await loginService.refreshToken(refreshToken);
 
       if (response.statusCode == 200 && response.data['success'] == true) {
@@ -549,7 +548,6 @@ class LoginController extends GetxController {
 
         print('LoginController: Token refreshed successfully');
         _startTokenRefreshTimer();
-
       } else {
         print('LoginController: Token refresh failed. Response: ${response.data}');
         _clearLoginData();
@@ -558,13 +556,24 @@ class LoginController extends GetxController {
     } catch (e) {
       print('LoginController: Token refresh error: $e');
 
-      if (e is dio.DioException && (e.response?.statusCode == 401 || e.response?.statusCode == 403)) {
-        print('LoginController: Refresh token expired or invalid. Logging out...');
+      if (e is dio.DioException) {
+        if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {
+          print('LoginController: Refresh token expired or invalid. Logging out...');
+          _clearLoginData();
+          Get.offAll(() => PhoneAuthScreen());
+        } else if (retryCount < 3) {
+          final delay = Duration(seconds: 5 * (retryCount + 1));
+          print('LoginController: Network error during refresh. Retrying in ${delay.inSeconds} seconds...');
+          Timer(delay, () => _refreshToken(retryCount: retryCount + 1));
+        } else {
+          print('LoginController: Max retry attempts reached. Logging out...');
+          _clearLoginData();
+          Get.offAll(() => PhoneAuthScreen());
+        }
+      } else {
+        print('LoginController: An unexpected error occurred during refresh. Logging out...');
         _clearLoginData();
         Get.offAll(() => PhoneAuthScreen());
-      } else {
-        print('LoginController: Network error during refresh. Retrying in 5 minutes...');
-        Timer(const Duration(minutes: 5), () => _refreshToken());
       }
     }
   }

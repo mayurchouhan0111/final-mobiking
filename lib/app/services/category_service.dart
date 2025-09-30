@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../data/category_model.dart';
 import '../data/sub_category_model.dart';
 import 'package:dio/dio.dart' as dio;
+import '../data/product_model.dart';
 
 class CategoryService {
   static const String baseUrl = 'https://boxbudy.com/api/v1';
@@ -416,5 +417,34 @@ class CategoryService {
   // Method to manually refresh category details data
   Future<Map<String, dynamic>> refreshCategoryDetails(String slug) async {
     return await getCategoryDetails(slug, forceRefresh: true);
+  }
+
+  // Fetch products by subcategory slug
+  Future<List<ProductModel>> getProductsBySubCategorySlug(String slug) async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/home/categories/subCategories/details/$slug'));
+
+      if (response.statusCode == 200) {
+        final raw = json.decode(response.body);
+        final data = raw['data'];
+
+        if (data == null) {
+          print('CategoryService: Product data is null for slug: $slug');
+          return <ProductModel>[];
+        }
+
+        final products = (data['products'] as List?)
+            ?.map((e) => ProductModel.fromJson(e))
+            .toList() ?? <ProductModel>[];
+
+        return products;
+      } else {
+        print('CategoryService: Failed to load products for slug: $slug. Status: ${response.statusCode}');
+        return <ProductModel>[];
+      }
+    } catch (e) {
+      print('CategoryService: Exception in getProductsBySubCategorySlug: $e');
+      return <ProductModel>[];
+    }
   }
 }

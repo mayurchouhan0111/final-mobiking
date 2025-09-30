@@ -57,6 +57,8 @@ class HomeService {
         },
       );
 
+      _log('Raw API Response: ${response.body}');
+
       _log('Home layout response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {

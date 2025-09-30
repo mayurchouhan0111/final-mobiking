@@ -2,6 +2,9 @@
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:async';
+import 'dart:convert';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:mobiking/app/controllers/user_controller.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
@@ -955,13 +958,14 @@ class OrderController extends GetxController {
     try {
       if (orderRequest.orderAmount > 5000) {
         debugPrint('🛑 COD not allowed for orders above ₹5000. Total: ${orderRequest.orderAmount}');
-        _showModernSnackbar(
-          'COD Not Allowed',
-          'Orders above ₹5000 cannot use Cash on Delivery.',
-          isError: true,
-          icon: Icons.warning_outlined,
-          backgroundColor: Colors.orange.shade600,
-          duration: const Duration(seconds: 5),
+        Fluttertoast.showToast(
+            msg: "Orders above ₹5000 cannot use Cash on Delivery.",
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.BOTTOM,
+            timeInSecForIosWeb: 1,
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
+            fontSize: 16.0
         );
         return;
       }

@@ -37,7 +37,7 @@ import 'package:mobiking/app/services/login_service.dart';
 import 'package:mobiking/app/services/user_service.dart';
 import 'package:mobiking/app/services/order_service.dart';
 import 'package:mobiking/app/services/query_service.dart';
-import 'package:mobiking/app/controllers/Home_controller.dart';
+import 'package:mobiking/app/controllers/home_controller.dart';
 import 'package:mobiking/app/controllers/system_ui_controller.dart';
 import 'package:mobiking/app/controllers/tab_controller_getx.dart';
 import 'package:mobiking/app/modules/login/login_screen.dart'; // Assuming PhoneAuthScreen is here
@@ -55,7 +55,9 @@ import 'app/controllers/fcm_controller.dart';
 import 'app/data/ParentCategory.dart';
 import 'app/data/key_information.dart';
 import 'app/data/selling_price.dart';
-import 'app/modules/bottombar/Bottom_bar.dart';
+import 'package:mobiking/app/modules/bottombar/Bottom_bar.dart';
+import 'package:workmanager/workmanager.dart';
+import 'package:mobiking/app/services/background_service.dart';
 import 'firebase_options.dart';
 
 // FCM Background Message Handler - MUST be a top-level function
@@ -97,6 +99,18 @@ Future<void> main() async {
   // uncomment the options line below and ensure you import 'firebase_options.dart'.
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  // --- Workmanager Initialization ---
+  Workmanager().initialize(
+    callbackDispatcher,
+    isInDebugMode: true,
+  );
+
+  Workmanager().registerPeriodicTask(
+    "1",
+    "refreshToken",
+    frequency: Duration(hours: 20),
   );
 
   // --- Core Services and Dependencies ---

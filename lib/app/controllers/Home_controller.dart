@@ -107,6 +107,7 @@ class HomeController extends GetxController {
       final groups = await _service.getGroupsByCategory(categoryId);
 
       // ✅ Store the fetched groups
+      print("Debug: Fetched groups data for category $categoryId: ${groups.map((g) => g.toJson()).toList()}");
       _categoryGroups[categoryId] = groups;
       print("✅ Groups fetched for category $categoryId: ${groups.length}");
 

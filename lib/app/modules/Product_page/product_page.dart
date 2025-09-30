@@ -846,6 +846,64 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
                       );
                     }),
 
+                    const SizedBox(height: 24),
+
+                    // Related products by category section
+                    Obx(() {
+                      if (productController.allProducts.isEmpty) {
+                        return const SizedBox.shrink();
+                      }
+
+                      final List<ProductModel> relatedProducts = productController.getProductsInSameParentCategory(
+                        widget.product.id,
+                        widget.product.category?.id,
+                      );
+
+                      if (relatedProducts.isEmpty) {
+                        return const SizedBox.shrink();
+                      }
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: _horizontalPagePadding),
+                            child: Text(
+                              'More in this Category',
+                              style: textTheme.headlineSmall?.copyWith(
+                                color: AppColors.textDark,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            height: 240,
+                            child: ListView.builder(
+                              padding: const EdgeInsets.symmetric(horizontal: _horizontalPagePadding),
+                              scrollDirection: Axis.horizontal,
+                              itemCount: relatedProducts.length,
+                              itemBuilder: (context, index) {
+                                final relatedProduct = relatedProducts[index];
+                                final String productHeroTag = 'product_image_related_category_${relatedProduct.id}_$index';
+                                return Container(
+                                  width: 110,
+                                  margin: const EdgeInsets.only(right: 12),
+                                  child: AllProductGridCard(
+                                    product: relatedProduct,
+                                    heroTag: productHeroTag,
+                                    onTap: (tappedProduct) {
+                                      _navigateToRelatedProduct(tappedProduct, productHeroTag);
+                                    },
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      );
+                    }),
+
                     const SizedBox(height: 70),
                   ],
                 ),

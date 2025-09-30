@@ -5,7 +5,8 @@ import 'package:get/get.dart';
 import 'package:mobiking/app/controllers/category_controller.dart';
 import 'package:mobiking/app/controllers/product_controller.dart';
 
-import '../controllers/Home_controller.dart';
+
+import '../controllers/home_controller.dart';
 import '../controllers/sub_category_controller.dart';
 import '../controllers/tab_controller_getx.dart';
 import '../data/Home_model.dart';
@@ -314,8 +315,6 @@ class CustomTabBarViewSection extends StatelessWidget {
                 bannerImageUrl: bannerImageUrlToUse,
                 categoryGridItems: subCategoryController.subCategories,
                 subCategories: subCategoryController.subCategories,
-                categoryController: categoryController,
-                subCategoryController: subCategoryController,
               ),
             ),
           );

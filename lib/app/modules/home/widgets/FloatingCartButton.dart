@@ -177,8 +177,8 @@ class _FloatingCartButtonState extends State<FloatingCartButton>
   @override
   Widget build(BuildContext context) {
     // These values are tuned to match the reference image's visual spacing and size
-    double imageSize = 24.0; // Smaller image size
-    double imageOverlap = 12.0; // Adjusted overlap for up to 3 images
+    double imageSize = 32.0; // Increased image size
+    double imageOverlap = 16.0; // Adjusted overlap
 
     // Calculate the width needed for the overlapping image stack (max 3 images)
     final List<String> effectiveImageUrls = widget.productImageUrls.take(3).toList(); // Convert to List here
@@ -195,7 +195,7 @@ class _FloatingCartButtonState extends State<FloatingCartButton>
         child: ScaleTransition(
           scale: _scaleAnimation, // Tap feedback animation
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8), // Adjusted padding for button size
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), // Increased padding
             decoration: BoxDecoration(
               color: AppColors.success, // Solid green background
               borderRadius: BorderRadius.circular(35), // More rounded, stadium shape
@@ -254,7 +254,7 @@ class _FloatingCartButtonState extends State<FloatingCartButton>
                       }).toList(),
                     ),
                   ),
-                  const SizedBox(width: 8), // Spacing between images and text
+                  const SizedBox(width: 12), // Spacing between images and text
                 ],
                 // Animated text for item count and label
                 AnimatedSwitcher(
@@ -289,7 +289,7 @@ class _FloatingCartButtonState extends State<FloatingCartButton>
                         style: GoogleFonts.poppins(
                           color: Colors.white,
                           fontWeight: FontWeight.w700, // Make it bolder
-                          fontSize: 12, // Smaller font size for the main label
+                          fontSize: 16, // Increased font size
                         ),
                       ),
                       Text(
@@ -297,15 +297,15 @@ class _FloatingCartButtonState extends State<FloatingCartButton>
                         style: GoogleFonts.poppins(
                           color: Colors.white.withOpacity(0.8), // Slightly subdued color
                           fontWeight: FontWeight.w500, // Medium weight
-                          fontSize: 10, // Smaller font size for item count
+                          fontSize: 12, // Increased font size
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 8), // Spacing before the arrow icon
+                const SizedBox(width: 12), // Spacing before the arrow icon
                 // Right-facing arrow icon (chevron)
-                const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 14), // Chevron icon
+                const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 16), // Chevron icon
               ],
             ),
           ),

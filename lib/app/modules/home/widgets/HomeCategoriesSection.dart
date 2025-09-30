@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobiking/app/controllers/category_controller.dart';
+import 'package:mobiking/app/controllers/home_controller.dart';
 import 'package:mobiking/app/controllers/sub_category_controller.dart';
 import 'package:mobiking/app/modules/Categories/widgets/CategoryProductsGridScreen.dart';
 import 'package:mobiking/app/modules/Categories/widgets/CategoryTile.dart';
@@ -62,7 +63,6 @@ class HomeCategoriesSection extends StatelessWidget {
               .toList();
 
           if (matchingSubs.isEmpty) return const SizedBox.shrink();
-
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

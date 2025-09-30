@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../themes/app_theme.dart';
 
 class BillSection extends StatefulWidget {
@@ -148,6 +149,10 @@ class _BillSectionState extends State<BillSection> {
                       const SizedBox(height: 16),
                       TextFormField(
                         controller: _gstNumberController,
+                        maxLength: 15,
+                        inputFormatters: [
+                          LengthLimitingTextInputFormatter(15),
+                        ],
                         decoration: InputDecoration(
                           labelText: 'GST Number',
                           hintText: 'Enter your GST number',

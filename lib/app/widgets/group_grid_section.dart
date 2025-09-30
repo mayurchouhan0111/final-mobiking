@@ -3,10 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
 import 'package:mobiking/app/themes/app_theme.dart';
+import 'package:mobiking/app/controllers/sub_category_controller.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../data/group_model.dart';
 import '../data/product_model.dart';
 import '../modules/Product_page/product_page.dart';
 import '../modules/home/widgets/GroupProductsScreen.dart';
+import 'package:mobiking/app/widgets/group_categories_section.dart';
 import '../modules/home/widgets/AllProductGridCard.dart';
 
 class GroupWithProductsSection extends StatefulWidget {
@@ -20,6 +23,7 @@ class GroupWithProductsSection extends StatefulWidget {
 
 class _GroupWithProductsSectionState extends State<GroupWithProductsSection>
     with AutomaticKeepAliveClientMixin {
+  final SubCategoryController subCategoryController = Get.find<SubCategoryController>();
 
   @override
   bool get wantKeepAlive => true; // 🚀 Keep widget alive to prevent rebuilds
@@ -79,27 +83,43 @@ class _GroupWithProductsSectionState extends State<GroupWithProductsSection>
                     if (group.isBannerVisible &&
                         group.banner != null &&
                         group.banner!.isNotEmpty)
-                      RepaintBoundary(
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(10.0),
-                          child: Container(
-                            height: 140,
-                            width: double.infinity,
-                            color: AppColors.neutralBackground,
-                            child: CachedNetworkImage(
-                              imageUrl: group.banner!,
-                              fit: BoxFit.cover,
-                              placeholder: (context, url) => const Center(
-                                child: CircularProgressIndicator(
-                                  color: AppColors.accentNeon,
-                                  strokeWidth: 2,
+                      GestureDetector(
+                        onTap: () async {
+                          if (group.isBannerLinkActive &&
+                              group.bannerLink != null &&
+                              group.bannerLink!.isNotEmpty) {
+                            String urlString = group.bannerLink!;
+                            if (!urlString.startsWith('http://') && !urlString.startsWith('https://')) {
+                              urlString = 'https://' + urlString;
+                            }
+                            final Uri url = Uri.parse(urlString);
+                            if (!await launchUrl(url)) {
+                              throw Exception('Could not launch $url');
+                            }
+                          }
+                        },
+                        child: RepaintBoundary(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(10.0),
+                            child: Container(
+                              height: 140,
+                              width: double.infinity,
+                              color: AppColors.neutralBackground,
+                              child: CachedNetworkImage(
+                                imageUrl: group.banner!,
+                                fit: BoxFit.cover,
+                                placeholder: (context, url) => const Center(
+                                  child: CircularProgressIndicator(
+                                    color: AppColors.accentNeon,
+                                    strokeWidth: 2,
+                                  ),
                                 ),
-                              ),
-                              errorWidget: (context, url, error) => const Center(
-                                child: Icon(
-                                  Icons.broken_image,
-                                  color: AppColors.textLight,
-                                  size: 40,
+                                errorWidget: (context, url, error) => const Center(
+                                  child: Icon(
+                                    Icons.broken_image,
+                                    color: AppColors.textLight,
+                                    size: 40,
+                                  ),
                                 ),
                               ),
                             ),
@@ -110,10 +130,21 @@ class _GroupWithProductsSectionState extends State<GroupWithProductsSection>
                     if (group.isBannerVisible &&
                         group.banner != null &&
                         group.banner!.isNotEmpty)
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 10),
+
+                    if (group.parentCategories.isNotEmpty)
+                      const SizedBox(height: 12),
+
+
+                    if (group.parentCategories.isNotEmpty)
+                      GroupCategoriesSection(
+                          categories: group.parentCategories,
+                          subCategoryController: subCategoryController),
+
+                    const SizedBox(height: 12),
 
                     // 🚀 Title with RepaintBoundary
-                    RepaintBoundary(
+                    ,RepaintBoundary(
                       child: Text(
                         group.name,
                         style: textTheme.bodyMedium?.copyWith(
@@ -127,7 +158,6 @@ class _GroupWithProductsSectionState extends State<GroupWithProductsSection>
                     ),
 
                     const SizedBox(height: 12),
-
                     // 🚀 Grid with RepaintBoundary and optimizations
                     RepaintBoundary(
                       child: LayoutBuilder(

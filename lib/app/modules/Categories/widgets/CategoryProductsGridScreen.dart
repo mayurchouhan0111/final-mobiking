@@ -83,7 +83,7 @@ class _CategoryProductsGridScreenState extends State<CategoryProductsGridScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                
+
 
                 // Subcategories List
                 Expanded(
@@ -267,8 +267,8 @@ class _CategoryProductsGridScreenState extends State<CategoryProductsGridScreen>
               children: [
                 // Category Image
                 Container(
-                  width: 64, // Slightly larger
-                  height: 64, // Slightly larger
+                  width: 60, // Slightly larger
+                  height: 60, // Slightly larger
                   decoration: BoxDecoration(
                     color: AppColors.lightGreyBackground,
                     borderRadius: BorderRadius.circular(10), // More rounded
@@ -307,7 +307,7 @@ class _CategoryProductsGridScreenState extends State<CategoryProductsGridScreen>
                     fontSize: 11, // Slightly smaller for better fit
                   ),
                   textAlign: TextAlign.center,
-                  maxLines: 2,
+                  maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
 
