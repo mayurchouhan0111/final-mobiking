@@ -27,6 +27,7 @@ import '../modules/bottombar/Bottom_bar.dart' show MainContainerScreen;
 import '../modules/checkout/widget/user_info_dialog_content.dart';
 import '../services/order_service.dart';
 import '../themes/app_theme.dart';
+import '../utils/reasons.dart';
 import 'coupon_controller.dart';
 
 class RazorpayErrorCodes {
@@ -187,14 +188,7 @@ class OrderController extends GetxController {
     "Cancelled",
   ];
 
-  var selectedReasonForRequest = ''.obs;
-  final List predefinedReasons = [
-    'Ordered wrong item',
-    'Found cheaper price',
-    'Delivery taking too long',
-    'Need to change address',
-    'Other (please specify)',
-  ];
+
 
   @override
   void onInit() {
@@ -1633,9 +1627,13 @@ class OrderController extends GetxController {
     }
   }
 
+  var selectedReasonForRequest = ''.obs;
+
   Future sendOrderRequest(String orderId, String requestType) async {
     selectedReasonForRequest.value = '';
     final TextEditingController reasonController = TextEditingController();
+
+    final List<String> reasons = requestType == 'Cancel' ? Reasons.cancelReasons : Reasons.returnReasons;
 
     final bool? dialogResult = await Get.dialog(
       GestureDetector(
@@ -1674,7 +1672,7 @@ class OrderController extends GetxController {
                   ),
                 ),
                 const SizedBox(height: 10),
-                ...predefinedReasons.map((reasonOption) {
+                ...reasons.map((reasonOption) {
                   return RadioListTile<String>(
                     title: Text(
                       reasonOption,
@@ -1823,7 +1821,7 @@ class OrderController extends GetxController {
   bool showReturnButton(OrderModel order) {
     final bool isOrderDelivered = order.status.toLowerCase() == 'delivered';
     final bool withinReturnPeriod = isOrderDelivered && order.deliveredAt != null &&
-        DateTime.now().difference(DateTime.tryParse(order.deliveredAt!) ?? DateTime(0)).inDays <= 7;
+        DateTime.now().difference(DateTime.tryParse(order.deliveredAt!) ?? DateTime(0)).inDays <= 3;
     final bool hasActiveReturnRequest = _isSpecificRequestActive(order, 'Return');
     return withinReturnPeriod && !hasActiveReturnRequest;
   }

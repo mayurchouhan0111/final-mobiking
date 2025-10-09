@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import '../../../controllers/query_getx_controller.dart';
 import '../../../themes/app_theme.dart';
 
@@ -52,19 +53,30 @@ class _RaiseQueryDialogState extends State<RaiseQueryDialog> with TickerProvider
       );
       _showSuccessSnackbar();
       Get.back(); // Dismiss dialog
+      // Wait for 5 seconds and then refresh the queries
+      Future.delayed(const Duration(seconds: 5), () {
+        queryController.refreshMyQueries();
+      });
     } catch (e) {
       debugPrint('Error submitting query: $e');
+      Get.snackbar(
+        'Error',
+        'Failed to submit query. Please try again.',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     }
   }
 
   void _showSuccessSnackbar() {
-    HapticFeedback.mediumImpact();
-    Get.snackbar(
-      'Query Submitted! 🎉',
-      'Your query has been successfully submitted.',
-      backgroundColor: AppColors.success,
-      colorText: AppColors.white,
-      duration: const Duration(seconds: 4),
+    Fluttertoast.showToast(
+        msg: "Query raised successfully",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.CENTER,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.green,
+        textColor: Colors.white,
+        fontSize: 16.0
     );
   }
 

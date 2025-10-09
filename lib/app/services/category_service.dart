@@ -166,13 +166,7 @@ class CategoryService {
 
         // Show success message only for forced refresh
         if (forceRefresh) {
-          Get.snackbar(
-            'Success',
-            'Category details refreshed successfully!',
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.green.shade600,
-            colorText: Colors.white,
-          );
+
         }
 
         return result;
@@ -182,13 +176,7 @@ class CategoryService {
         // Try to return cached data as fallback
         final cached = _getCachedCategoryDetails(slug);
         if (cached != null) {
-          Get.snackbar(
-            'Error',
-            'Failed to fetch fresh data. Showing cached data.',
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.orange.shade600,
-            colorText: Colors.white,
-          );
+
           return cached;
         }
 
@@ -203,13 +191,7 @@ class CategoryService {
       // Try to return cached data as fallback
       final cached = _getCachedCategoryDetails(slug);
       if (cached != null) {
-        Get.snackbar(
-          'Error',
-          'Failed to fetch category details. Showing cached data.',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.orange.shade600,
-          colorText: Colors.white,
-        );
+
         return cached;
       }
 
@@ -282,6 +264,9 @@ class CategoryService {
           }
         }
 
+        // Sort categories alphabetically by name
+        categories.sort((a, b) => a.name.compareTo(b.name));
+
         print('CategoryService: Successfully parsed ${categories.length} categories');
 
         // Cache the fresh data
@@ -289,13 +274,7 @@ class CategoryService {
 
         // Show success message only for forced refresh
         if (forceRefresh && categories.isNotEmpty) {
-          Get.snackbar(
-            'Success',
-            'Categories refreshed successfully!',
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.green.shade600,
-            colorText: Colors.white,
-          );
+
         }
 
         return categories;
@@ -306,13 +285,7 @@ class CategoryService {
         // Try to return cached data as fallback
         final cached = _getCachedCategories();
         if (cached.isNotEmpty) {
-          Get.snackbar(
-            'Error',
-            'Failed to fetch fresh data. Showing cached categories.',
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.orange.shade600,
-            colorText: Colors.white,
-          );
+
           return cached;
         }
 
@@ -324,13 +297,7 @@ class CategoryService {
       // Try to return cached data as fallback
       final cached = _getCachedCategories();
       if (cached.isNotEmpty) {
-        Get.snackbar(
-          'Error',
-          'Failed to fetch categories. Showing cached data.',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.orange.shade600,
-          colorText: Colors.white,
-        );
+
         return cached;
       }
 

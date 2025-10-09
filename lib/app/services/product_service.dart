@@ -156,4 +156,31 @@ class ProductService {
       throw Exception("Error fetching products: $e");
     }
   }
+
+  /// Get frequently bought together products
+  Future<List<ProductModel>> getFrequentlyBoughtTogether(String productId) async {
+    final url = Uri.parse('$baseUrl/products/frequently-bought-together/$productId');
+    _log('GET /products/frequently-bought-together/$productId');
+
+    try {
+      final response = await http.get(url);
+      _log('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+        final List data = jsonData['data'];
+        final products = data.map((e) => ProductModel.fromJson(e)).toList();
+
+        _log('Successfully fetched ${products.length} frequently bought together products');
+
+        return products;
+      } else {
+        _log("Failed to fetch frequently bought together products: ${response.reasonPhrase} (Status: ${response.statusCode})");
+        throw Exception("Failed to fetch frequently bought together products: ${response.reasonPhrase} (Status: ${response.statusCode})");
+      }
+    } catch (e) {
+      _log("Error while fetching frequently bought together products: $e");
+      throw Exception("Error while fetching frequently bought together products: $e");
+    }
+  }
 }

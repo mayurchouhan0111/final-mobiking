@@ -1,6 +1,9 @@
 import 'dart:convert';
+
 import 'package:dio/dio.dart';
+
 import '../data/QueryModel.dart';
+import '../data/order_model.dart';
 
 class QueryService {
   final Dio _dio;
@@ -93,7 +96,7 @@ class QueryService {
 
   // --- MAIN QUERY FUNCTIONS ---
 
-  Future<QueryModel> raiseQuery({
+  Future<void> raiseQuery({
     required String title,
     required String message,
     String? orderId,
@@ -105,8 +108,7 @@ class QueryService {
       if (orderId != null) "orderId": orderId,
     };
     try {
-      final response = await _dio.post(url, data: requestBody);
-      return await _handleDioResponse(response, (json) => QueryModel.fromJson(json as Map<String, dynamic>));
+      await _dio.post(url, data: requestBody);
     } on DioException catch (e) {
       throw Exception('Failed to raise query: ${_getDioErrorMessage(e)}');
     } catch (e) {
@@ -135,7 +137,7 @@ class QueryService {
     }
   }
 
-  Future<QueryModel> replyToQuery({
+  Future<void> replyToQuery({
     required String queryId,
     required String replyText,
   }) async {
@@ -145,8 +147,7 @@ class QueryService {
       'message': replyText,
     };
     try {
-      final response = await _dio.post(url, data: requestBody);
-      return await _handleDioResponse(response, (json) => QueryModel.fromJson(json as Map<String, dynamic>));
+      await _dio.post(url, data: requestBody);
     } on DioException catch (e) {
       throw Exception('Failed to reply to query: ${_getDioErrorMessage(e)}');
     } catch (e) {

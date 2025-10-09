@@ -8,6 +8,7 @@ import '../services/query_service.dart';
 import '../themes/app_theme.dart';
 
 import 'package:mobiking/app/controllers/connectivity_controller.dart';
+import 'package:mobiking/app/controllers/order_controller.dart';
 
 class QueryGetXController extends GetxController {
   /// Main list of user queries (order-linked and general)
@@ -299,21 +300,15 @@ class QueryGetXController extends GetxController {
     _isLoading.value = true;
     _errorMessage.value = '';
     try {
-      final newQuery = await _queryService.raiseQuery(
+      await _queryService.raiseQuery(
         title: title,
         message: message,
         orderId: orderId,
       );
-      _myQueries.insert(0, newQuery);
-      _myQueries.refresh();
-      
-      if (orderId != null) {
-        _currentQuery.value = newQuery;
-        _updateConversationStream(newQuery.replies ?? []);
-      }
     } catch (e) {
       final userFriendlyMessage = _getFriendlyErrorMessage(e, 'Error raising query.');
       _errorMessage.value = userFriendlyMessage;
+      rethrow;
     } finally {
       _isLoading.value = false;
     }
@@ -336,17 +331,16 @@ class QueryGetXController extends GetxController {
     _isLoading.value = true;
     _errorMessage.value = '';
     try {
-      final updatedQuery = await _queryService.replyToQuery(
+      await _queryService.replyToQuery(
         queryId: queryId,
         replyText: replyText,
       );
-      _updateQueryInList(updatedQuery);
+
+      // Refresh all orders to get the new message
+      final orderController = Get.find<OrderController>();
+      await orderController.fetchOrderHistory();
+
       _replyInputController.clear();
-      _updateConversationStream(updatedQuery.replies ?? []);
-      if (_currentQuery.value?.id == queryId) {
-        await Future.delayed(const Duration(milliseconds: 500));
-        await refreshCurrentQuery();
-      }
       _showModernSnackbar(
         title: 'Success',
         message: 'Reply sent successfully!',

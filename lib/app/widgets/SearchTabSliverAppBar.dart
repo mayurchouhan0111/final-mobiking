@@ -6,7 +6,7 @@ import 'package:mobiking/app/controllers/sub_category_controller.dart';
 import 'package:mobiking/app/modules/search/SearchPage.dart';
 import 'package:mobiking/app/themes/app_theme.dart';
 import '../controllers/tab_controller_getx.dart';
-import '../controllers/home_controller.dart';
+import 'package:mobiking/app/controllers/home_controller.dart';
 import 'CategoryTab.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 

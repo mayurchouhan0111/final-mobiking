@@ -137,13 +137,6 @@ class SubCategoryService {
 
       // Show success message only for forced refresh
       if (forceRefresh && subCategories.isNotEmpty) {
-        Get.snackbar(
-          'Success',
-          'Data refreshed successfully!',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green.shade600,
-          colorText: Colors.white,
-        );
       }
 
       return subCategories;
@@ -153,13 +146,6 @@ class SubCategoryService {
       // Try to return cached data as fallback
       final cached = _getCachedSubCategories();
       if (cached.isNotEmpty) {
-        Get.snackbar(
-          'Error',
-          'Failed to fetch fresh data. Showing cached data.',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.orange.shade600,
-          colorText: Colors.white,
-        );
         return cached;
       }
 

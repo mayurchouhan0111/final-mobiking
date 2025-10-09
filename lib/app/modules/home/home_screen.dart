@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:mobiking/app/modules/home/widgets/FloatingCartButton.dart';
 import '../../controllers/cart_controller.dart' show CartController;
 import '../../controllers/category_controller.dart';
+import 'package:mobiking/app/controllers/home_controller.dart';
 import '../../controllers/sub_category_controller.dart';
 import '../../controllers/tab_controller_getx.dart';
 import '../../controllers/product_controller.dart';
@@ -29,6 +30,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final SubCategoryController subCategoryController = Get.find<SubCategoryController>();
   final TabControllerGetX tabController = Get.find<TabControllerGetX>();
   final ProductController productController = Get.find<ProductController>();
+  final HomeController homeController = Get.find<HomeController>();
 
   late ScrollController _scrollController;
   final RxBool _showScrollToTopButton = false.obs;
@@ -36,6 +38,10 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    productController.refreshProducts();
+    categoryController.refreshCategories();
+    subCategoryController.refreshSubCategories();
+    homeController.refreshAllData();
     _scrollController = ScrollController();
     _scrollController.addListener(_scrollListener);
   }

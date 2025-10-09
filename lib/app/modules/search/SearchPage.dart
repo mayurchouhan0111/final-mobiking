@@ -53,9 +53,14 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
     fadeController.forward();
   }
 
+  Timer? _debounce;
+
   void _setupListeners() {
     textController.addListener(() {
-      searchController.onSearchChanged(textController.text);
+      if (_debounce?.isActive ?? false) _debounce?.cancel();
+      _debounce = Timer(const Duration(milliseconds: 500), () {
+        searchController.onSearchChanged(textController.text);
+      });
     });
 
     scrollController.addListener(() {
@@ -68,6 +73,7 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
 
   @override
   void dispose() {
+    _debounce?.cancel();
     textController.dispose();
     focusNode.dispose();
     scrollController.dispose();

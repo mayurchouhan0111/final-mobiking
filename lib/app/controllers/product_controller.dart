@@ -11,6 +11,8 @@ class ProductController extends GetxController {
   var isLoading = false.obs;
   var selectedProduct = Rxn<ProductModel>();
   var searchResults = <ProductModel>[].obs;
+  var frequentlyBoughtTogetherProducts = <ProductModel>[].obs;
+  var isFetchingFrequentlyBoughtTogether = false.obs;
 
   // 🚀 LAZY LOADING: Advanced pagination states
   var isFetchingMore = false.obs;
@@ -33,7 +35,6 @@ class ProductController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    // 🚀 LAZY LOADING: Don't auto-fetch, wait for UI request
     _initializeLazyLoading();
   }
 
@@ -174,9 +175,7 @@ class ProductController extends GetxController {
       return;
     }
 
-    // 🚀 OPTIMIZATION: Debounce search requests
-    _debounceTimer?.cancel();
-    _debounceTimer = Timer(_debounceDelay, () => _executeSearch(trimmedQuery));
+    await _executeSearch(trimmedQuery);
   }
 
   Future<void> _executeSearch(String query) async {

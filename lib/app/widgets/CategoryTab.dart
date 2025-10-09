@@ -6,7 +6,7 @@ import 'package:mobiking/app/controllers/category_controller.dart';
 import 'package:mobiking/app/controllers/product_controller.dart';
 
 
-import '../controllers/home_controller.dart';
+import 'package:mobiking/app/controllers/home_controller.dart';
 import '../controllers/sub_category_controller.dart';
 import '../controllers/tab_controller_getx.dart';
 import '../data/Home_model.dart';
@@ -137,40 +137,43 @@ class _CustomTabBarSectionState extends State<CustomTabBarSection> {
     required Color iconAndTextColor,
     required TextTheme textTheme,
   }) {
-    return GestureDetector(
+    return InkWell(
       key: key,
       onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(
-            height: 22,
-            width: 22,
-            child: Builder(
-              builder: (context) {
-                try {
-                  final decodedSvg = htmlUnescape(icon);
-                  return SvgPicture.string(decodedSvg, color: iconAndTextColor);
-                } catch (e) {
-                  return Icon(Icons.broken_image, size: 20, color: iconAndTextColor);
-                }
-              },
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              height: 22,
+              width: 22,
+              child: Builder(
+                builder: (context) {
+                  try {
+                    final decodedSvg = htmlUnescape(icon);
+                    return SvgPicture.string(decodedSvg, color: iconAndTextColor);
+                  } catch (e) {
+                    return Icon(Icons.broken_image, size: 20, color: iconAndTextColor);
+                  }
+                },
+              ),
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            maxLines: 2,
-            textAlign: TextAlign.center,
-            style: textTheme.labelSmall?.copyWith(
-              fontSize: 11,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              color: iconAndTextColor,
-              letterSpacing: -0.2,
+            const SizedBox(height: 4),
+            Text(
+              label,
+              maxLines: 2,
+              textAlign: TextAlign.center,
+              style: textTheme.labelSmall?.copyWith(
+                fontSize: 11,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                color: iconAndTextColor,
+                letterSpacing: -0.2,
+              ),
             ),
-          ),
-          const SizedBox(height: 4),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -217,17 +220,14 @@ class _CustomTabBarSectionState extends State<CustomTabBarSection> {
                   final theme = category.theme ?? 'dark';
                   final Color tabColor = theme == 'light' ? Colors.white : Colors.black;
 
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: _buildTabItem(
-                      key: _tabKeys[index],
-                      icon: category.icon ?? '',
-                      label: category.name,
-                      isSelected: isSelected,
-                      onTap: () => tabControllerGetX.updateIndex(index),
-                      iconAndTextColor: tabColor,
-                      textTheme: textTheme,
-                    ),
+                  return _buildTabItem(
+                    key: _tabKeys[index],
+                    icon: category.icon ?? '',
+                    label: category.name,
+                    isSelected: isSelected,
+                    onTap: () => tabControllerGetX.updateIndex(index),
+                    iconAndTextColor: tabColor,
+                    textTheme: textTheme,
                   );
                 }),
               ),
@@ -294,10 +294,7 @@ class CustomTabBarViewSection extends StatelessWidget {
           final category = categories[index];
           final categoryId = category.id;
 
-          // Fetch group data only once
-          if (!homeController.categoryGroups.containsKey(categoryId)) {
-            homeController.fetchGroupsByCategory(categoryId);
-          }
+          
 
           // ✅ Reset and fetch products when category changes
 

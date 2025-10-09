@@ -41,17 +41,11 @@ class LoginController extends GetxController {
   final CartController _cartController = Get.find<CartController>();
   final WishlistController _wishlistController = Get.find<WishlistController>();
 
-  // Timer for automatic token refresh
-  Timer? _tokenRefreshTimer;
-  static const Duration _refreshInterval = Duration(hours: 20); // Refresh token after 20 hours
-  static const Duration _tokenValidityPeriod = Duration(hours: 24); // Token is valid for 24 hours
-
   @override
   void onInit() {
     super.onInit();
     _loadCurrentUserFromStorage();
     checkLoginStatus();
-    _startTokenRefreshTimer(); // Start automatic refresh timer
 
     ever(_connectivityController.isConnected, (bool isConnected) {
       if (isConnected) {
@@ -63,7 +57,6 @@ class LoginController extends GetxController {
   @override
   void onClose() {
     phoneController.dispose();
-    _tokenRefreshTimer?.cancel(); // Cancel token refresh timer
     _otpResendTimer?.cancel(); // Cancel OTP resend timer
     super.onClose();
   }
@@ -126,18 +119,12 @@ class LoginController extends GetxController {
         // OTP verification successful - user is now logged in
         final responseData = response.data['data'];
         final user = responseData['user'];
-        final accessToken = responseData['accessToken'];
-        final refreshToken = responseData['refreshToken'];
         final Map<String, dynamic>? cart = user?['cart'];
         String? cartId = cart?['_id'];
 
-        // Store tokens and user data
-        await box.write('accessToken', accessToken);
-        await box.write('refreshToken', refreshToken);
+        // Store user data
         await box.write('user', user);
         await box.write('cartId', cartId);
-        await box.write('tokenCreationTime', DateTime.now().millisecondsSinceEpoch);
-        print('LoginController: tokenCreationTime written: ${box.read('tokenCreationTime')}');
 
         print('LoginController: User object before setting currentUser: $user');
         print('LoginController: User _id before setting currentUser: ${user?['_id']}');
@@ -146,11 +133,7 @@ class LoginController extends GetxController {
         // Clear OTP related data
         _clearOtpData();
 
-        // Start automatic token refresh timer
-        _startTokenRefreshTimer();
-
         print('LoginController: OTP verified and user logged in successfully');
-        print('Access Token: ${box.read('accessToken')}');
         print('User data: ${box.read('user')}');
         print('Cart ID: ${box.read('cartId')}');
 
@@ -344,16 +327,9 @@ class LoginController extends GetxController {
       }
 
       // Check if tokens are not expired
-      final tokenCreationTime = box.read('tokenCreationTime');
-      if (tokenCreationTime != null) {
-        final now = DateTime.now().millisecondsSinceEpoch;
-        final tokenAge = Duration(milliseconds: now - (tokenCreationTime as num).toInt());
-
-        // If token is expired (>24 hours), user needs to re-login
-        if (tokenAge.inHours >= 24) {
-          print('LoginController: Token expired, user needs to re-login for account deletion');
-          return false;
-        }
+      if (loginService.isTokenExpired()) {
+        print('LoginController: Token expired, user needs to re-login for account deletion');
+        return false;
       }
 
       // Optional: Check service health before allowing deletion
@@ -376,18 +352,13 @@ class LoginController extends GetxController {
       print('LoginController: Clearing all user data...');
 
       // Cancel timers
-      _tokenRefreshTimer?.cancel();
       _otpResendTimer?.cancel();
 
       // Clear OTP data
       _clearOtpData();
 
       // Clear all stored data
-      box.remove('accessToken');
-      box.remove('refreshToken');
-      box.remove('user');
-      box.remove('cartId');
-      box.remove('tokenCreationTime');
+      loginService.clearAllTokenData();
       box.remove('userPreferences');
       box.remove('favorites');
       box.remove('settings');
@@ -410,7 +381,7 @@ class LoginController extends GetxController {
     print('LoginController: Internet connection restored. Attempting to refresh user data/session...');
     if (currentUser.value != null && box.read('accessToken') != null) {
       try {
-        await _checkAndRefreshTokenIfNeeded();
+        await manualRefreshToken();
         print('LoginController: User session or data re-validated/refreshed successfully.');
       } catch (e) {
         print('LoginController: Failed to refresh user data/session on reconnect: $e');
@@ -427,86 +398,16 @@ class LoginController extends GetxController {
     }
   }
 
-  void checkLoginStatus() async {
-    final accessToken = box.read('accessToken');
-    final refreshToken = box.read('refreshToken');
-    final tokenCreationTime = box.read('tokenCreationTime');
-
-    if (accessToken != null && refreshToken != null && tokenCreationTime != null) {
-      final now = DateTime.now().millisecondsSinceEpoch;
-      // ✅ CORRECTED: Cast the value from storage to num and then convert to int.
-      final tokenAge = Duration(milliseconds: now - (tokenCreationTime as num).toInt());
-
-      if (tokenAge >= _tokenValidityPeriod) {
-        print('LoginController: Token expired (\${tokenAge.inHours} hours old). Refreshing...');
-        await _refreshToken();
-      } else if (tokenAge >= _refreshInterval) {
-        print('LoginController: Token needs refresh (\${tokenAge.inHours} hours old). Refreshing...');
-        await _refreshToken();
-      } else {
-        print('LoginController: Access token is valid (\${tokenAge.inHours} hours old).');
-      }
-    } else {
-      print('LoginController: No access token, refresh token, or creation time found.');
-    }
-  }
-
-  void _startTokenRefreshTimer() {
-    _tokenRefreshTimer?.cancel();
-
-    final tokenCreationTime = box.read('tokenCreationTime');
-    final accessToken = box.read('accessToken');
-    print('LoginController: _startTokenRefreshTimer called.');
-    print('LoginController: tokenCreationTime: $tokenCreationTime');
-    print('LoginController: accessToken: $accessToken');
-
-    if (tokenCreationTime == null || accessToken == null) {
-      print('LoginController: Token creation time or access token is null. Cannot start refresh timer.');
-      return;
-    }
-
-    final now = DateTime.now().millisecondsSinceEpoch;
-    // ✅ CORRECTED: Cast the value from storage to num and then convert to int.
-    final tokenAge = now - (tokenCreationTime as num).toInt();
-
-    Duration effectiveRefreshInterval = loginService.isTestingTokenRefresh.value
-        ? const Duration(minutes: 1) // 1 minute for testing
-        : _refreshInterval; // 20 hours for normal operation
-
-    final nextRefreshTimeMs = effectiveRefreshInterval.inMilliseconds - tokenAge;
-
-    if (nextRefreshTimeMs <= 0) {
-      _refreshToken();
-      return;
-    }
-
-    print('LoginController: Next token refresh scheduled in ${(nextRefreshTimeMs / (1000 * 60 * 60)).toStringAsFixed(1)} hours');
-
-    _tokenRefreshTimer = Timer(Duration(milliseconds: nextRefreshTimeMs), () {
-      _refreshToken();
-    });
-  }
-
-  Future<void> _checkAndRefreshTokenIfNeeded() async {
-    final tokenCreationTime = box.read('tokenCreationTime');
-    if (tokenCreationTime == null) return;
-
-    final now = DateTime.now().millisecondsSinceEpoch;
-    // ✅ CORRECTED: Cast the value from storage to num and then convert to int.
-    final tokenAge = Duration(milliseconds: now - (tokenCreationTime as num).toInt());
-
-    Duration effectiveRefreshInterval = loginService.isTestingTokenRefresh.value
-        ? const Duration(minutes: 1) // 1 minute for testing
-        : _refreshInterval; // 20 hours for normal operation
-
-    if (tokenAge >= effectiveRefreshInterval) {
-      await _refreshToken();
+  void checkLoginStatus() {
+    if (loginService.hasValidTokens()) {
+      _loadCurrentUserFromStorage();
+      loginService.startTokenRefreshTimer();
     }
   }
 
   Future<void> _refreshToken({int retryCount = 0}) async {
     print('LoginController: _refreshToken() called at ${DateTime.now()}');
-    final refreshToken = box.read('refreshToken');
+    final refreshToken = loginService.getCurrentRefreshToken();
     if (refreshToken == null) {
       print('LoginController: No refresh token available. Logging out...');
       _clearLoginData();
@@ -519,18 +420,9 @@ class LoginController extends GetxController {
 
       if (response.statusCode == 200 && response.data['success'] == true) {
         final responseData = response.data['data'];
-        final newAccessToken = responseData['accessToken'];
-        final newRefreshToken = responseData['refreshToken'];
         final updatedUser = responseData['user'];
         final updatedCart = responseData['cart'];
         final updatedWishlist = responseData['wishlist'];
-
-        await box.write('accessToken', newAccessToken);
-        await box.write('tokenCreationTime', DateTime.now().millisecondsSinceEpoch);
-
-        if (newRefreshToken != null) {
-          await box.write('refreshToken', newRefreshToken);
-        }
 
         if (updatedUser != null) {
           await box.write('user', updatedUser);
@@ -547,7 +439,6 @@ class LoginController extends GetxController {
         }
 
         print('LoginController: Token refreshed successfully');
-        _startTokenRefreshTimer();
       } else {
         print('LoginController: Token refresh failed. Response: ${response.data}');
         _clearLoginData();
@@ -579,13 +470,9 @@ class LoginController extends GetxController {
   }
 
   void _clearLoginData() {
-    _tokenRefreshTimer?.cancel();
+    _otpResendTimer?.cancel();
     _clearOtpData();
-    box.remove('accessToken');
-    box.remove('refreshToken');
-    box.remove('user');
-    box.remove('cartId');
-    box.remove('tokenCreationTime');
+    loginService.clearAllTokenData();
     currentUser.value = null;
   }
 
@@ -599,7 +486,7 @@ class LoginController extends GetxController {
       return;
     }
 
-    if (phone.length != 10 || !RegExp(r'^[0-9]+$').hasMatch(phone)) {
+    if (phone.length != 10 || !RegExp(r'^[0-9]+').hasMatch(phone)) {
       return;
     }
 
@@ -640,28 +527,6 @@ class LoginController extends GetxController {
   }
 
   Map<String, dynamic> getTokenStatus() {
-    final tokenCreationTime = box.read('tokenCreationTime');
-    final accessToken = box.read('accessToken');
-
-    if (tokenCreationTime == null || accessToken == null) {
-      return {
-        'hasToken': false,
-        'ageHours': 0.0,
-        'needsRefresh': false,
-        'isExpired': true,
-      };
-    }
-
-    final now = DateTime.now().millisecondsSinceEpoch;
-    // ✅ CORRECTED: Cast the value from storage to num and then convert to int.
-    final tokenAge = Duration(milliseconds: now - (tokenCreationTime as num).toInt());
-    final tokenAgeHours = tokenAge.inMilliseconds / (1000 * 60 * 60);
-
-    return {
-      'hasToken': true,
-      'ageHours': tokenAgeHours,
-      'needsRefresh': tokenAge >= _refreshInterval,
-      'isExpired': tokenAge >= _tokenValidityPeriod,
-    };
+    return loginService.getTokenStatus();
   }
 }

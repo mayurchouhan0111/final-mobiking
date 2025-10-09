@@ -322,10 +322,10 @@ class PhoneAuthScreen extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  "India's best electronics Store",
+                  "INDIA'S BIGGEST OPEN-BOX ELECTRONICS STORE",
                   style: textTheme.bodySmall?.copyWith(
                     color: AppColors.primaryPurple,
-                    fontSize: 12,
+                    fontSize: 8,
                     letterSpacing: 0.3,
                     fontWeight: FontWeight.w500,
                   ),

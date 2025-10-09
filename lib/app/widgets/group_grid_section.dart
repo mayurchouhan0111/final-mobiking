@@ -144,7 +144,7 @@ class _GroupWithProductsSectionState extends State<GroupWithProductsSection>
                     const SizedBox(height: 12),
 
                     // 🚀 Title with RepaintBoundary
-                    ,RepaintBoundary(
+                    RepaintBoundary(
                       child: Text(
                         group.name,
                         style: textTheme.bodyMedium?.copyWith(
@@ -163,15 +163,9 @@ class _GroupWithProductsSectionState extends State<GroupWithProductsSection>
                       child: LayoutBuilder(
                         builder: (context, constraints) {
                           final productsToShow = inStockProducts.take(6).toList();
-                          final rowCount = (productsToShow.length / 3).ceil().clamp(1, 2);
-                          final cardHeight = gridCardHeight;
-                          final mainAxisSpacing = 10.0;
-                          final totalHeight = (cardHeight * rowCount) +
-                              (mainAxisSpacing * (rowCount - 1));
 
-                          return SizedBox(
-                            height: totalHeight,
-                            child: GridView.builder(
+                          return GridView.builder(
+                              shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),
                               padding:  EdgeInsets.zero,
                               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -204,12 +198,12 @@ class _GroupWithProductsSectionState extends State<GroupWithProductsSection>
                                   },
                                 );
                               },
-                            ),
-                          );
+                            );
                         },
                       ),
                     ),
 
+                    SizedBox(height: 4,),
                     // 🚀 Button with RepaintBoundary
                     RepaintBoundary(
                       child: SizedBox(

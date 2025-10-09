@@ -14,6 +14,8 @@ import 'package:mobiking/app/modules/orders/add_review_screen.dart';
 import 'shipping_details_screen.dart';
 import 'package:mobiking/app/modules/profile/query/Raise_query.dart';
 
+import 'invoice_screen.dart';
+
 class OrderHistoryScreen extends StatefulWidget {
   const OrderHistoryScreen({super.key});
 
@@ -732,6 +734,25 @@ class _OrderCard extends StatelessWidget {
                     ),
                   ),
                 if (order.scans?.isNotEmpty == true) const SizedBox(width: 12),
+                if (order.status.toLowerCase() == 'delivered')
+                  OutlinedButton(
+                    onPressed: () {
+                      Get.to(() => InvoiceScreen(order: order));
+                    },
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: AppColors.success),
+                      foregroundColor: AppColors.success,
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      visualDensity: VisualDensity.compact,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                    ),
+                    child: Text(
+                      'Download Invoice',
+                      style: textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w600, color: AppColors.success),
+                    ),
+                  ),
                 if (order.status == "Accepted")
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),

@@ -145,114 +145,7 @@ class HomeService {
     }
   }
 
-  /// Get groups by category with comprehensive error handling
-  Future<List<GroupModel>> getGroupsByCategory(String categoryId) async {
-    // Input validation
-    if (categoryId.trim().isEmpty) {
-      _log('Error: Category ID is required');
-      return <GroupModel>[];
-    }
-
-    try {
-      final url = Uri.parse('$_baseUrl/groups/category/${categoryId.trim()}');
-      _log('Fetching groups for category: $categoryId from: $url');
-
-      final response = await http.get(url).timeout(
-        const Duration(seconds: 30),
-        onTimeout: () {
-          _log('Request timeout while fetching groups by category');
-          return http.Response('Request timeout', 408);
-        },
-      );
-
-      _log('Groups by category response status: ${response.statusCode}');
-
-      if (response.statusCode == 200) {
-        try {
-          final jsonData = jsonDecode(response.body);
-          _log('✅ Successfully decoded JSON response for groups');
-
-          if (jsonData == null) {
-            _log('❌ Response body is null');
-            return <GroupModel>[];
-          }
-
-          if (jsonData is Map<String, dynamic>) {
-            final dynamic dataField = jsonData['data'];
-
-            if (dataField == null) {
-              _log('❌ No data field found in groups response');
-              return <GroupModel>[];
-            }
-
-            if (dataField is List) {
-              if (dataField.isEmpty) {
-                _log('✅ Empty groups list received for category: $categoryId');
-                return <GroupModel>[];
-              }
-
-              _log('🔍 Processing ${dataField.length} groups');
-
-              // Individual item error handling
-              final List<GroupModel> groups = [];
-              for (int i = 0; i < dataField.length; i++) {
-                try {
-                  final item = dataField[i];
-                  if (item is Map<String, dynamic>) {
-                    final group = GroupModel.fromJson(item);
-                    groups.add(group);
-                  } else {
-                    _log('❌ Invalid group data at index $i: ${item.runtimeType}');
-                  }
-                } catch (e) {
-                  _log('❌ Error parsing group at index $i: $e');
-                  // Continue with other groups instead of failing completely
-                }
-              }
-
-              _log('✅ Successfully parsed ${groups.length} groups out of ${dataField.length} items');
-
-              // Show success message for successful groups fetch
-              if (groups.isNotEmpty) {
-              /*  Get.snackbar('Success', '${groups.length} products loaded successfully!',
-                    snackPosition: SnackPosition.BOTTOM,
-                    backgroundColor: Colors.green.shade600,
-                    colorText: Colors.white);*/
-              }
-
-              return groups;
-            } else {
-              _log('❌ Expected a list in data field, got: ${dataField.runtimeType}');
-              return <GroupModel>[];
-            }
-          } else {
-            _log('❌ Unexpected JSON structure. Expected Map<String, dynamic>, got: ${jsonData.runtimeType}');
-            return <GroupModel>[];
-          }
-        } catch (jsonError) {
-          _log('❌ JSON parsing error in getGroupsByCategory: $jsonError');
-          if (response.body.isNotEmpty) {
-            _log('Response body preview: ${response.body.length > 200 ? response.body.substring(0, 200) + '...' : response.body}');
-          }
-          return <GroupModel>[];
-        }
-      } else {
-        _log('❌ Failed to fetch groups. Status: ${response.statusCode} - ${response.reasonPhrase}');
-        if (response.body.isNotEmpty) {
-          try {
-            final errorData = jsonDecode(response.body);
-            _log('Error details: ${errorData['message'] ?? errorData['error'] ?? 'Unknown error'}');
-          } catch (e) {
-            _log('Response body: ${response.body.length > 200 ? response.body.substring(0, 200) + '...' : response.body}');
-          }
-        }
-        return <GroupModel>[];
-      }
-    } catch (e) {
-      _log('❌ Exception during fetch groups by category: $e');
-      return <GroupModel>[];
-    }
-  }
+  
 
   // Health check method
   Future<bool> checkServiceHealth() async {
@@ -275,7 +168,7 @@ class HomeService {
   }
 
   // Get groups by multiple categories
-  Future<Map<String, List<GroupModel>>> getGroupsByMultipleCategories(List<String> categoryIds) async {
+  /*Future<Map<String, List<GroupModel>>> getGroupsByMultipleCategories(List<String> categoryIds) async {
     if (categoryIds.isEmpty) {
       _log('Error: No category IDs provided');
       return <String, List<GroupModel>>{};
@@ -302,15 +195,15 @@ class HomeService {
     // Show success message for multiple categories fetch
     int totalGroups = result.values.fold(0, (sum, list) => sum + list.length);
     if (totalGroups > 0) {
-     /* Get.snackbar('Success', 'Loaded $totalGroups products across ${result.length} categories!',
+     *//* Get.snackbar('Success', 'Loaded $totalGroups products across ${result.length} categories!',
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Colors.green.shade600,
-          colorText: Colors.white);*/
+          colorText: Colors.white);*//*
     }
 
     return result;
   }
-
+*/
   // Get group by ID with error handling
   Future<GroupModel?> getGroupById(String groupId) async {
     if (groupId.trim().isEmpty) {

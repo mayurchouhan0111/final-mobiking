@@ -55,9 +55,7 @@ import 'app/controllers/fcm_controller.dart';
 import 'app/data/ParentCategory.dart';
 import 'app/data/key_information.dart';
 import 'app/data/selling_price.dart';
-import 'package:mobiking/app/modules/bottombar/Bottom_bar.dart';
-import 'package:workmanager/workmanager.dart';
-import 'package:mobiking/app/services/background_service.dart';
+import 'app/modules/bottombar/Bottom_bar.dart';
 import 'firebase_options.dart';
 
 // FCM Background Message Handler - MUST be a top-level function
@@ -101,18 +99,6 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // --- Workmanager Initialization ---
-  Workmanager().initialize(
-    callbackDispatcher,
-    isInDebugMode: true,
-  );
-
-  Workmanager().registerPeriodicTask(
-    "1",
-    "refreshToken",
-    frequency: Duration(hours: 20),
-  );
-
   // --- Core Services and Dependencies ---
   final dioInstance = dio.Dio(); // Single Dio instance
   final getStorageBox = GetStorage(); // Single GetStorage instance
@@ -124,6 +110,7 @@ Future<void> main() async {
   // ✅ SERVICES: Put services into GetX dependency injection (ORDER MATTERS)
   Get.put(UserService(dioInstance)); // Put UserService first
   Get.put(LoginService(dioInstance, getStorageBox, Get.find<UserService>()));
+  await Get.find<LoginService>().refreshTokenOnAppStart();
   Get.put(OrderService());
   Get.put(AddressService(dioInstance, getStorageBox));
   Get.put(ConnectivityService());

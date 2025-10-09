@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import 'package:mobiking/app/controllers/query_getx_controller.dart'; // ✅ ADDED BACK
+import 'package:mobiking/app/controllers/query_getx_controller.dart';
 import 'package:mobiking/app/themes/app_theme.dart';
 
 import '../../../data/QueryModel.dart';
@@ -55,6 +55,10 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> with TickerProvid
       setState(() {
         _isTextFieldFocused = _textFieldFocusNode.hasFocus;
       });
+      // ✅ FIXED: Scroll to bottom when keyboard appears to ensure input is visible
+      if (_isTextFieldFocused) {
+        Future.delayed(const Duration(milliseconds: 300), () => _scrollToBottom());
+      }
     });
   }
 
@@ -87,6 +91,8 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> with TickerProvid
     final TextTheme textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
+      // ✅ FIXED: Ensures the Scaffold body resizes to avoid the on-screen keyboard.
+      resizeToAvoidBottomInset: true,
       backgroundColor: AppColors.neutralBackground,
       appBar: AppBar(
         title: Text(
