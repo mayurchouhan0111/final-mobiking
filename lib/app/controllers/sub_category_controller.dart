@@ -19,6 +19,7 @@ class SubCategoryController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    _service.init(); // Initialize the service's Hive boxes
     loadSubCategories();
 
     // React to changes in selectedSubCategory to update products

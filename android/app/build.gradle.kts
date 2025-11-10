@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     // START: FlutterFire Configuration
@@ -9,8 +11,8 @@ plugins {
 }
 
 android {
-    namespace = "com.example.mobiking"
-    compileSdk = flutter.compileSdkVersion
+    namespace = "com.mobiking.wholesale"
+    compileSdk = 35
     ndkVersion = "27.0.12077973"
 
     compileOptions {
@@ -23,25 +25,50 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.mobiking"
+        // TODO: Specify your own unique Application ID[](https://developer.android.com/studio/build/application-id.html).
+        applicationId = "com.mobiking.wholesale"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = 21
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName
 
-        // >>> YOU MUST ADD THIS LINE HERE <<<
+        // Enable multiDex for apps with many methods
         multiDexEnabled = true
+    }
+
+    signingConfigs {
+        create("release") {
+            val keyPropertiesFile = file("../key.properties")
+            if (keyPropertiesFile.exists()) {
+                val properties = Properties()
+                keyPropertiesFile.inputStream().use { input ->
+                    properties.load(input)
+                }
+                keyAlias = properties["keyAlias"] as String
+                keyPassword = properties["keyPassword"] as String
+                storeFile = file(properties["storeFile"] as String)
+                storePassword = properties["storePassword"] as String
+            } else {
+                throw GradleException("key.properties file not found at ${keyPropertiesFile.absolutePath}")
+            }
+        }
     }
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // Use the release signing config
+            signingConfig = signingConfigs.getByName("release")
+            // Optional: Enable minification and optimization
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
+    }
+
+    packagingOptions {
+        jniLibs.useLegacyPackaging = true
     }
 }
 
@@ -49,8 +76,8 @@ flutter {
     source = "../.."
 }
 
-// >>> YOU MUST ADD THIS ENTIRE BLOCK HERE, OUTSIDE the 'android { ... }' block <<<
+// Add dependencies outside the 'android' block
 dependencies {
     // Required for core library desugaring (Java 8+ API support on older Android)
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:1.1.5")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 }

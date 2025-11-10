@@ -62,7 +62,7 @@ class CreateOrderRequestModel {
   final double orderAmount;
   final double discount;
   final double deliveryCharge;
-  final double gst;
+  final String? gst;
   final double subtotal;
   final String address; // Full shipping address string
   final String method; // Payment method (e.g., 'COD')
@@ -84,7 +84,7 @@ class CreateOrderRequestModel {
     required this.orderAmount,
     required this.discount,
     required this.deliveryCharge,
-    required this.gst,
+    this.gst,
     required this.subtotal,
     required this.address,
     required this.method,

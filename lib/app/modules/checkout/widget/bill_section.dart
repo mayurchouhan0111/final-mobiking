@@ -6,12 +6,14 @@ class BillSection extends StatefulWidget {
   final int itemTotal;
   final int deliveryCharge;
   final int couponDiscount; // ✅ NEW: Add coupon discount parameter
+  final TextEditingController gstNumberController; // Add this line
 
   const BillSection({
     Key? key,
     required this.itemTotal,
     required this.deliveryCharge,
     this.couponDiscount = 0, // ✅ Default to 0
+    required this.gstNumberController, // Add this line
   }) : super(key: key);
 
   @override
@@ -23,12 +25,10 @@ class _BillSectionState extends State<BillSection> {
   bool _hasGstNumber = false;
   bool _showGstInput = false;
   final TextEditingController _gstController = TextEditingController();
-  final TextEditingController _gstNumberController = TextEditingController();
 
   @override
   void dispose() {
     _gstController.dispose();
-    _gstNumberController.dispose();
     super.dispose();
   }
 
@@ -126,7 +126,7 @@ class _BillSectionState extends State<BillSection> {
                               if (!_hasGstNumber) {
                                 _showGstInput = false;
                                 _gstController.clear();
-                                _gstNumberController.clear();
+                                widget.gstNumberController.clear();
                               }
                             });
                           },
@@ -148,7 +148,7 @@ class _BillSectionState extends State<BillSection> {
                     if (_hasGstNumber) ...[
                       const SizedBox(height: 16),
                       TextFormField(
-                        controller: _gstNumberController,
+                        controller: widget.gstNumberController,
                         maxLength: 15,
                         inputFormatters: [
                           LengthLimitingTextInputFormatter(15),

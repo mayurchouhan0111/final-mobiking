@@ -1,5 +1,5 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:mobiking/app/controllers/query_getx_controller.dart';
@@ -7,6 +7,7 @@ import 'package:mobiking/app/themes/app_theme.dart';
 
 import '../../../data/QueryModel.dart';
 import '../../../data/order_model.dart';
+import 'OptimizedMessageInput.dart';
 
 class QueryDetailScreen extends StatefulWidget {
   final OrderModel? order;
@@ -20,68 +21,35 @@ class QueryDetailScreen extends StatefulWidget {
   State<QueryDetailScreen> createState() => _QueryDetailScreenState();
 }
 
-class _QueryDetailScreenState extends State<QueryDetailScreen> with TickerProviderStateMixin {
+class _QueryDetailScreenState extends State<QueryDetailScreen> {
   late final QueryModel? currentQuery;
   final TextEditingController _replyInputController = TextEditingController();
   final FocusNode _textFieldFocusNode = FocusNode();
   final ScrollController _scrollController = ScrollController();
+  int? _previousMessageCount;
 
-  bool _isTextFieldFocused = false;
-  bool _isSending = false; // ✅ ADDED: To manage loading state for the send button
-  late AnimationController _messageAnimationController;
-  late Animation<double> _messageAnimation;
+  bool _isSending = false;
+
+  // 🔥 KEYBOARD STATE TRACKING
+  bool _isKeyboardVisible = false;
+  bool _isKeyboardAnimating = false;
+  double _lastKeyboardHeight = 0;
 
   @override
   void initState() {
     super.initState();
     currentQuery = widget.order?.query;
-    _initializeAnimations();
-    _setupFocusListener();
-  }
 
-  void _initializeAnimations() {
-    _messageAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 300),
-      vsync: this,
-    );
-    _messageAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _messageAnimationController, curve: Curves.easeInOut),
-    );
-    _messageAnimationController.forward();
-  }
-
-  void _setupFocusListener() {
-    _textFieldFocusNode.addListener(() {
-      setState(() {
-        _isTextFieldFocused = _textFieldFocusNode.hasFocus;
-      });
-      // ✅ FIXED: Scroll to bottom when keyboard appears to ensure input is visible
-      if (_isTextFieldFocused) {
-        Future.delayed(const Duration(milliseconds: 300), () => _scrollToBottom());
-      }
+    // 🔥 Pre-warm keyboard to reduce first-open lag
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      SystemChannels.textInput.invokeMethod('TextInput.hide');
     });
-  }
-
-  void _scrollToBottom({bool animate = true}) {
-    if (_scrollController.hasClients) {
-      final position = _scrollController.position.maxScrollExtent;
-      if (animate) {
-        _scrollController.animateTo(
-          position,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      } else {
-        _scrollController.jumpTo(position);
-      }
-    }
   }
 
   @override
   void dispose() {
     _textFieldFocusNode.dispose();
     _scrollController.dispose();
-    _messageAnimationController.dispose();
     _replyInputController.dispose();
     super.dispose();
   }
@@ -90,9 +58,52 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> with TickerProvid
   Widget build(BuildContext context) {
     final TextTheme textTheme = Theme.of(context).textTheme;
 
+    // 🔥 TRACK KEYBOARD STATE
+    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+
+    // Detect keyboard animation
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      final bool wasVisible = _isKeyboardVisible;
+      final bool isNowVisible = keyboardHeight > 100;
+
+      // Keyboard opening
+      if (!wasVisible && keyboardHeight > 0 && keyboardHeight < 200) {
+        if (!_isKeyboardAnimating) {
+          setState(() {
+            _isKeyboardAnimating = true;
+          });
+        }
+      }
+      // Keyboard fully open
+      else if (keyboardHeight >= 200 && _isKeyboardAnimating) {
+        setState(() {
+          _isKeyboardAnimating = false;
+          _isKeyboardVisible = true;
+        });
+      }
+      // Keyboard closing
+      else if (wasVisible && keyboardHeight < _lastKeyboardHeight && keyboardHeight > 0) {
+        if (!_isKeyboardAnimating) {
+          setState(() {
+            _isKeyboardAnimating = true;
+          });
+        }
+      }
+      // Keyboard fully closed
+      else if (keyboardHeight == 0 && _isKeyboardAnimating) {
+        setState(() {
+          _isKeyboardAnimating = false;
+          _isKeyboardVisible = false;
+        });
+      }
+
+      _lastKeyboardHeight = keyboardHeight;
+    });
+
     return Scaffold(
-      // ✅ FIXED: Ensures the Scaffold body resizes to avoid the on-screen keyboard.
-      resizeToAvoidBottomInset: true,
+      resizeToAvoidBottomInset: false,
       backgroundColor: AppColors.neutralBackground,
       appBar: AppBar(
         title: Text(
@@ -109,101 +120,105 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> with TickerProvid
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
-              // You can optionally trigger a refresh via the controller here if needed
               final controller = Get.find<QueryGetXController>();
               if (controller.currentQuery != null) {
                 controller.refreshCurrentQuery();
-                Get.snackbar("Syncing", "Refreshing conversation...", snackPosition: SnackPosition.BOTTOM);
+                Get.snackbar(
+                  "Syncing",
+                  "Refreshing conversation...",
+                  snackPosition: SnackPosition.BOTTOM,
+                  duration: const Duration(seconds: 2),
+                );
               }
             },
           ),
         ],
       ),
-      body: Builder(
-        builder: (context) {
-          // The main view logic still depends on the initial data
-          if (currentQuery == null) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.help_outline, size: 64, color: AppColors.textLight),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No Query Found',
-                    style: textTheme.titleLarge?.copyWith(
-                      color: AppColors.textDark,
-                      fontWeight: FontWeight.w600,
-                    ),
+      body: currentQuery == null
+          ? _buildNoQueryView(textTheme)
+          : SafeArea(
+            child: Column(
+                    children: [
+            // 🔥 WRAPPED IN REPAINT BOUNDARY
+            RepaintBoundary(
+              child: _OrderInfoSection(order: widget.order, query: currentQuery),
+            ),
+            
+            RepaintBoundary(
+              child: _buildConversationHeader(textTheme),
+            ),
+            
+            Expanded(
+              child: RepaintBoundary(
+                child: Container(
+                  margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.lightGreyBackground, width: 1),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'No query has been raised for this order yet.',
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textLight,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton(
-                    onPressed: _showCreateQueryDialog,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryPurple,
-                      foregroundColor: AppColors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                    ),
-                    child: const Text('Create Query'),
-                  ),
-                ],
+                  child: Obx(() {
+                    final liveQuery =
+                        Get.find<QueryGetXController>().currentQuery ?? currentQuery;
+                    return _buildConversationListFromQuery(liveQuery!, textTheme);
+                  }),
+                ),
               ),
-            );
-          }
+            ),
+            
+            // 🔥 SHOW/HIDE INPUT BASED ON KEYBOARD STATE
+            if (currentQuery?.status != 'resolved')
+              Visibility(
+                visible: !_isKeyboardAnimating,
+                maintainSize: false,
+                maintainAnimation: false,
+                maintainState: true,
+                child: OptimizedMessageInput(
+                  controller: _replyInputController,
+                  focusNode: _textFieldFocusNode,
+                  isSending: _isSending,
+                  onSend: _sendMessage,
+                ),
+              ),
+                    ],
+                  ),
+          ),
+    );
+  }
 
-          return Column(
-            children: [
-              SingleChildScrollView(
-                child: Column(
-                  children: [
-                    _buildOrderInfoCard(widget.order, textTheme),
-                    _buildQueryDetailsCard(currentQuery, textTheme),
-                    const SizedBox(height: 8),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: Column(
-                  children: [
-                    _buildConversationHeader(textTheme),
-                    Expanded(
-                      child: Container(
-                        margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                        decoration: BoxDecoration(
-                          color: AppColors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: AppColors.lightGreyBackground, width: 1),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.04),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        // Using Obx & controller here to get real-time message updates after sending
-                        child: Obx(() {
-                          final liveQuery = Get.find<QueryGetXController>().currentQuery ?? currentQuery;
-                          return _buildConversationListFromQuery(liveQuery!, textTheme);
-                        }
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (currentQuery?.status != 'resolved') _buildMessageInput(textTheme),
-            ],
-          );
-        },
+  Widget _buildNoQueryView(TextTheme textTheme) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.help_outline, size: 64, color: AppColors.textLight),
+          const SizedBox(height: 16),
+          Text(
+            'No Query Found',
+            style: textTheme.titleLarge?.copyWith(
+              color: AppColors.textDark,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'No query has been raised for this order yet.',
+            style: textTheme.bodyMedium?.copyWith(
+              color: AppColors.textLight,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: _showCreateQueryDialog,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryPurple,
+              foregroundColor: AppColors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
+            child: const Text('Create Query'),
+          ),
+        ],
       ),
     );
   }
@@ -255,72 +270,284 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> with TickerProvid
     );
   }
 
+  Widget _buildConversationList(List<dynamic> replies, TextTheme textTheme) {
+    if (replies.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: const BoxDecoration(
+                color: AppColors.neutralBackground,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.chat_bubble_outline,
+                size: 32,
+                color: AppColors.textLight,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No messages yet',
+              style: textTheme.titleMedium?.copyWith(
+                color: AppColors.textDark,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Start the conversation by sending a message',
+              style: textTheme.bodyMedium?.copyWith(color: AppColors.textLight),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
+
+    final sortedReplies = List<dynamic>.from(replies);
+    sortedReplies.sort((a, b) {
+      final dateA = a.timestamp ?? a.createdAt ?? DateTime.now();
+      final dateB = b.timestamp ?? b.createdAt ?? DateTime.now();
+      return dateA.compareTo(dateB);
+    });
+
+    // 🔥 ONLY scroll on new messages, not on keyboard open
+    if (sortedReplies.length > (_previousMessageCount ?? 0)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _scrollController.hasClients) {
+          _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+        }
+      });
+      _previousMessageCount = sortedReplies.length;
+    }
+
+    return ListView.builder(
+      controller: _scrollController,
+      padding: const EdgeInsets.all(20),
+      itemCount: sortedReplies.length,
+      physics: const ClampingScrollPhysics(),
+      cacheExtent: 500,
+      itemBuilder: (context, index) {
+        final reply = sortedReplies[index];
+        final isUser = !reply.isAdmin;
+        return Padding(
+          key: ValueKey(reply.timestamp ?? index),
+          padding: EdgeInsets.only(bottom: index < sortedReplies.length - 1 ? 16 : 0),
+          child: _MessageBubble(reply: reply, isUser: isUser),
+        );
+      },
+    );
+  }
+
+  void _sendMessage() async {
+    if (_replyInputController.text.trim().isEmpty || currentQuery == null) {
+      return;
+    }
+
+    final controller = Get.find<QueryGetXController>();
+    final textToSend = _replyInputController.text.trim();
+
+    FocusScope.of(context).unfocus();
+    _replyInputController.clear();
+
+    if (mounted) {
+      setState(() {
+        _isSending = true;
+      });
+    }
+
+    try {
+      await controller.replyToQuery(
+        queryId: currentQuery!.id,
+        replyText: textToSend,
+      );
+
+      if (mounted && _scrollController.hasClients) {
+        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+      }
+    } catch (e) {
+      if (mounted) {
+        Get.snackbar(
+          "Error",
+          "Failed to send message.",
+          snackPosition: SnackPosition.BOTTOM,
+          duration: const Duration(seconds: 2),
+        );
+        _replyInputController.text = textToSend;
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSending = false;
+        });
+      }
+    }
+  }
+
+  void _showCreateQueryDialog() {
+    final titleController = TextEditingController();
+    final messageController = TextEditingController();
+
+    Get.dialog(
+      AlertDialog(
+        title: const Text('Create Query'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: titleController,
+              decoration: const InputDecoration(
+                labelText: 'Query Title',
+                border: OutlineInputBorder(),
+              ),
+              autocorrect: false,
+              enableSuggestions: false,
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: messageController,
+              decoration: const InputDecoration(
+                labelText: 'Message',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 3,
+              autocorrect: false,
+              enableSuggestions: false,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (titleController.text.trim().isNotEmpty &&
+                  messageController.text.trim().isNotEmpty) {
+                final controller = Get.find<QueryGetXController>();
+                Get.back();
+                await controller.raiseQuery(
+                  title: titleController.text.trim(),
+                  message: messageController.text.trim(),
+                  orderId: widget.order?.id,
+                );
+              }
+            },
+            child: const Text('Create'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// 🔥 OPTIMIZED: RepaintBoundary + removed SingleChildScrollView
+class _OrderInfoSection extends StatelessWidget {
+  final OrderModel? order;
+  final QueryModel? query;
+
+  const _OrderInfoSection({required this.order, required this.query});
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _buildOrderInfoCard(order, textTheme),
+        _buildQueryDetailsCard(query, textTheme),
+        const SizedBox(height: 8),
+      ],
+    );
+  }
+
   Widget _buildOrderInfoCard(OrderModel? order, TextTheme textTheme) {
     return Container(
       margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.primaryPurple,
-            AppColors.primaryPurple.withOpacity(0.8),
-          ],
-        ),
+        color: AppColors.primaryPurple,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primaryPurple.withOpacity(0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(children: [
-              Container(
+            Row(
+              children: [
+                Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                      color: AppColors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(8)),
-                  child: const Icon(Icons.shopping_bag, color: AppColors.white, size: 20)),
-              const SizedBox(width: 12),
-              Expanded(
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text('Order Details',
-                        style: textTheme.titleMedium
-                            ?.copyWith(color: AppColors.white, fontWeight: FontWeight.w700)),
-                    Text('Query related to this order',
-                        style: textTheme.bodySmall
-                            ?.copyWith(color: AppColors.white.withOpacity(0.8)))
-                  ]))
-            ]),
+                    color: AppColors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.shopping_bag, color: AppColors.white, size: 20),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Order Details',
+                        style: textTheme.titleMedium?.copyWith(
+                          color: AppColors.white,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      Text(
+                        'Query related to this order',
+                        style: textTheme.bodySmall?.copyWith(
+                          color: AppColors.white.withOpacity(0.8),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 16),
-            Row(children: [
-              Expanded(
+            Row(
+              children: [
+                Expanded(
+                  child: _buildOrderInfoItem('Order ID', order?.orderId ?? 'N/A', textTheme),
+                ),
+                Expanded(
                   child: _buildOrderInfoItem(
-                      'Order ID', order?.orderId ?? 'N/A', textTheme)),
-              Expanded(
-                  child: _buildOrderInfoItem('Amount',
-                      '₹${order?.orderAmount.toStringAsFixed(0) ?? 'N/A'}', textTheme))
-            ]),
+                    'Amount',
+                    '₹${order?.orderAmount.toStringAsFixed(0) ?? 'N/A'}',
+                    textTheme,
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 8),
-            Row(children: [
-              Expanded(
+            Row(
+              children: [
+                Expanded(
                   child: _buildOrderInfoItem(
-                      'Date',
-                      order?.createdAt != null
-                          ? DateFormat('MMM d, yyyy').format(order!.createdAt)
-                          : 'N/A',
-                      textTheme)),
-              Expanded(
+                    'Date',
+                    order?.createdAt != null
+                        ? DateFormat('MMM d, yyyy').format(order!.createdAt)
+                        : 'N/A',
+                    textTheme,
+                  ),
+                ),
+                Expanded(
                   child: _buildOrderInfoItem(
-                      'Status', order?.status.capitalizeFirst ?? 'N/A', textTheme))
-            ])
+                    'Status',
+                    order?.status.capitalizeFirst ?? 'N/A',
+                    textTheme,
+                  ),
+                ),
+              ],
+            )
           ],
         ),
       ),
@@ -357,13 +584,6 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> with TickerProvid
         color: AppColors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.lightGreyBackground, width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -440,225 +660,6 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> with TickerProvid
     );
   }
 
-  Widget _buildConversationList(List<dynamic> replies, TextTheme textTheme) {
-    if (replies.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: const BoxDecoration(
-                  color: AppColors.neutralBackground, shape: BoxShape.circle),
-              child: const Icon(Icons.chat_bubble_outline,
-                  size: 32, color: AppColors.textLight),
-            ),
-            const SizedBox(height: 16),
-            Text('No messages yet',
-                style: textTheme.titleMedium?.copyWith(
-                    color: AppColors.textDark, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 8),
-            Text('Start the conversation by sending a message',
-                style: textTheme.bodyMedium?.copyWith(color: AppColors.textLight),
-                textAlign: TextAlign.center),
-          ],
-        ),
-      );
-    }
-
-    final sortedReplies = List.from(replies);
-    sortedReplies.sort((a, b) {
-      final dateA = a.timestamp ?? a.createdAt ?? DateTime.now();
-      final dateB = b.timestamp ?? b.createdAt ?? DateTime.now();
-      return dateA.compareTo(dateB);
-    });
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scrollToBottom();
-    });
-
-    return ListView.separated(
-      controller: _scrollController,
-      padding: const EdgeInsets.all(20),
-      itemCount: sortedReplies.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 16),
-      itemBuilder: (context, index) {
-        final reply = sortedReplies[index];
-        final isUser = !reply.isAdmin;
-        return AnimatedBuilder(
-          animation: _messageAnimation,
-          builder: (context, child) {
-            return Transform.scale(
-              scale: 0.8 + (0.2 * _messageAnimation.value),
-              child: Opacity(
-                opacity: _messageAnimation.value,
-                child: _buildMessageBubble(reply, isUser, textTheme),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildMessageBubble(dynamic reply, bool isUser, TextTheme textTheme) {
-    return Align(
-      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        constraints: BoxConstraints(maxWidth: Get.width * 0.75),
-        decoration: BoxDecoration(
-          color: isUser ? AppColors.primaryPurple : AppColors.neutralBackground,
-          borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(16),
-            topRight: const Radius.circular(16),
-            bottomLeft: Radius.circular(isUser ? 16 : 4),
-            bottomRight: Radius.circular(isUser ? 4 : 16),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 4,
-              offset: const Offset(0, 1),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (!isUser) ...[
-                Row(
-                  children: [
-                    Container(
-                      width: 6,
-                      height: 6,
-                      decoration: const BoxDecoration(
-                          color: AppColors.success, shape: BoxShape.circle),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Support Team',
-                      style: textTheme.labelSmall?.copyWith(
-                        color: AppColors.primaryPurple,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-              ],
-              Text(
-                reply.replyText ?? reply.message ?? 'No message',
-                style: textTheme.bodyMedium?.copyWith(
-                  color: isUser ? AppColors.white : AppColors.textDark,
-                  height: 1.4,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    DateFormat('MMM d, hh:mm a').format(
-                      reply.timestamp ?? reply.createdAt ?? DateTime.now(),
-                    ),
-                    style: textTheme.labelSmall?.copyWith(
-                      color: isUser
-                          ? AppColors.white.withOpacity(0.7)
-                          : AppColors.textLight,
-                    ),
-                  ),
-                  if (isUser) ...[
-                    const SizedBox(width: 4),
-                    const Icon(
-                      Icons.check,
-                      size: 12,
-                      color: Colors.white70,
-                    ),
-                  ],
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMessageInput(TextTheme textTheme) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        border: Border(top: BorderSide(color: AppColors.lightGreyBackground, width: 1)),
-        boxShadow: _isTextFieldFocused
-            ? [
-          BoxShadow(
-            color: AppColors.primaryPurple.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, -2),
-          ),
-        ]
-            : null,
-      ),
-      child: SafeArea(
-        child: Row(
-          children: [
-            const SizedBox(width: 12),
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppColors.neutralBackground,
-                  borderRadius: BorderRadius.circular(24),
-                  border: _isTextFieldFocused
-                      ? Border.all(
-                    color: AppColors.primaryPurple.withOpacity(0.3),
-                    width: 1,
-                  )
-                      : null,
-                ),
-                child: TextField(
-                  controller: _replyInputController,
-                  focusNode: _textFieldFocusNode,
-                  decoration: const InputDecoration(
-                    hintText: 'Type your message...',
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  ),
-                  maxLines: 4,
-                  minLines: 1,
-                  textInputAction: TextInputAction.newline,
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Container(
-              decoration: BoxDecoration(
-                color: _isSending ? AppColors.textLight : AppColors.primaryPurple,
-                shape: BoxShape.circle,
-              ),
-              child: IconButton(
-                icon: _isSending
-                    ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.white),
-                  ),
-                )
-                    : const Icon(Icons.send, color: AppColors.white),
-                onPressed: _isSending ? null : _sendMessage,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
       case 'pending':
@@ -675,95 +676,96 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> with TickerProvid
         return AppColors.danger;
     }
   }
+}
 
-  // ✅ MODIFIED: This function now works again.
-  void _sendMessage() async {
-    if (_replyInputController.text.trim().isEmpty || currentQuery == null) {
-      return;
-    }
+// 🔥 OPTIMIZED: RepaintBoundary on each bubble
+class _MessageBubble extends StatelessWidget {
+  final dynamic reply;
+  final bool isUser;
 
-    // Find the controller to perform the action
-    final controller = Get.find<QueryGetXController>();
-    final textToSend = _replyInputController.text.trim();
+  const _MessageBubble({required this.reply, required this.isUser});
 
-    _textFieldFocusNode.unfocus();
-    _replyInputController.clear();
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
 
-    setState(() {
-      _isSending = true;
-    });
-
-    try {
-      await controller.replyToQuery(
-        queryId: currentQuery!.id,
-        replyText: textToSend,
-      );
-      // Let the Obx handle the UI update
-    } catch (e) {
-      // Handle error, maybe show a snackbar
-      Get.snackbar("Error", "Failed to send message.");
-      // If failed, put the text back for the user to retry
-      _replyInputController.text = textToSend;
-    } finally {
-      setState(() {
-        _isSending = false;
-      });
-      // Scroll to bottom after a short delay to allow UI to update
-      Future.delayed(const Duration(milliseconds: 300), () => _scrollToBottom());
-    }
-  }
-
-  // ✅ MODIFIED: This function now works again.
-  void _showCreateQueryDialog() {
-    final titleController = TextEditingController();
-    final messageController = TextEditingController();
-
-    Get.dialog(
-      AlertDialog(
-        title: const Text('Create Query'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: titleController,
-              decoration: const InputDecoration(
-                labelText: 'Query Title',
-                border: OutlineInputBorder(),
-              ),
+    return RepaintBoundary(
+      child: Align(
+        alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+        child: Container(
+          constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+          decoration: BoxDecoration(
+            color: isUser ? AppColors.primaryPurple : AppColors.neutralBackground,
+            borderRadius: BorderRadius.only(
+              topLeft: const Radius.circular(16),
+              topRight: const Radius.circular(16),
+              bottomLeft: Radius.circular(isUser ? 16 : 4),
+              bottomRight: Radius.circular(isUser ? 4 : 16),
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: messageController,
-              decoration: const InputDecoration(
-                labelText: 'Message',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 3,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (!isUser) ...[
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: const BoxDecoration(
+                          color: AppColors.success,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Support Team',
+                        style: textTheme.labelSmall?.copyWith(
+                          color: AppColors.primaryPurple,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                ],
+                Text(
+                  reply.replyText ?? reply.message ?? 'No message',
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: isUser ? AppColors.white : AppColors.textDark,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      DateFormat('MMM d, hh:mm a').format(
+                        reply.timestamp ?? reply.createdAt ?? DateTime.now(),
+                      ),
+                      style: textTheme.labelSmall?.copyWith(
+                        color: isUser ? AppColors.white.withOpacity(0.7) : AppColors.textLight,
+                      ),
+                    ),
+                    if (isUser) ...[
+                      const SizedBox(width: 4),
+                      Icon(
+                        Icons.check,
+                        size: 12,
+                        color: AppColors.white.withOpacity(0.7),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
             ),
-          ],
+          ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (titleController.text.trim().isNotEmpty &&
-                  messageController.text.trim().isNotEmpty) {
-                // Find the controller to perform the action
-                final controller = Get.find<QueryGetXController>();
-                Get.back(); // Close the dialog first
-                await controller.raiseQuery(
-                  title: titleController.text.trim(),
-                  message: messageController.text.trim(),
-                  orderId: widget.order?.id,
-                );
-              }
-            },
-            child: const Text('Create'),
-          ),
-        ],
       ),
     );
   }

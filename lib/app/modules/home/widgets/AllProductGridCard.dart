@@ -58,7 +58,7 @@ class AllProductGridCard extends StatelessWidget {
                   ? null
                   : () async {
                 HapticFeedback.lightImpact();
-                if (hasMultipleVariants || totalQuantity > 1) {
+                if (hasMultipleVariants) {
                   _showVariantBottomSheet(context, product);
                 } else {
                   final cartItemsForProduct =
@@ -220,21 +220,19 @@ class AllProductGridCard extends StatelessWidget {
 
     final hasImage = product.images.isNotEmpty && product.images[0].isNotEmpty;
 
-    final int sellingPrice;
-    int actualPrice = 0;
-    String discountPercentage = '';
+    double displayPrice = 0.0;
+    double? originalPrice = product.regularPrice?.toDouble();
 
-    if (product.sellingPrice.isNotEmpty) {
-      sellingPrice = product.sellingPrice.map((e) => e.price.toInt()).reduce(min);
-      actualPrice = product.regularPrice ?? product.sellingPrice.map((e) => e.price.toInt()).reduce(max);
-      if (actualPrice > 0 && sellingPrice < actualPrice) {
-        double discount = ((actualPrice - sellingPrice) / actualPrice) * 100;
-        discountPercentage = '${discount.round()}%';
-      }
-    } else {
-      sellingPrice = 0;
-      actualPrice = 0;
+    if (product.sellingPrice.isNotEmpty && product.sellingPrice.last.price != null) {
+      displayPrice = product.sellingPrice.last.price!.toDouble();
     }
+
+    final bool hasDiscount = originalPrice != null && originalPrice > displayPrice && displayPrice > 0;
+    final double discountValue = hasDiscount ? ((originalPrice! - displayPrice) / originalPrice) * 100 : 0;
+    String discountPercentage = hasDiscount ? '${discountValue.round()}%' : '';
+
+    final int sellingPrice = displayPrice.toInt();
+    final int actualPrice = (originalPrice ?? 0).toInt();
 
     const double addBtnFixedWidth = 50.0;
     const double buttonHeight = 24.0;

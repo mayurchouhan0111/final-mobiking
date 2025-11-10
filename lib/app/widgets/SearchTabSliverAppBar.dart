@@ -26,12 +26,18 @@ class SearchTabSliverAppBar extends StatefulWidget {
 
 class _SearchTabSliverAppBarState extends State<SearchTabSliverAppBar> {
   final List<String> _hintTexts = [
-    'Search "20w bulb"',
-    'Search "LED strip lights"',
-    'Search "solar panel"',
-    'Search "smart plug"',
-    'Search "rechargeable battery"',
+    'Search "wireless earbuds"',
+    'Search "fast charging cable"',
+    'Search "power bank 20000mAh"',
+    'Search "mobile back cover"',
+    'Search "Bluetooth neckband"',
+    'Search "screen protector"',
+    'Search "MagSafe charger"',
+    'Search "phone holder for car"',
+    'Search "USB-C adapter"',
+    'Search "gaming earbuds"',
   ];
+
 
   late final RxInt _currentHintIndex;
   Timer? _hintTextTimer;

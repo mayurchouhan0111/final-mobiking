@@ -15,6 +15,7 @@ class CategoryController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    _service.init(); // Initialize the service's Hive boxes
     fetchCategories();
   }
 
@@ -39,7 +40,7 @@ class CategoryController extends GetxController {
 
     } catch (e) {
       print('[CategoryController] Error in fetchCategories: $e');
-      
+
     } finally {
       isLoading.value = false;
       isInitialLoad.value = false;

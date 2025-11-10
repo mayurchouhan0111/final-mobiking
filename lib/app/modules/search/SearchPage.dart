@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:mobiking/app/modules/home/widgets/AllProductGridCard.dart';
 import 'dart:async';
 
@@ -9,8 +9,9 @@ import '../../controllers/SearchPageController.dart';
 import '../../controllers/product_controller.dart';
 import '../../services/product_service.dart';
 import '../../themes/app_theme.dart';
-
-// ✅ Separated controller for better state management
+import 'package:mobiking/app/modules/home/widgets/FloatingCartButton.dart';
+import 'package:mobiking/app/controllers/cart_controller.dart';
+import 'package:mobiking/app/modules/checkout/CheckoutScreen.dart';
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
@@ -84,6 +85,7 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    final CartController cartController = Get.find<CartController>();
     return Scaffold(
       backgroundColor: AppColors.white,
       resizeToAvoidBottomInset: true,
@@ -106,6 +108,42 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
           ],
         ),
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: Obx(() {
+        if (cartController.totalCartItemsCount == 0) {
+          return const SizedBox.shrink();
+        }
+
+        final List<String> imageUrls = cartController.cartItems.take(3).map((item) {
+          final product = item['productId'];
+          String? imageUrl;
+
+          if (product is Map) {
+            final imagesData = product['images'];
+            if (imagesData is List && imagesData.isNotEmpty) {
+              final firstImage = imagesData[0];
+              if (firstImage is String) {
+                imageUrl = firstImage;
+              } else if (firstImage is Map) {
+                imageUrl = firstImage['url'] as String?;
+              }
+            } else if (imagesData is String) {
+              imageUrl = imagesData;
+            }
+          }
+          return imageUrl ?? 'https://placehold.co/50x50/cccccc/ffffff?text=No+Img';
+        }).toList();
+
+        return FloatingCartButton(
+          onTap: () {
+            Get.to(() => CheckoutScreen(),
+                transition: Transition.rightToLeft,
+                duration: const Duration(milliseconds: 300));
+          },
+          itemCount: cartController.totalCartItemsCount,
+          productImageUrls: imageUrls,
+        );
+      }),
     );
   }
 }
@@ -522,7 +560,116 @@ class _SearchResultsHeader extends StatelessWidget {
   }
 }
 
-// ✅ Search results content
+// ✅ Skeleton loading widget for product cards
+class _SkeletonProductCard extends StatelessWidget {
+  const _SkeletonProductCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.all(1),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Image skeleton
+          Expanded(
+            flex: 3,
+            child: Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(4),
+                ),
+              ),
+            ),
+          ),
+          // Content skeleton
+          Expanded(
+            flex: 2,
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: double.infinity,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Container(
+                        width: 50,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Spacer(),
+                  Container(
+                    width: 40,
+                    height: 14,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ✅ Shimmer wrapper for skeleton loading
+class _ShimmerLoadingGrid extends StatelessWidget {
+  const _ShimmerLoadingGrid();
+
+  @override
+  Widget build(BuildContext context) {
+    return SliverPadding(
+      padding: const EdgeInsets.symmetric(horizontal: 2),
+      sliver: SliverGrid(
+        delegate: SliverChildBuilderDelegate(
+              (context, index) {
+            return Shimmer.fromColors(
+              baseColor: Colors.grey.shade300,
+              highlightColor: Colors.grey.shade100,
+              period: const Duration(milliseconds: 1000),
+              child: const _SkeletonProductCard(),
+            );
+          },
+          childCount: 12, // Show 12 skeleton cards
+        ),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          crossAxisSpacing: 1.0,
+          mainAxisSpacing: 1.0,
+          childAspectRatio: 0.50,
+        ),
+      ),
+    );
+  }
+}
+
+// ✅ Search results content with skeleton loading
 class _SearchResults extends StatelessWidget {
   const _SearchResults({
     required this.searchController,
@@ -534,7 +681,6 @@ class _SearchResults extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
     final productController = searchController.productController;
 
     return Obx(() {
@@ -547,10 +693,10 @@ class _SearchResults extends StatelessWidget {
         );
       }
 
-      // Loading state
+      // ✅ Loading state with skeleton
       if (productController.isLoading.value &&
           searchController.displayedProducts.isEmpty) {
-        return _LoadingState(textTheme: textTheme);
+        return const _ShimmerLoadingGrid();
       }
 
       // No results
@@ -738,45 +884,6 @@ class _MessageState extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ✅ Loading state widget
-class _LoadingState extends StatelessWidget {
-  const _LoadingState({required this.textTheme});
-
-  final TextTheme textTheme;
-
-  @override
-  Widget build(BuildContext context) {
-    return SliverToBoxAdapter(
-      child: Container(
-        height: 200,
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox(
-                width: 40,
-                height: 40,
-                child: CircularProgressIndicator(
-                  color: AppColors.primaryPurple,
-                  strokeWidth: 3,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Searching products...',
-                style: textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textLight,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
             ],
           ),
         ),

@@ -13,6 +13,8 @@ class ProductController extends GetxController {
   var searchResults = <ProductModel>[].obs;
   var frequentlyBoughtTogetherProducts = <ProductModel>[].obs;
   var isFetchingFrequentlyBoughtTogether = false.obs;
+  var relatedProducts = <ProductModel>[].obs;
+  var isFetchingRelatedProducts = false.obs;
 
   // 🚀 LAZY LOADING: Advanced pagination states
   var isFetchingMore = false.obs;
@@ -72,10 +74,13 @@ class ProductController extends GetxController {
         limit: _productsPerPage,
       );
 
-      print("✅ Fetched ${products.length} initial products");
+      // Filter for active products
+      final activeProducts = products.where((p) => p.active == true).toList();
 
-      allProducts.assignAll(products);
-      _totalProductsLoaded = products.length;
+      print("✅ Fetched ${activeProducts.length} initial active products");
+
+      allProducts.assignAll(activeProducts);
+      _totalProductsLoaded = activeProducts.length;
       hasMoreProducts.value = products.length == _productsPerPage;
       initialLoadCompleted.value = true;
       _lastFetchTime = DateTime.now();
@@ -115,22 +120,25 @@ class ProductController extends GetxController {
         limit: _productsPerPage,
       );
 
-      print("✨ Fetched ${newProducts.length} new products");
+      // Filter for active products
+      final activeNewProducts = newProducts.where((p) => p.active == true).toList();
 
-      if (newProducts.isEmpty) {
+      print("✨ Fetched ${activeNewProducts.length} new active products");
+
+      if (activeNewProducts.isEmpty) {
         hasMoreProducts.value = false;
         print("🏁 Reached end of products");
       } else {
         // 🚀 OPTIMIZATION: Memory management - remove old products if cache is too large
         if (allProducts.length > _maxCacheSize) {
-          final removeCount = allProducts.length - _maxCacheSize + newProducts.length;
+          final removeCount = allProducts.length - _maxCacheSize + activeNewProducts.length;
           allProducts.removeRange(0, removeCount);
           print("🧹 Removed $removeCount old products to manage memory");
         }
 
-        allProducts.addAll(newProducts);
-        _totalProductsLoaded += newProducts.length;
-        hasMoreProducts.value = newProducts.length == _productsPerPage;
+        allProducts.addAll(activeNewProducts);
+        _totalProductsLoaded += activeNewProducts.length;
+        hasMoreProducts.value = activeNewProducts.length == _productsPerPage;
         _lastFetchTime = DateTime.now();
       }
 
@@ -330,5 +338,20 @@ class ProductController extends GetxController {
   void onClose() {
     _debounceTimer?.cancel();
     super.onClose();
+  }
+
+  /// Fetch related products by slug
+  Future<void> fetchRelatedProducts(String slug) async {
+    if (isFetchingRelatedProducts.value) return;
+
+    try {
+      isFetchingRelatedProducts.value = true;
+      final products = await _productService.fetchRelatedProducts(slug);
+      relatedProducts.assignAll(products);
+    } catch (e) {
+      print('Error fetching related products: $e');
+    } finally {
+      isFetchingRelatedProducts.value = false;
+    }
   }
 }

@@ -61,7 +61,7 @@ class _MainContainerScreenState extends State<MainContainerScreen> with WidgetsB
   Widget build(BuildContext context) {
     const double customBottomBarContentHeight = 65.0; // From CustomBottomBar
     final double bottomSafeAreaPadding = MediaQuery.of(context).padding.bottom;
-    final double totalCustomBottomBarHeight = customBottomBarContentHeight + bottomSafeAreaPadding;
+    final double totalCustomBottomBarHeight = customBottomBarContentHeight;
 
     return Theme(
       data: AppTheme.lightTheme,

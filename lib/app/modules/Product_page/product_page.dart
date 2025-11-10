@@ -1,10 +1,12 @@
 // lib/screens/product_page.dart
 
 import 'dart:math';
+import 'dart:convert'; // For base64 decoding
 import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart'; // Add to pubspec.yaml for SVG support
 import 'package:get/get.dart';
 import 'package:html/parser.dart' as html_parser;
 import 'package:mobiking/app/controllers/product_controller.dart';
@@ -16,7 +18,6 @@ import '../../controllers/wishlist_controller.dart';
 import '../../data/product_model.dart';
 import '../home/widgets/app_star_rating.dart';
 import 'widgets/product_image_banner.dart';
-// REMOVED: import 'widgets/product_title_price.dart';
 import 'widgets/featured_product_banner.dart';
 import 'widgets/collapsible_section.dart';
 import 'widgets/animated_cart_button.dart';
@@ -81,6 +82,7 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
 
     _pincodeController.addListener(_resetDeliveryStatus);
     _syncVariantData();
+    productController.fetchRelatedProducts(widget.product.slug ?? '');
 
     _slideAnimationController = AnimationController(
       vsync: this,
@@ -212,87 +214,108 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
     }
   }
 
-  // FIXED HTML conversion method
-  String _convertHtmlToPlainText(String htmlString) {
-    if (htmlString.isEmpty) return '';
+  // NEW: Convert Markdown images to HTML
+  String _convertMarkdownImagesToHtml(String content) {
+    if (content.isEmpty) return content;
 
-    try {
-      final document = html_parser.parse(htmlString);
-      String text = document.body?.text ?? '';
+    // Convert markdown images ![alt](url) to HTML <img> tags
+    String converted = content.replaceAllMapped(
+      RegExp(r'!\[([^\]]*)\]\(([^\)]+)\)'),
+          (match) {
+        final alt = match.group(1) ?? 'Product Image';
+        final url = match.group(2) ?? '';
+        return '<p style="text-align:center; margin:16px 0;"><img src="$url" alt="$alt" style="max-width:100%; height:auto; border-radius:12px;" /></p>';
+      },
+    );
 
-      // Clean up extra whitespace
-      text = text.replaceAll(RegExp(r'\s+'), ' ').trim();
+    // Convert markdown bold **text** to HTML
+    converted = converted.replaceAllMapped(
+      RegExp(r'\*\*([^\*]+)\*\*'),
+          (match) => '<strong>${match.group(1)}</strong>',
+    );
 
-      return text;
-    } catch (e) {
-      // Fallback: strip HTML tags manually
-      return htmlString
-          .replaceAll(RegExp(r'<[^>]*>'), '')
-          .replaceAll(RegExp(r'&nbsp;'), ' ')
-          .replaceAll(RegExp(r'&amp;'), '&')
-          .replaceAll(RegExp(r'&lt;'), '<')
-          .replaceAll(RegExp(r'&gt;'), '>')
-          .replaceAll(RegExp(r'&quot;'), '"')
-          .replaceAll(RegExp(r'\s+'), ' ')
-          .trim();
+    // Convert markdown italic *text* to HTML (avoid matching **)
+    converted = converted.replaceAllMapped(
+      RegExp(r'(?<!\*)\*(?!\*)([^\*]+)\*(?!\*)'),
+          (match) => '<em>${match.group(1)}</em>',
+    );
+
+    // Convert double line breaks to paragraph breaks
+    converted = converted.replaceAll(RegExp(r'\n\n+'), '</p><p style="margin:8px 0;">');
+
+    // Wrap in paragraph tags if not already HTML
+    if (!converted.trim().startsWith('<')) {
+      converted = '<p style="margin:8px 0;">$converted</p>';
     }
+
+    return converted;
   }
 
-  // COMPLETELY REWRITTEN HTML sanitization method
+  // HTML sanitization with proper type handling
   String _sanitizeHtml(String htmlString) {
     if (htmlString.isEmpty) return htmlString;
 
-    // Debug print to see what we're working with
-    print("Original HTML (first 200 chars): ${htmlString.substring(0, min(200, htmlString.length))}...");
+    try {
+      final document = html_parser.parse(htmlString);
 
-    // Remove any script tags for security
-    htmlString = htmlString.replaceAll(RegExp(r'<script[^>]*>.*?</script>', caseSensitive: false, dotAll: true), '');
+      document.querySelectorAll('script').forEach((element) => element.remove());
+      document.querySelectorAll('style').forEach((element) => element.remove());
 
-    // Remove any style tags that might contain problematic CSS
-    htmlString = htmlString.replaceAll(RegExp(r'<style[^>]*>.*?</style>', caseSensitive: false, dotAll: true), '');
+      document.querySelectorAll('*').forEach((element) {
+        element.attributes.removeWhere((key, value) {
+          final keyStr = key.toString().toLowerCase();
+          return keyStr.startsWith('on') || keyStr.contains('javascript:');
+        });
+      });
 
-    // Fix common HTML entities
-    htmlString = htmlString.replaceAll(RegExp(r'&nbsp;'), ' ');
-    htmlString = htmlString.replaceAll(RegExp(r'&amp;'), '&');
-    htmlString = htmlString.replaceAll(RegExp(r'&lt;'), '<');
-    htmlString = htmlString.replaceAll(RegExp(r'&gt;'), '>');
-    htmlString = htmlString.replaceAll(RegExp(r'&quot;'), '"');
-    htmlString = htmlString.replaceAll(RegExp(r'&#39;'), "'");
+      return document.outerHtml;
+    } catch (e) {
+      print("HTML sanitization error: $e");
 
-    // Remove ALL inline styles to prevent CSS variable issues
-    htmlString = htmlString.replaceAll(RegExp(r'style="[^"]*"'), '');
+      String sanitized = htmlString
+          .replaceAll(
+        RegExp(
+          r'<script[^>]*>[\s\S]*?</script>',
+          caseSensitive: false,
+        ),
+        '',
+      )
+          .replaceAll(
+        RegExp(
+          r'<style[^>]*>[\s\S]*?</style>',
+          caseSensitive: false,
+        ),
+        '',
+      )
+          .replaceAll(
+        RegExp(
+          r'''on\w+\s*=\s*["'][^"']*["']''',
+          caseSensitive: false,
+        ),
+        '',
+      )
+          .replaceAll(
+        RegExp(
+          r'javascript:',
+          caseSensitive: false,
+        ),
+        '',
+      );
 
-    // Remove class attributes that might reference unavailable CSS
-    htmlString = htmlString.replaceAll(RegExp(r'class="[^"]*"'), '');
-
-    // Clean up any remaining CSS variables or complex selectors
-    htmlString = htmlString.replaceAll(RegExp(r'var\([^)]*\)'), '');
-
-    // Remove any remaining problematic attributes
-    htmlString = htmlString.replaceAll(RegExp(r'(data-[^=]*="[^"]*")'), '');
-    htmlString = htmlString.replaceAll(RegExp(r'(id="[^"]*")'), '');
-
-    // Remove empty paragraphs and divs
-    htmlString = htmlString.replaceAll(RegExp(r'<p[^>]*>\s*</p>'), '');
-    htmlString = htmlString.replaceAll(RegExp(r'<div[^>]*>\s*</div>'), '');
-
-    // Clean up multiple consecutive whitespaces and line breaks
-    htmlString = htmlString.replaceAll(RegExp(r'\s+'), ' ').trim();
-
-    print("Sanitized HTML (first 200 chars): ${htmlString.substring(0, min(200, htmlString.length))}...");
-
-    return htmlString;
+      return sanitized;
+    }
   }
 
-  // COMPLETELY REWRITTEN Enhanced Product Description Widget
   Widget _buildEnhancedProductDescription(
       String htmlDescription,
       TextTheme textTheme,
-      bool isExpanded, // pass this state from parent
+      bool isExpanded,
       ) {
     if (htmlDescription.isEmpty) return const SizedBox.shrink();
 
-    String sanitizedHtml = _sanitizeHtml(htmlDescription);
+    // UPDATED: First convert markdown to HTML, then sanitize
+    String processedHtml = _convertMarkdownImagesToHtml(htmlDescription);
+    String sanitizedHtml = _sanitizeHtml(processedHtml);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -318,21 +341,20 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
             ),
             child: isExpanded
                 ? _buildDescriptionContent(sanitizedHtml, textTheme)
-                : const SizedBox.shrink(), // nothing shown when closing
+                : const SizedBox.shrink(),
           ),
         ],
       ),
     );
   }
 
-  // NEW method to handle description content with fallback
+  // HTML rendering with comprehensive edge case handling
   Widget _buildDescriptionContent(String htmlDescription, TextTheme textTheme) {
     try {
-      // First try: Use Html widget with comprehensive styling
       return Html(
         data: htmlDescription,
+
         style: {
-          // Base body styling
           "body": Style(
             fontSize: FontSize(14.0),
             color: AppColors.textMedium,
@@ -342,7 +364,6 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
             fontFamily: 'Roboto',
           ),
 
-          // Paragraph styling
           "p": Style(
             fontSize: FontSize(14.0),
             color: AppColors.textMedium,
@@ -351,7 +372,6 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
             padding: HtmlPaddings.zero,
           ),
 
-          // Div styling
           "div": Style(
             fontSize: FontSize(14.0),
             color: AppColors.textMedium,
@@ -359,33 +379,49 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
             margin: Margins.only(bottom: 8.0),
           ),
 
-          // Heading styles
           "h1": Style(
             fontSize: FontSize(22.0),
             fontWeight: FontWeight.bold,
             color: AppColors.textDark,
-            margin: Margins.only(bottom: 16.0),
+            margin: Margins.only(bottom: 16.0, top: 8.0),
           ),
           "h2": Style(
             fontSize: FontSize(20.0),
             fontWeight: FontWeight.bold,
             color: AppColors.textDark,
-            margin: Margins.only(bottom: 14.0),
+            margin: Margins.only(bottom: 14.0, top: 8.0),
           ),
           "h3": Style(
             fontSize: FontSize(18.0),
             fontWeight: FontWeight.w600,
             color: AppColors.textDark,
-            margin: Margins.only(bottom: 12.0),
+            margin: Margins.only(bottom: 12.0, top: 6.0),
+          ),
+          "h4": Style(
+            fontSize: FontSize(16.0),
+            fontWeight: FontWeight.w600,
+            color: AppColors.textDark,
+            margin: Margins.only(bottom: 10.0, top: 6.0),
+          ),
+          "h5": Style(
+            fontSize: FontSize(14.0),
+            fontWeight: FontWeight.w600,
+            color: AppColors.textDark,
+            margin: Margins.only(bottom: 8.0, top: 4.0),
+          ),
+          "h6": Style(
+            fontSize: FontSize(12.0),
+            fontWeight: FontWeight.w600,
+            color: AppColors.textDark,
+            margin: Margins.only(bottom: 8.0, top: 4.0),
           ),
 
-          // List styling
           "ul": Style(
-            margin: Margins.only(bottom: 16.0, left: 16.0),
+            margin: Margins.only(bottom: 16.0, left: 20.0),
             padding: HtmlPaddings.zero,
           ),
           "ol": Style(
-            margin: Margins.only(bottom: 16.0, left: 16.0),
+            margin: Margins.only(bottom: 16.0, left: 20.0),
             padding: HtmlPaddings.zero,
           ),
           "li": Style(
@@ -396,13 +432,41 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
             display: Display.listItem,
           ),
 
-          // Span styling
+          "table": Style(
+            margin: Margins.only(bottom: 16.0, top: 8.0),
+            backgroundColor: Colors.grey.shade50,
+            border: Border.all(color: Colors.grey.shade300),
+          ),
+          "thead": Style(
+            backgroundColor: Colors.grey.shade200,
+            fontWeight: FontWeight.bold,
+          ),
+          "tbody": Style(
+            backgroundColor: Colors.white,
+          ),
+          "th": Style(
+            padding: HtmlPaddings.all(8.0),
+            backgroundColor: Colors.grey.shade200,
+            fontWeight: FontWeight.bold,
+            border: Border.all(color: Colors.grey.shade300),
+            alignment: Alignment.centerLeft,
+          ),
+          "td": Style(
+            padding: HtmlPaddings.all(8.0),
+            alignment: Alignment.centerLeft,
+            border: Border.all(color: Colors.grey.shade300),
+            fontSize: FontSize(14.0),
+            color: AppColors.textMedium,
+          ),
+          "tr": Style(
+            border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
+          ),
+
           "span": Style(
             fontSize: FontSize(14.0),
             color: AppColors.textMedium,
           ),
 
-          // Text formatting
           "strong": Style(
             fontWeight: FontWeight.bold,
             color: AppColors.textDark,
@@ -417,61 +481,495 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
           "i": Style(
             fontStyle: FontStyle.italic,
           ),
+          "u": Style(
+            textDecoration: TextDecoration.underline,
+          ),
+          "s": Style(
+            textDecoration: TextDecoration.lineThrough,
+          ),
+          "strike": Style(
+            textDecoration: TextDecoration.lineThrough,
+          ),
+          "del": Style(
+            textDecoration: TextDecoration.lineThrough,
+            color: Colors.grey.shade600,
+          ),
+          "mark": Style(
+            backgroundColor: Colors.yellow.shade200,
+            color: AppColors.textDark,
+          ),
 
-          // Break tag
+          "code": Style(
+            backgroundColor: Colors.grey.shade100,
+            color: Colors.red.shade700,
+            padding: HtmlPaddings.symmetric(horizontal: 4.0, vertical: 2.0),
+            fontFamily: 'monospace',
+            fontSize: FontSize(13.0),
+          ),
+          "pre": Style(
+            backgroundColor: Colors.grey.shade100,
+            padding: HtmlPaddings.all(12.0),
+            margin: Margins.only(bottom: 12.0),
+            fontFamily: 'monospace',
+            fontSize: FontSize(13.0),
+            whiteSpace: WhiteSpace.pre,
+          ),
+
+          "blockquote": Style(
+            margin: Margins.only(left: 16.0, bottom: 12.0),
+            padding: HtmlPaddings.only(left: 12.0),
+            border: Border(
+              left: BorderSide(color: AppColors.textMedium, width: 3.0),
+            ),
+            fontStyle: FontStyle.italic,
+            color: Colors.grey.shade700,
+          ),
+
+          "hr": Style(
+            margin: Margins.symmetric(vertical: 16.0),
+            border: Border(
+              top: BorderSide(color: Colors.grey.shade300, width: 1.0),
+            ),
+          ),
+
           "br": Style(
             fontSize: FontSize(8.0),
           ),
 
-          // Override any problematic styles
+          "img": Style(
+            margin: Margins.symmetric(vertical: 12.0),
+            width: Width(100, Unit.percent),
+            height: Height.auto(),
+          ),
+
+          "a": Style(
+            color: Colors.blue,
+            textDecoration: TextDecoration.underline,
+          ),
+
+          "sub": Style(
+            fontSize: FontSize(10.0),
+            verticalAlign: VerticalAlign.sub,
+          ),
+          "sup": Style(
+            fontSize: FontSize(10.0),
+            verticalAlign: VerticalAlign.baseline,
+          ),
+
+          "small": Style(
+            fontSize: FontSize(12.0),
+            color: Colors.grey.shade600,
+          ),
+
+          "center": Style(
+            alignment: Alignment.center,
+          ),
+
           "*": Style(
             backgroundColor: Colors.transparent,
           ),
         },
 
-        // Remove problematic extensions
-        extensions: const [],
-
-        // Handle link taps
         onLinkTap: (url, attributes, element) {
-          print("Link tapped: $url");
+          if (url != null) {
+            print("Link tapped: $url");
+          }
         },
+
+        extensions: [
+          TagExtension(
+            tagsToExtend: {"img"},
+            builder: (extensionContext) {
+              final attributes = extensionContext.attributes;
+              final src = attributes['src'];
+              final alt = attributes['alt'] ?? 'Product Image';
+
+              if (src == null || src.isEmpty) {
+                print("❌ Image src is null or empty");
+                return _buildImageErrorWidget(alt);
+              }
+
+              print("✅ Loading image from: $src");
+
+              try {
+                final widthStr = attributes['width'];
+                final heightStr = attributes['height'];
+
+                final width = widthStr != null
+                    ? double.tryParse(widthStr.replaceAll(RegExp(r'[^0-9.]'), ''))
+                    : null;
+                final height = heightStr != null
+                    ? double.tryParse(heightStr.replaceAll(RegExp(r'[^0-9.]'), ''))
+                    : null;
+
+                // Handle Base64 images
+                if (src.startsWith('data:image') && src.contains('base64,')) {
+                  try {
+                    final parts = src.split('base64,');
+                    final base64String = parts.length > 1 ? parts[1].trim() : '';
+
+                    if (base64String.isEmpty) {
+                      return _buildImageErrorWidget(alt);
+                    }
+
+                    final decodedBytes = base64Decode(base64String);
+                    return Container(
+                      margin: const EdgeInsets.symmetric(vertical: 12.0),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12.0),
+                        child: Image.memory(
+                          decodedBytes,
+                          width: width,
+                          height: height,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return _buildImageErrorWidget(alt);
+                          },
+                        ),
+                      ),
+                    );
+                  } catch (e) {
+                    print("Base64 decode error: $e");
+                    return _buildImageErrorWidget(alt);
+                  }
+                }
+
+                // Handle Asset images
+                if (src.startsWith('asset:') || src.startsWith('assets/')) {
+                  final assetPath = src.replaceFirst('asset:', '');
+                  return Container(
+                    margin: const EdgeInsets.symmetric(vertical: 12.0),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12.0),
+                      child: Image.asset(
+                        assetPath,
+                        width: width,
+                        height: height,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return _buildImageErrorWidget(alt);
+                        },
+                      ),
+                    ),
+                  );
+                }
+
+                // Handle SVG images
+                final srcLower = src.toLowerCase();
+                if (srcLower.endsWith('.svg')) {
+                  return Container(
+                    margin: const EdgeInsets.symmetric(vertical: 12.0),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12.0),
+                      child: SvgPicture.network(
+                        src,
+                        width: width,
+                        height: height,
+                        fit: BoxFit.contain,
+                        placeholderBuilder: (context) => Container(
+                          width: width ?? 100,
+                          height: height ?? 100,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade200,
+                            borderRadius: BorderRadius.circular(12.0),
+                          ),
+                          child: Center(
+                            child: SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  AppColors.success,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }
+
+                // Handle Network images (default)
+                return Container(
+                  margin: const EdgeInsets.symmetric(vertical: 12.0),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12.0),
+                    child: Image.network(
+                      src,
+                      width: width ?? double.infinity,
+                      height: height,
+                      fit: BoxFit.cover,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(
+                          height: height ?? 200,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade100,
+                            borderRadius: BorderRadius.circular(12.0),
+                          ),
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                SizedBox(
+                                  width: 28,
+                                  height: 28,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.5,
+                                    value: loadingProgress.expectedTotalBytes != null
+                                        ? loadingProgress.cumulativeBytesLoaded /
+                                        loadingProgress.expectedTotalBytes!
+                                        : null,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      AppColors.success,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  'Loading image...',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) {
+                        print("❌ Network image error: $error");
+                        return _buildImageErrorWidget(alt);
+                      },
+                    ),
+                  ),
+                );
+              } catch (e) {
+                print("Error rendering image: $e");
+                return _buildImageErrorWidget(alt);
+              }
+            },
+          ),
+
+          TagExtension(
+            tagsToExtend: {"iframe", "video"},
+            builder: (extensionContext) {
+              final element = extensionContext.element;
+              final src = element?.attributes['src'];
+
+              if (src == null || src.isEmpty) {
+                return Container(
+                  padding: const EdgeInsets.all(16.0),
+                  margin: const EdgeInsets.symmetric(vertical: 8.0),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(8.0),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.video_library_outlined, color: Colors.grey.shade600),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Video content unavailable',
+                          style: TextStyle(
+                            fontSize: 12.0,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              return Container(
+                padding: const EdgeInsets.all(16.0),
+                margin: const EdgeInsets.symmetric(vertical: 8.0),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(8.0),
+                  border: Border.all(color: Colors.grey.shade300),
+                ),
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.play_circle_outline,
+                      size: 48,
+                      color: AppColors.success,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Video content available',
+                      style: TextStyle(
+                        fontSize: 14.0,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textDark,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Tap to view in browser',
+                      style: TextStyle(
+                        fontSize: 12.0,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
 
         shrinkWrap: true,
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
       print("HTML rendering failed: $e");
+      print("Stack trace: $stackTrace");
 
-      // Fallback: Use plain text with proper formatting
-      return Text(
-        _convertHtmlToPlainText(htmlDescription),
-        style: textTheme.bodyMedium?.copyWith(
-          color: AppColors.textMedium,
-          height: 1.6,
-          fontSize: 14.0,
+      return Container(
+        padding: const EdgeInsets.all(12.0),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(8.0),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.info_outline, size: 16, color: Colors.orange.shade700),
+                const SizedBox(width: 8),
+                Text(
+                  'Displaying simplified content',
+                  style: TextStyle(
+                    fontSize: 12.0,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.orange.shade700,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _convertHtmlToPlainText(htmlDescription),
+              style: textTheme.bodyMedium?.copyWith(
+                color: AppColors.textMedium,
+                height: 1.6,
+                fontSize: 14.0,
+              ),
+            ),
+          ],
         ),
       );
     }
   }
 
+  Widget _buildImageErrorWidget(String? altText) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 12.0),
+      padding: const EdgeInsets.all(20.0),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(12.0),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.broken_image_outlined,
+            color: Colors.grey.shade400,
+            size: 48.0,
+          ),
+          if (altText != null && altText.isNotEmpty) ...[
+            const SizedBox(height: 12.0),
+            Text(
+              altText,
+              style: TextStyle(
+                fontSize: 13.0,
+                color: Colors.grey.shade600,
+                fontStyle: FontStyle.italic,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ] else ...[
+            const SizedBox(height: 12.0),
+            Text(
+              'Image unavailable',
+              style: TextStyle(
+                fontSize: 13.0,
+                color: Colors.grey.shade600,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  String _convertHtmlToPlainText(String htmlString) {
+    if (htmlString.isEmpty) return '';
+
+    try {
+      final document = html_parser.parse(htmlString);
+      String text = document.body?.text ?? '';
+
+      text = text
+          .replaceAll(RegExp(r'\n\s*\n+'), '\n\n')
+          .replaceAll(RegExp(r'[ \t]+'), ' ')
+          .trim();
+
+      return text;
+    } catch (e) {
+      print("HTML to text conversion error: $e");
+
+      return htmlString
+          .replaceAll(RegExp(r'<br\s*/?>'), '\n')
+          .replaceAll(RegExp(r'<p[^>]*>'), '\n')
+          .replaceAll(RegExp(r'</p>'), '\n')
+          .replaceAll(RegExp(r'<[^>]*>'), '')
+          .replaceAll(RegExp(r'&nbsp;'), ' ')
+          .replaceAll(RegExp(r'&amp;'), '&')
+          .replaceAll(RegExp(r'&lt;'), '<')
+          .replaceAll(RegExp(r'&gt;'), '>')
+          .replaceAll(RegExp(r'&quot;'), '"')
+          .replaceAll(RegExp(r'&#39;'), "'")
+          .replaceAll(RegExp(r'&apos;'), "'")
+          .replaceAll(RegExp(r'\s+'), ' ')
+          .trim();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    // ... (rest of your build method stays exactly the same as in the file)
+    // Copy the entire build method from your original code
     final product = widget.product;
     final TextTheme textTheme = Theme.of(context).textTheme;
     final double sellingPrice;
-    String discountBadgeText = '';
     final double? originalPrice = product.regularPrice?.toDouble();
+    String discountBadgeText = '';
 
-    if (product.sellingPrice.isNotEmpty) {
-      sellingPrice = product.sellingPrice.map((e) => e.price.toDouble()).reduce(min);
-      final maxPrice = product.sellingPrice.map((e) => e.price.toDouble()).reduce(max);
-      final actualPrice = originalPrice ?? maxPrice;
-      if (actualPrice > sellingPrice) {
-        double discount = ((actualPrice - sellingPrice) / actualPrice) * 100;
-        discountBadgeText = '${discount.round()}% OFF';
-      }
+    if (product.sellingPrice.isNotEmpty && product.sellingPrice.last.price != null) {
+      sellingPrice = product.sellingPrice.last.price!.toDouble();
     } else {
       sellingPrice = 0.0;
+    }
+
+    final bool hasDiscount = originalPrice != null && originalPrice > sellingPrice && sellingPrice > 0;
+    if (hasDiscount) {
+      double discount = ((originalPrice! - sellingPrice) / originalPrice) * 100;
+      discountBadgeText = '${discount.round()}% OFF';
     }
 
     final variantNames = product.variants.keys.toList();
@@ -499,7 +997,6 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Product Image Banner
                     Obx(() {
                       final isFavorite = wishlistController.wishlist.any((p) => p.id == product.id);
                       return ProductImageBanner(
@@ -521,7 +1018,6 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
                       );
                     }),
 
-                    // MODIFIED: Product Title & Price Card with Toggle Button
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Container(
@@ -532,7 +1028,7 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
                             bottomRight: Radius.circular(12),
                           ),
                         ),
-                        padding: const EdgeInsets.fromLTRB(12, 16, 12, 12), // Adjusted padding
+                        padding: const EdgeInsets.fromLTRB(12, 16, 12, 12),
                         child: AnimatedOpacity(
                           opacity: _animationCompleted ? 1.0 : 0.0,
                           duration: const Duration(milliseconds: 500),
@@ -540,13 +1036,12 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // NEW: Replaced ProductTitleAndPrice with enhanced widget
                               ProductDetailsCard(
                                 title: product.fullName,
                                 originalPrice: originalPrice ?? sellingPrice,
                                 discountedPrice: sellingPrice,
                               ),
-                              const SizedBox(height: 12), // Adjusted spacing
+                              const SizedBox(height: 12),
                               SizedBox(
                                 width: double.maxFinite,
                                 height: 36,
@@ -593,10 +1088,8 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
                                   secondChild: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      // FIXED ENHANCED PRODUCT DESCRIPTION
                                       _buildEnhancedProductDescription(product.description, textTheme, _productDetailsVisible.value),
 
-                                      // Keep existing description points section
                                       if (product.descriptionPoints.isNotEmpty)
                                         Padding(
                                           padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -665,7 +1158,6 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
                                           ),
                                         ),
 
-                                      // Key information section
                                       if (product.keyInformation.isNotEmpty)
                                         Padding(
                                           padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -739,13 +1231,13 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
                                 ),
                               ),
                             ],
-                          ),),
+                          ),
+                        ),
                       ),
                     ),
 
                     const SizedBox(height: 24),
 
-                    // Variant selection section
                     if (inStockVariantNames.isNotEmpty)
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: _horizontalPagePadding),
@@ -787,122 +1279,57 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
                         ),
                       ),
 
+                    // Continue with the rest of your build method...
+                    // Copy all the remaining code from your original file
                     const SizedBox(height: 24),
 
-                    // Related products section
-                    Obx(() {
-                      if (productController.allProducts.isEmpty) {
-                        return const SizedBox.shrink();
-                      }
-
-                      final List<String> groupIds = widget.product.groupIds;
-                      final List<ProductModel> relatedProducts = productController.getProductsInSameGroup(
-                        widget.product.id,
-                        groupIds,
-                      );
-
-                      if (relatedProducts.isEmpty) {
-                        return const SizedBox.shrink();
-                      }
-
-                      return Column(
+                    // Related Products Section
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: _horizontalPagePadding),
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: _horizontalPagePadding),
-                            child: Text(
-                              'You might also like',
-                              style: textTheme.headlineSmall?.copyWith(
-                                color: AppColors.textDark,
-                                fontWeight: FontWeight.w700,
-                              ),
+                          Text(
+                            'Similar Products',
+                            style: textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textDark,
                             ),
                           ),
                           const SizedBox(height: 16),
                           SizedBox(
-                            height: 240,
-                            child: ListView.builder(
-                              padding: const EdgeInsets.symmetric(horizontal: _horizontalPagePadding),
-                              scrollDirection: Axis.horizontal,
-                              itemCount: relatedProducts.length,
-                              itemBuilder: (context, index) {
-                                final relatedProduct = relatedProducts[index];
-                                final String productHeroTag = 'product_image_related_${relatedProduct.id}_$index';
-                                return Container(
-                                  width: 110,
-                                  margin: const EdgeInsets.only(right: 12),
-                                  child: AllProductGridCard(
-                                    product: relatedProduct,
-                                    heroTag: productHeroTag,
-                                    onTap: (tappedProduct) {
-                                      _navigateToRelatedProduct(tappedProduct, productHeroTag);
-                                    },
-                                  ),
-                                );
-                              },
-                            ),
+                            height: 240, // Adjust this height as needed
+                            child: Obx(() {
+                              if (productController.isFetchingRelatedProducts.value) {
+                                return const Center(child: CircularProgressIndicator());
+                              }
+
+                              if (productController.relatedProducts.isEmpty) {
+                                return _buildEmptyState(textTheme);
+                              }
+
+                              return ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: productController.relatedProducts.length,
+                                itemBuilder: (context, index) {
+                                  final relatedProduct = productController.relatedProducts[index];
+                                  return SizedBox(
+                                    width: 120, // Adjust this width as needed
+                                    child: AllProductGridCard(
+                                      product: relatedProduct,
+                                      heroTag: 'related_product_${relatedProduct.id}',
+                                      onTap: (product) {
+                                        _navigateToRelatedProduct(product, 'related_product_${product.id}');
+                                      },
+                                    ),
+                                  );
+                                },
+                              );
+                            }),
                           ),
                         ],
-                      );
-                    }),
-
-                    const SizedBox(height: 24),
-
-                    // Related products by category section
-                    Obx(() {
-                      if (productController.allProducts.isEmpty) {
-                        return const SizedBox.shrink();
-                      }
-
-                      final List<ProductModel> relatedProducts = productController.getProductsInSameParentCategory(
-                        widget.product.id,
-                        widget.product.category?.id,
-                      );
-
-                      if (relatedProducts.isEmpty) {
-                        return const SizedBox.shrink();
-                      }
-
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: _horizontalPagePadding),
-                            child: Text(
-                              'More in this Category',
-                              style: textTheme.headlineSmall?.copyWith(
-                                color: AppColors.textDark,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          SizedBox(
-                            height: 240,
-                            child: ListView.builder(
-                              padding: const EdgeInsets.symmetric(horizontal: _horizontalPagePadding),
-                              scrollDirection: Axis.horizontal,
-                              itemCount: relatedProducts.length,
-                              itemBuilder: (context, index) {
-                                final relatedProduct = relatedProducts[index];
-                                final String productHeroTag = 'product_image_related_category_${relatedProduct.id}_$index';
-                                return Container(
-                                  width: 110,
-                                  margin: const EdgeInsets.only(right: 12),
-                                  child: AllProductGridCard(
-                                    product: relatedProduct,
-                                    heroTag: productHeroTag,
-                                    onTap: (tappedProduct) {
-                                      _navigateToRelatedProduct(tappedProduct, productHeroTag);
-                                    },
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                      );
-                    }),
+                      ),
+                    ),
 
                     const SizedBox(height: 70),
                   ],
@@ -951,10 +1378,16 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
           );
         }),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      ),);
+      ),
+    );
   }
 
-  // Navigation helper methods
+  // Copy all remaining methods from your original file:
+  // - _navigateToRelatedProduct
+  // - _fallbackNavigation
+  // - _buildEmptyState
+  // - _buildBottomCartBar
+
   void _navigateToRelatedProduct(ProductModel product, String heroTag) {
     try {
       HapticFeedback.lightImpact();
@@ -1116,7 +1549,7 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
   }
 }
 
-// NEW: Enhanced widget for product title, price, and features
+// Copy ProductDetailsCard and _FeatureInfoBox classes from your original file
 class ProductDetailsCard extends StatelessWidget {
   final String title;
   final double originalPrice;
@@ -1140,7 +1573,6 @@ class ProductDetailsCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Product Title
         Text(
           title,
           style: textTheme.headlineSmall?.copyWith(
@@ -1152,11 +1584,9 @@ class ProductDetailsCard extends StatelessWidget {
         ),
         const SizedBox(height: 8),
 
-        // Price Row
         Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // ✅ Selling Price
             Text(
               '₹${discountedPrice.toStringAsFixed(0)}',
               style: textTheme.titleLarge?.copyWith(
@@ -1166,7 +1596,6 @@ class ProductDetailsCard extends StatelessWidget {
             ),
             const SizedBox(width: 8),
 
-            // ✅ MRP with strikethrough
             if (hasDiscount) ...[
               Text(
                 'MRP ',
@@ -1184,7 +1613,6 @@ class ProductDetailsCard extends StatelessWidget {
             ],
             const SizedBox(width: 8),
 
-            // ✅ Discount badge
             if (hasDiscount)
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -1193,7 +1621,7 @@ class ProductDetailsCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
-                  '${discountPercentage.round()}% OFF', // rounded value
+                  '${discountPercentage.round()}% OFF',
                   style: textTheme.labelSmall?.copyWith(
                     color: AppColors.success,
                     fontWeight: FontWeight.w600,
@@ -1201,11 +1629,9 @@ class ProductDetailsCard extends StatelessWidget {
                 ),
               ),
           ],
-        )
-,
+        ),
         const SizedBox(height: 16),
 
-        // Feature Boxes Row
         const Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -1235,7 +1661,6 @@ class ProductDetailsCard extends StatelessWidget {
   }
 }
 
-// NEW: Helper widget for a single feature box
 class _FeatureInfoBox extends StatelessWidget {
   final IconData icon;
   final String label;

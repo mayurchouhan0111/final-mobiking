@@ -49,13 +49,14 @@ import 'package:mobiking/app/modules/no_network/no_network_screen.dart';
 
 // ✅ ADD COUPON IMPORTS
 import 'app/controllers/coupon_controller.dart';
+import 'app/services/category_service.dart';
 import 'app/services/coupon_service.dart';
 
 import 'app/controllers/fcm_controller.dart';
 import 'app/data/ParentCategory.dart';
 import 'app/data/key_information.dart';
 import 'app/data/selling_price.dart';
-import 'app/modules/bottombar/Bottom_bar.dart';
+import 'package:mobiking/app/modules/bottombar/Bottom_bar.dart';
 import 'firebase_options.dart';
 
 // FCM Background Message Handler - MUST be a top-level function
@@ -78,6 +79,21 @@ Future<void> _firebaseBackgroundMessagehandler(RemoteMessage message) async {
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // ========== ANDROID 15 EDGE-TO-EDGE COMPATIBILITY ==========
+  // Step 1: Enable Edge-to-Edge Display
+  // This makes the system bars transparent, allowing the app to draw behind them.
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    systemNavigationBarColor: Colors.transparent,
+    statusBarIconBrightness: Brightness.dark, // For dark icons on a light background
+    systemNavigationBarIconBrightness: Brightness.dark, // For dark icons on a light background
+  ));
+
+  // Step 2: Ensure the UI mode is set to edge-to-edge
+  // This is the modern way to handle system UI visibility.
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  // =========================================================
 
   // Set preferred orientations to portrait mode only
   await SystemChrome.setPreferredOrientations([
@@ -206,9 +222,12 @@ Future<void> _preOpenBoxes() async {
     print('[Hive] Opened metadata box');
 
     // You can pre-open other boxes here if needed
-    // await Hive.openBox<SubCategory>('subcategories');
-    // await Hive.openBox<CategoryModel>('categories');
-    // await Hive.openBox<ProductModel>('products');
+    await Hive.openBox<SubCategory>('subcategories');
+    print('[Hive] Opened subcategories box');
+    await Hive.openBox<CategoryModel>('categories');
+    print('[Hive] Opened categories box');
+    await Hive.openBox<Map>('category_details');
+    print('[Hive] Opened category_details box');
 
   } catch (e) {
     print('[Hive] Error pre-opening boxes: $e');
@@ -231,6 +250,15 @@ class MyApp extends StatelessWidget {
       title: 'Mobiking',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
+      // IMPORTANT: Wrap your home screen's Scaffold with a SafeArea widget
+      // to avoid UI overlapping with system bars (status bar, navigation bar).
+      // Example:
+      // home: Scaffold(
+      //   body: SafeArea(
+      //     child: SplashScreen(),
+      //   ),
+      // ),
+      // Since SplashScreen is your home, you should modify the SplashScreen file.
       home: SplashScreen(),
 
       // If you decide to use GetX routing (recommended), remove 'home:' and use 'initialRoute' and 'getPages'.

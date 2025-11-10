@@ -136,7 +136,7 @@ class _ProductImageBannerState extends State<ProductImageBanner> {
             ),
           ),
 
-          
+
 
           // ⭐ Rating + Review Count (bottom left)
           if (widget.productRating != null && widget.reviewCount != null)

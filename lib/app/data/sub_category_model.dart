@@ -104,6 +104,16 @@ class SubCategory extends HiveObject {
   }
 
   factory SubCategory.fromJson(Map<String, dynamic> json) {
+    var productsData = json['products'];
+    List<ProductModel> products = [];
+    if (productsData is List) {
+      if (productsData.isNotEmpty && productsData[0] is Map<String, dynamic>) {
+        products = productsData
+            .map((e) => ProductModel.fromJson(e as Map<String, dynamic>))
+            .toList();
+      }
+    }
+
     return SubCategory(
       id: json['_id'] ?? '',
       name: json['name'] ?? '',
@@ -117,9 +127,7 @@ class SubCategory extends HiveObject {
       parentCategory: json['parentCategory'] != null
           ? ParentCategory.fromJson(json['parentCategory'] as Map<String, dynamic>)
           : null,
-      products: (json['products'] as List?)
-          ?.map((e) => ProductModel.fromJson(e as Map<String, dynamic>))
-          .toList() ?? <ProductModel>[],
+      products: products,
       createdAt: json['createdAt'] != null && json['createdAt'] is String
           ? DateTime.tryParse(json['createdAt']) ?? DateTime(2000)
           : DateTime(2000),

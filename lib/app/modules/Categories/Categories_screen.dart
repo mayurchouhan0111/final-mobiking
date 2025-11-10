@@ -163,9 +163,11 @@ class _CategorySectionScreenState extends State<CategorySectionScreen> {
           return _buildEmptyState(context);
         }
 
-        return SingleChildScrollView(
-          child: Column(
-            children: [
+        return RefreshIndicator(
+          onRefresh: _refreshData,
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
               ListView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
@@ -202,7 +204,7 @@ class _CategorySectionScreenState extends State<CategorySectionScreen> {
                               ),
                             ),
                             TextButton(
-                              onPressed: () => Get.to(() => CategoryProductsGridScreen(
+onPressed: () => Get.to(() => CategoryProductsGridScreen(
                                 categoryName: title,
                                 subCategories: matchingSubs,
                               )),
@@ -262,10 +264,11 @@ class _CategorySectionScreenState extends State<CategorySectionScreen> {
                               title: sub.name ?? 'Unknown',
                               imageUrl: image,
                               icon: sub.icon, // new
-                              onTap: () {
+onTap: () {
                                 Get.to(() => CategoryProductsGridScreen(
                                   categoryName: title,
                                   subCategories: matchingSubs,
+                                  initialSubCategoryIndex: i,
                                 ));
                               },
                             );
@@ -283,7 +286,7 @@ class _CategorySectionScreenState extends State<CategorySectionScreen> {
               _buildBrandingSection(textTheme),
             ],
           ),
-        );
+        ));
       }),
     );
   }

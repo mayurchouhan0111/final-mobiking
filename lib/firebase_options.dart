@@ -17,10 +17,7 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -28,15 +25,9 @@ class DefaultFirebaseOptions {
       case TargetPlatform.iOS:
         return ios;
       case TargetPlatform.macOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for macos - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return macos;
       case TargetPlatform.windows:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for windows - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return windows;
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
@@ -51,7 +42,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyA-hY1C6U4onfqy73j5HglwtN5BtqQNoFw',
-    appId: '1:397433355252:android:91f28235af6af4650857a1',
+    appId: '1:397433355252:android:aff3765b990edb180857a1',
     messagingSenderId: '397433355252',
     projectId: 'mobiking-25fc3',
     storageBucket: 'mobiking-25fc3.firebasestorage.app',
@@ -64,6 +55,33 @@ class DefaultFirebaseOptions {
     projectId: 'mobiking-25fc3',
     storageBucket: 'mobiking-25fc3.firebasestorage.app',
     iosBundleId: 'com.example.mobiking',
+  );
+
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyC2cD8s816pK1xC_zSI4eGG_Yjro8X_Gm4',
+    appId: '1:397433355252:web:cc8c08179b3ad2c10857a1',
+    messagingSenderId: '397433355252',
+    projectId: 'mobiking-25fc3',
+    authDomain: 'mobiking-25fc3.firebaseapp.com',
+    storageBucket: 'mobiking-25fc3.firebasestorage.app',
+  );
+
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyCLfnDnqJ3LDp9NgMA0VqJ2yE-AFm9tgdE',
+    appId: '1:397433355252:ios:d22edbf2a925e6ac0857a1',
+    messagingSenderId: '397433355252',
+    projectId: 'mobiking-25fc3',
+    storageBucket: 'mobiking-25fc3.firebasestorage.app',
+    iosBundleId: 'com.example.mobiking',
+  );
+
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyC2cD8s816pK1xC_zSI4eGG_Yjro8X_Gm4',
+    appId: '1:397433355252:web:9599c9d3971c62720857a1',
+    messagingSenderId: '397433355252',
+    projectId: 'mobiking-25fc3',
+    authDomain: 'mobiking-25fc3.firebaseapp.com',
+    storageBucket: 'mobiking-25fc3.firebasestorage.app',
   );
 
 }

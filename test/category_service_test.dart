@@ -1,19 +1,20 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:dio/dio.dart';
+import 'package:http/http.dart' as http;
 import 'package:mobiking/app/services/category_service.dart';
+import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import 'mocks.mocks.dart';
-import 'mocks.mocks.mocks.dart';
 
+import 'category_service_test.mocks.dart';
+
+@GenerateMocks([http.Client])
 void main() {
   group('CategoryService', () {
-    late MockDio mockDio;
+    late MockClient mockClient;
     late CategoryService categoryService;
 
     setUp(() {
-      mockDio = MockDio();
+      mockClient = MockClient();
       categoryService = CategoryService();
-      categoryService.overrideDio(mockDio); // Assuming you allow override for testing
     });
 
     test('returns categories from API', () async {
@@ -32,15 +33,11 @@ void main() {
         },
       ];
 
-      when(mockDio.get('/categories')).thenAnswer(
-            (_) async => Response(
-          data: dummyData,
-          statusCode: 200,
-          requestOptions: RequestOptions(path: '/categories'),
-        ),
+      when(mockClient.get(Uri.parse('https://boxbudy.com/api/v1/categories'))).thenAnswer(
+        (_) async => http.Response(jsonEncode({'data': dummyData}), 200),
       );
 
-      final result = await categoryService.getCategories();
+      final result = await categoryService.getCategories(client: mockClient);
 
       expect(result.length, 2);
       expect(result[0].name, 'Electronics');

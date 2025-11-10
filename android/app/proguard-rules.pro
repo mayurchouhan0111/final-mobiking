@@ -30,3 +30,6 @@
 -dontwarn com.google.android.play.core.review.**
 -dontwarn com.google.android.play.core.common.**
 -dontwarn com.google.android.play.core.integrity.**
+
+# Keep the main activity class from being stripped by ProGuard.
+-keep class com.mobiking.wholesale.MainActivity { *; }

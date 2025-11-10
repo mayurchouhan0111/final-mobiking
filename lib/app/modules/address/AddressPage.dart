@@ -8,6 +8,7 @@ import 'package:geocoding/geocoding.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:mobiking/app/themes/app_theme.dart';
 import '../../controllers/address_controller.dart';
+import '../../controllers/login_controller.dart';
 import '../../data/AddressModel.dart';
 import 'address_card_painter.dart';
 import 'package:mobiking/app/modules/checkout/CheckoutScreen.dart';
@@ -15,8 +16,9 @@ import 'package:mobiking/app/modules/checkout/CheckoutScreen.dart';
 class AddressPage extends StatefulWidget {
   final Map<String, dynamic>? initialUser;
   final bool showAddressListFirst;
+  final bool initialShowUserSection;
 
-  AddressPage({Key? key, this.initialUser, this.showAddressListFirst = false}) : super(key: key) {
+  AddressPage({Key? key, this.initialUser, this.showAddressListFirst = false, this.initialShowUserSection = false}) : super(key: key) {
     if (!Get.isRegistered<AddressController>()) {
       Get.put(AddressController());
     }
@@ -29,6 +31,7 @@ class AddressPage extends StatefulWidget {
 class _AddressPageState extends State<AddressPage> {
   final AddressController controller = Get.find<AddressController>();
   final UserController userController = Get.find<UserController>();
+  final LoginController loginController = Get.find<LoginController>();
   final _formKey = GlobalKey<FormState>();
   final _userFormKey = GlobalKey<FormState>();
   final _storage = GetStorage();
@@ -46,7 +49,7 @@ class _AddressPageState extends State<AddressPage> {
   // ✅ User Info State Management
   final RxBool _isUserLoading = false.obs;
   final RxBool _hasUserChanges = false.obs;
-  final RxBool _showUserSection = true.obs;
+  final RxBool _showUserSection = false.obs;
 
   // ✅ Location State Management
   final RxBool _isLoadingLocation = false.obs;
@@ -55,9 +58,7 @@ class _AddressPageState extends State<AddressPage> {
   @override
   void initState() {
     super.initState();
-    if (widget.showAddressListFirst) {
-      _showUserSection.value = false;
-    }
+    _showUserSection.value = widget.initialShowUserSection;
     _initializeUserControllers();
     _setupUserChangeListener();
     controller.fetchAddresses(); // Fetch addresses when the page initializes
@@ -81,7 +82,7 @@ class _AddressPageState extends State<AddressPage> {
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        
+
         return false;
       }
     }
@@ -119,7 +120,7 @@ class _AddressPageState extends State<AddressPage> {
       // Check if location services are enabled
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        
+
         return;
       }
 
@@ -159,7 +160,7 @@ class _AddressPageState extends State<AddressPage> {
         _showLocationOptions.value = false;
       }
     }  catch (e) {
-      
+
     } finally {
       _isLoadingLocation.value = false;
     }
@@ -482,6 +483,19 @@ class _AddressPageState extends State<AddressPage> {
                 ),
               ),
             )),
+            const SizedBox(height: 24),
+            Center(
+              child: TextButton(
+                onPressed: () => _showDeleteAccountWarningDialog(context),
+                child: Text(
+                  'Do you want to delete your account?',
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: AppColors.danger,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ),
             const SizedBox(height: 100),
           ],
         ),
@@ -703,7 +717,7 @@ class _AddressPageState extends State<AddressPage> {
                                     await controller.deleteAddress(addr.id!);
                                   }
                                 } else {
-                                  
+
                                 }
                               },
                               padding: EdgeInsets.zero,
@@ -1178,7 +1192,7 @@ class _AddressPageState extends State<AddressPage> {
       );
 
     } catch (e) {
-      
+
     } finally {
       _isUserLoading.value = false;
     }
@@ -1222,5 +1236,95 @@ class _AddressPageState extends State<AddressPage> {
       phone: _phoneController.text.trim(),
     );
     _hasUserChanges.value = false;
+  }
+
+  void _showDeleteAccountWarningDialog(BuildContext context) {
+    final TextTheme textTheme = Theme.of(context).textTheme;
+    Get.dialog(
+      AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Delete Account', style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700, color: AppColors.danger)),
+        content: Text(
+          'Are you sure you want to delete your account? This action is irreversible and all your data will be lost.',
+          style: textTheme.bodyMedium,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: Text('Cancel', style: textTheme.labelLarge?.copyWith(color: AppColors.textMedium)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Get.back(); // Close warning dialog
+              _showDeleteAccountConfirmationDialog(context);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.danger,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: Text('Yes, Delete', style: textTheme.labelLarge?.copyWith(color: AppColors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteAccountConfirmationDialog(BuildContext context) {
+    final TextTheme textTheme = Theme.of(context).textTheme;
+    final TextEditingController confirmController = TextEditingController();
+    final GlobalKey<FormState> _confirmFormKey = GlobalKey<FormState>();
+
+    Get.dialog(
+      AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Confirm Account Deletion', style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700, color: AppColors.danger)),
+        content: Form(
+          key: _confirmFormKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'To confirm, please type "Deleteaccount" in the field below.',
+                style: textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: confirmController,
+                decoration: InputDecoration(
+                  hintText: 'Type Deleteaccount',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                validator: (value) {
+                  if (value != 'Deleteaccount') {
+                    return 'Please type "Deleteaccount" exactly to confirm.';
+                  }
+                  return null;
+                },
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: Text('Cancel', style: textTheme.labelLarge?.copyWith(color: AppColors.textMedium)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (_confirmFormKey.currentState!.validate()) {
+                Get.back(); // Close confirmation dialog
+                loginController.deleteAccount(); // Call the actual delete account logic
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.danger,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: Text('Delete My Account', style: textTheme.labelLarge?.copyWith(color: AppColors.white)),
+          ),
+        ],
+      ),
+    );
   }
 }

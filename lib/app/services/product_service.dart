@@ -183,4 +183,34 @@ class ProductService {
       throw Exception("Error while fetching frequently bought together products: $e");
     }
   }
+
+  /// Fetch related products by slug
+  Future<List<ProductModel>> fetchRelatedProducts(String slug) async {
+    final url = Uri.parse('$baseUrl/products/related/$slug');
+    _log('GET /products/related/$slug');
+
+    try {
+      final response = await http.get(url);
+      _log('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+        // Assuming the data is a list under a 'data' key, like other endpoints
+        final List data = jsonData['data'];
+        final products = data.map((e) => ProductModel.fromJson(e)).toList();
+
+        _log('Successfully fetched ${products.length} related products for slug: $slug');
+
+        return products;
+      } else {
+        _log("Failed to fetch related products: ${response.reasonPhrase} (Status: ${response.statusCode})");
+        // Return an empty list on failure to prevent UI errors
+        return [];
+      }
+    } catch (e) {
+      _log("Error while fetching related products for slug $slug: $e");
+      // Return an empty list on error
+      return [];
+    }
+  }
 }

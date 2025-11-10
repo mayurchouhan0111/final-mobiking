@@ -46,6 +46,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final _storage = GetStorage();
 
   final RxString _selectedPaymentMethod = ''.obs;
+  final TextEditingController _gstController = TextEditingController();
   
 
   @override
@@ -399,6 +400,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     ),
                   ),
                   child: TextField(
+                    autofocus: false,
                     controller: couponController.couponTextController,
                     textCapitalization: TextCapitalization.characters,
                     style: textTheme.bodyMedium?.copyWith(
@@ -614,9 +616,22 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     if (!isAddressSelected) {
       Fluttertoast.showToast(
           msg: "Please select or add an address before placing the order.");
-      Get.to(() => AddressPage());
+      Get.to(() => AddressPage()); // This will now show address list first
       return;
     }
+
+    // NEW: Check if user information is complete
+    final userName = userController.userName.value;
+    final userMap = loginController.currentUser.value;
+    final userPhone = userMap?['phoneNo'] as String? ?? '';
+
+    if (userName.isEmpty || userPhone.isEmpty) { // Email can be optional, as per AddressPage.dart
+      Fluttertoast.showToast(
+          msg: "Please complete your user information before placing the order.");
+      Get.to(() => AddressPage(initialShowUserSection: true)); // Explicitly show user info section
+      return;
+    }
+
     if (isCartEmpty) {
       Get.back();
       return;
@@ -626,6 +641,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       return;
     }
     orderController.isLoading.value = true;
+    orderController.gstNumber.value = _gstController.text; // Add this line
+    print('[CheckoutScreen] GST Number added to orderController: ${_gstController.text}');
     try {
       final orderData = {
         'items': cartController.cartItems,
@@ -635,10 +652,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         'deliveryCharge': billingBreakdown['deliveryCharge'],
         'couponDiscount': billingBreakdown['couponDiscount'],
         'finalTotal': billingBreakdown['finalTotal'],
+        'gst': _gstController.text, // Add this line
         
         'userPhone': loginController.currentUser.value?['phoneNo'] ?? '',
         ...couponController.getOrderCouponData(),
       };
+      print('[CheckoutScreen] Order data with GST: $orderData'); // Added log
       if (_selectedPaymentMethod.value == 'COD') {
         await orderController.placeOrder(method: 'COD');
       } else if (_selectedPaymentMethod.value == 'Online') {
@@ -785,6 +804,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       itemTotal: billingBreakdown['cartTotal']!.toInt(),
                       deliveryCharge: billingBreakdown['deliveryCharge']!.toInt(),
                       couponDiscount: billingBreakdown['couponDiscount']!.toInt(),
+                      gstNumberController: _gstController, // Pass the controller here
                     ),
                   ),
                   const SizedBox(height: 24),

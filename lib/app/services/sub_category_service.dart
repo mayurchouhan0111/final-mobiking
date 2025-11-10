@@ -72,7 +72,7 @@ class SubCategoryService {
   }
 
   Future<List<SubCategory>> fetchSubCategories({bool forceRefresh = false}) async {
-    await init(); // Ensure boxes are initialized
+    // Ensure boxes are initialized (handled by onInit now)
 
     // Return cached data if valid and not forcing refresh
     if (!forceRefresh && _isCacheValid()) {
@@ -154,7 +154,7 @@ class SubCategoryService {
   }
 
   Future<SubCategory> createSubCategory(SubCategory model) async {
-    await init();
+    // Ensure boxes are initialized (handled by onInit now)
 
     final url = Uri.parse('${baseUrl}subCategories');
     _log('Creating subcategory at: $url');
@@ -205,7 +205,7 @@ class SubCategoryService {
 
   // Method to manually clear cache
   Future<void> clearCache() async {
-    await init();
+    // await init(); // Handled by onInit now
     await _subCategoriesBox.clear();
     await _metadataBox.delete(lastFetchKey);
     _log('Cache cleared');

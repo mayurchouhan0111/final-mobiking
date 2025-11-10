@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:mobiking/app/controllers/login_controller.dart';
 import 'package:mobiking/app/modules/bottombar/Bottom_bar.dart';
@@ -17,11 +16,6 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
     _navigateToNextScreen();
-
-    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
-    ));
   }
 
   void _navigateToNextScreen() {
@@ -43,10 +37,13 @@ class _SplashScreenState extends State<SplashScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Center(
-        child: Image.asset(
-          'assets/animations/splash.gif',
-          width: 150,
+      // Wrap the body with SafeArea to handle system insets
+      body: SafeArea(
+        child: Center(
+          child: Image.asset(
+            'assets/animations/splash1.gif',
+            width: 150,
+          ),
         ),
       ),
     );

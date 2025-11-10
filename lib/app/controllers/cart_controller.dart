@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:mobiking/app/controllers/product_controller.dart';
+import 'package:collection/collection.dart'; // ✅ ADDED: Required for firstWhereOrNull
 
 import '../data/product_model.dart';
 import '../services/cart_service.dart';
@@ -18,6 +19,20 @@ class CartController extends GetxController {
   final ProductController _productController = Get.find<ProductController>();
 
   RxMap<String, int> productVariantQuantities = <String, int>{}.obs;
+
+  // ✅ ADDED: userId getter to safely retrieve user ID
+  String? get userId {
+    try {
+      final user = box.read('user');
+      if (user != null && user is Map) {
+        return user['_id']?.toString() ?? user['id']?.toString();
+      }
+      return null;
+    } catch (e) {
+      print('🛒 CartController: Error getting userId: $e');
+      return null;
+    }
+  }
 
   @override
   void onInit() {
@@ -57,23 +72,26 @@ class CartController extends GetxController {
     isLoading.value = true;
 
     try {
-      final String? userId = box.read('user')?['_id'];
-      if (userId == null) {
-        print('🛒 CartController: User ID not found, cannot fetch cart from backend. Loading from local storage fallback.');
+      final String? cartId = box.read('cartId');
+      if (userId == null || cartId == null) {
+        print('🛒 CartController: User ID or Cart ID not found, cannot fetch cart from backend. Loading from local storage fallback.');
         await _loadCartDataFromLocalStorage();
         return;
       }
 
-      final apiResponse = await CartService().fetchCart(cartId: cartData.value['_id']);
+      final apiResponse = await CartService().fetchCart(cartId: cartId);
       print('🛒 CartController: Fetched cart from backend: $apiResponse');
 
       if (apiResponse != null && apiResponse['success'] == true && apiResponse['data']?['cart'] is Map) {
         final Map<String, dynamic> fetchedCart = Map<String, dynamic>.from(apiResponse['data']['cart']);
         cartData.value = fetchedCart;
-        var userInStorage = box.read('user') as Map<String, dynamic>?;
-        if (userInStorage != null) {
-          userInStorage['cart'] = fetchedCart;
-          await box.write('user', userInStorage);
+
+        // ✅ FIXED: Proper type handling for GetStorage
+        var userInStorage = box.read('user');
+        if (userInStorage != null && userInStorage is Map) {
+          final updatedUser = Map<String, dynamic>.from(userInStorage);
+          updatedUser['cart'] = fetchedCart;
+          await box.write('user', updatedUser);
         }
         print('🛒 CartController: Cart data updated from backend: ${cartData.value}');
       } else {
@@ -85,21 +103,29 @@ class CartController extends GetxController {
       await _loadCartDataFromLocalStorage();
     } finally {
       isLoading.value = false;
-      print('🛒 CartController: Current totalCartItemsCount after _fetchAndLoadCartData: ${totalCartItemsCount}');
+      print('🛒 CartController: Current totalCartItemsCount after fetchAndLoadCartData: $totalCartItemsCount');
     }
   }
 
   Future<void> _loadCartDataFromLocalStorage() async {
     print('🛒 CartController: Loading cart data from local storage (fallback)...');
     try {
-      final Map<String, dynamic>? user = box.read('user');
+      final dynamic userRaw = box.read('user');
 
-      if (user != null && user.containsKey('cart') && user['cart'] is Map) {
-        cartData.value = Map<String, dynamic>.from(user['cart']);
-        print('🛒 CartController: Cart data loaded from local storage: ${cartData.value}');
+      if (userRaw != null && userRaw is Map) {
+        final user = Map<String, dynamic>.from(userRaw);
+
+        if (user.containsKey('cart') && user['cart'] is Map) {
+          cartData.value = Map<String, dynamic>.from(user['cart']);
+          _updateProductVariantQuantities();
+          print('🛒 CartController: Cart data loaded from local storage: ${cartData.value}');
+        } else {
+          await _resetLocalCartData();
+          print('🛒 CartController: No valid cart data found in stored user object locally, initializing to empty structure.');
+        }
       } else {
         await _resetLocalCartData();
-        print('🛒 CartController: No valid cart data found in stored user object locally, initializing to empty structure.');
+        print('🛒 CartController: No user data in storage, initializing to empty cart.');
       }
     } catch (e) {
       print('🛒 CartController: Error loading cart data from local storage: $e');
@@ -117,10 +143,10 @@ class CartController extends GetxController {
       if (cartData.containsKey('items') && cartData['items'] is List) {
         final List<Map<String, dynamic>> validItems = [];
         for (var item in (cartData['items'] as List)) {
-          if (item is Map && item.containsKey('productId') && item['productId'] is Map<String, dynamic>) {
+          if (item is Map && item.containsKey('productId') && item['productId'] is Map) {
             validItems.add(Map<String, dynamic>.from(item));
           } else {
-            debugPrint('🛒 CartController: Malformed cart item found: $item'); // ADDED DEBUG PRINT
+            debugPrint('🛒 CartController: Malformed cart item found: $item');
           }
         }
         return validItems;
@@ -180,43 +206,49 @@ class CartController extends GetxController {
     for (var item in cartItems) {
       final productData = item['productId'];
       if (productData is Map<String, dynamic>) {
-        final product = ProductModel.fromJson(productData);
-        final itemDeliveryCharge = product.category?.deliveryCharge ?? 0.0;
-        if (itemDeliveryCharge > maxDeliveryCharge) {
-          maxDeliveryCharge = itemDeliveryCharge;
+        try {
+          final product = ProductModel.fromJson(productData);
+          final itemDeliveryCharge = product.category?.deliveryCharge ?? 0.0;
+          if (itemDeliveryCharge > maxDeliveryCharge) {
+            maxDeliveryCharge = itemDeliveryCharge;
+          }
+        } catch (e) {
+          print('🛒 CartController: Error parsing product for delivery charge: $e');
         }
       }
     }
     return maxDeliveryCharge;
   }
 
-  // ✅ FIXED: Rewrote totalCartValue to ensure consistency with CheckoutScreen.
-  // It now recalculates the price from the full product data every time,
-  // preventing stale price issues.
+  // ✅ FIXED: Proper null-safety and type handling
   double get totalCartValue {
     double total = 0.0;
     for (var item in cartItems) {
       final productData = item['productId'];
       final quantity = (item['quantity'] as int?) ?? 1;
-      final itemVariantName = item['variantName'] as String? ?? 'Default'; // Get variant name from cart item
+      final itemVariantName = item['variantName'] as String? ?? 'Default';
 
       if (productData is Map<String, dynamic>) {
-        final product = ProductModel.fromJson(productData);
+        try {
+          final product = ProductModel.fromJson(productData);
 
-        // Find the selling price for the specific variant
-        final sellingPriceForVariant = product.sellingPrice.firstWhereOrNull(
-          (sp) => sp.variantName == itemVariantName,
-        );
+          // ✅ FIXED: Using firstWhereOrNull from collection package
+          final sellingPriceForVariant = product.sellingPrice.firstWhereOrNull(
+                (sp) => sp.variantName == itemVariantName,
+          );
 
-        if (sellingPriceForVariant != null && sellingPriceForVariant.price != null) {
-          final itemPrice = sellingPriceForVariant.price!.toDouble();
-          total += itemPrice * quantity;
-        } else {
-          // Fallback if variant price not found, use first selling price if available
-          if (product.sellingPrice.isNotEmpty && product.sellingPrice[0].price != null) {
-            final itemPrice = product.sellingPrice[0].price!.toDouble();
+          if (sellingPriceForVariant != null && sellingPriceForVariant.price != null) {
+            final itemPrice = sellingPriceForVariant.price!.toDouble();
             total += itemPrice * quantity;
+          } else {
+            // Fallback if variant price not found
+            if (product.sellingPrice.isNotEmpty && product.sellingPrice.last.price != null) {
+              final itemPrice = product.sellingPrice.last.price!.toDouble();
+              total += itemPrice * quantity;
+            }
           }
+        } catch (e) {
+          print('🛒 CartController: Error calculating price for item: $e');
         }
       }
     }
@@ -228,6 +260,9 @@ class CartController extends GetxController {
     required String variantName,
     ProductModel? product,
   }) async {
+    if (product != null) {
+      print('🛒 CartController: Product details: ${product.toJson()}');
+    }
     final cartId = box.read('cartId');
     if (cartId == null) {
       _showSnackbar('Not Logged In', 'Please log in to add items to your cart.', Colors.orange, Icons.login);
@@ -245,11 +280,10 @@ class CartController extends GetxController {
 
       if (response['success'] == true) {
         await _updateStorageAndCartData(response);
-        
         return true;
       } else {
         final errorMessage = response['message'] ?? 'Failed to add product to cart.';
-
+        print('🛒 CartController: Add to cart failed: $errorMessage');
         return false;
       }
     } catch (e) {
@@ -260,7 +294,6 @@ class CartController extends GetxController {
         errorMessage = e.toString();
       }
       print("🛒 CartController: Add to cart error: $errorMessage");
-      
       return false;
     } finally {
       processingProductId.value = '';
@@ -287,7 +320,6 @@ class CartController extends GetxController {
 
       if (response['success'] == true) {
         await _updateStorageAndCartData(response);
-        
       }
     } catch (e) {
       print("🛒 CartController: Remove from cart error: $e");
@@ -300,10 +332,11 @@ class CartController extends GetxController {
     print('🛒 CartController: Starting _updateStorageAndCartData...');
     print('🛒 CartController: Full API Response for cart update: $apiResponse');
 
-    final updatedUser = apiResponse['data']?['user'];
-    print('🛒 CartController: Extracted updatedUser from response: $updatedUser');
+    final updatedUserRaw = apiResponse['data']?['user'];
+    print('🛒 CartController: Extracted updatedUser from response: $updatedUserRaw');
 
-    if (updatedUser != null && updatedUser is Map) {
+    if (updatedUserRaw != null && updatedUserRaw is Map) {
+      final updatedUser = Map<String, dynamic>.from(updatedUserRaw);
       await box.write('user', updatedUser);
       print('🛒 CartController: Stored updated user object directly to "user" key in GetStorage.');
 
@@ -326,8 +359,10 @@ class CartController extends GetxController {
       'items': [],
       'totalCartValue': 0.0,
     };
-    final user = box.read('user');
-    if (user != null) {
+
+    final userRaw = box.read('user');
+    if (userRaw != null && userRaw is Map) {
+      final user = Map<String, dynamic>.from(userRaw);
       user['cart'] = cartData.value;
       await box.write('user', user);
     }

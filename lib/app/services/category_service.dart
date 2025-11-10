@@ -117,7 +117,7 @@ class CategoryService {
   }
 
   Future<Map<String, dynamic>> getCategoryDetails(String slug, {bool forceRefresh = false}) async {
-    await init(); // Ensure boxes are initialized
+    // Ensure boxes are initialized (handled by onInit now)
 
     // Return cached data if valid and not forcing refresh
     if (!forceRefresh && _isCacheValid('$lastFetchDetailsPrefix$slug')) {
@@ -151,7 +151,7 @@ class CategoryService {
 
         final category = CategoryModel.fromJson(data);
         final subCategories = (data['subCategories'] as List?)
-            ?.map((e) => SubCategory.fromJson(e))
+            ?.map((e) => SubCategory.fromJson(e)).where((element) => element.active)
             .toList() ?? <SubCategory>[];
 
         final result = {
@@ -203,7 +203,7 @@ class CategoryService {
   }
 
   Future<List<CategoryModel>> getCategories({bool forceRefresh = false}) async {
-    await init(); // Ensure boxes are initialized
+    // Ensure boxes are initialized (handled by onInit now)
 
     // Return cached data if valid and not forcing refresh
     if (!forceRefresh && _isCacheValid(lastFetchCategoriesKey)) {
@@ -264,20 +264,22 @@ class CategoryService {
           }
         }
 
-        // Sort categories alphabetically by name
-        categories.sort((a, b) => a.name.compareTo(b.name));
+        final activeCategories = categories.where((c) => c.active).toList();
 
-        print('CategoryService: Successfully parsed ${categories.length} categories');
+        // Sort categories alphabetically by name
+        activeCategories.sort((a, b) => a.name.compareTo(b.name));
+
+        print('CategoryService: Successfully parsed ${activeCategories.length} categories');
 
         // Cache the fresh data
-        await _cacheCategories(categories);
+        await _cacheCategories(activeCategories);
 
         // Show success message only for forced refresh
-        if (forceRefresh && categories.isNotEmpty) {
+        if (forceRefresh && activeCategories.isNotEmpty) {
 
         }
 
-        return categories;
+        return activeCategories;
 
       } else {
         print('CategoryService: HTTP error ${response.statusCode}: ${response.reasonPhrase}');
@@ -389,7 +391,7 @@ class CategoryService {
   // Fetch products by subcategory slug
   Future<List<ProductModel>> getProductsBySubCategorySlug(String slug) async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/home/categories/subCategories/details/$slug'));
+      final response = await http.get(Uri.parse('$baseUrl/categories/subCategories/details/$slug'));
 
       if (response.statusCode == 200) {
         final raw = json.decode(response.body);

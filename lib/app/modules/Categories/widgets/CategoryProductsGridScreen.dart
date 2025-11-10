@@ -7,17 +7,20 @@ import 'package:mobiking/app/controllers/cart_controller.dart';
 import 'package:mobiking/app/modules/checkout/CheckoutScreen.dart';
 
 import '../../../data/product_model.dart';
+import '../../../services/category_service.dart';
 import '../../../themes/app_theme.dart';
 
 
 class CategoryProductsGridScreen extends StatefulWidget {
   final String categoryName;
   final List<SubCategory> subCategories;
+  final int initialSubCategoryIndex;
 
   const CategoryProductsGridScreen({
     Key? key,
     required this.categoryName,
     required this.subCategories,
+    this.initialSubCategoryIndex = 0,
   }) : super(key: key);
 
   @override
@@ -27,23 +30,35 @@ class CategoryProductsGridScreen extends StatefulWidget {
 class _CategoryProductsGridScreenState extends State<CategoryProductsGridScreen> {
   late RxInt selectedSubCategoryIndex;
   late RxList<ProductModel> displayedProducts;
+  final CategoryService _categoryService = CategoryService();
+  final RxBool _isLoadingProducts = false.obs;
 
   @override
   void initState() {
     super.initState();
-    selectedSubCategoryIndex = 0.obs;
+    selectedSubCategoryIndex = widget.initialSubCategoryIndex.obs;
+    displayedProducts = <ProductModel>[].obs;
+    if (widget.subCategories.isNotEmpty) {
+      _fetchProductsForSubCategory(widget.initialSubCategoryIndex);
+    }
+  }
 
-    // Initialize with first subcategory's products
-    if (widget.subCategories.isNotEmpty && (widget.subCategories.first.products != null)) {
-      displayedProducts = widget.subCategories.first.products!.obs;
-    } else {
-      displayedProducts = <ProductModel>[].obs;
+  Future<void> _fetchProductsForSubCategory(int index) async {
+    try {
+      _isLoadingProducts.value = true;
+      final products = await _categoryService.getProductsBySubCategorySlug(widget.subCategories[index].slug);
+      displayedProducts.value = products;
+    } catch (e) {
+      print(e);
+      // Handle error, maybe show a snackbar
+    } finally {
+      _isLoadingProducts.value = false;
     }
   }
 
   void _onSubCategorySelected(int index) {
     selectedSubCategoryIndex.value = index;
-    displayedProducts.value = widget.subCategories[index].products ?? [];
+    _fetchProductsForSubCategory(index);
   }
 
   @override
@@ -163,6 +178,9 @@ class _CategoryProductsGridScreenState extends State<CategoryProductsGridScreen>
                   // Products Grid
                   Expanded(
                     child: Obx(() {
+                      if (_isLoadingProducts.value) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
                       if (displayedProducts.isEmpty) {
                         return _buildEmptyProductsState(textTheme);
                       }
@@ -309,18 +327,6 @@ class _CategoryProductsGridScreenState extends State<CategoryProductsGridScreen>
                   textAlign: TextAlign.center,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                ),
-
-                const SizedBox(height: 4),
-
-                // Product Count
-                Text(
-                  '$productCount items',
-                  style: textTheme.labelSmall?.copyWith(
-                    color: isSelected ? AppColors.success.withOpacity(0.8) : AppColors.textLight,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 10, // Slightly smaller
-                  ),
                 ),
               ],
             ),

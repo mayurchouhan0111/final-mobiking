@@ -29,6 +29,7 @@ import '../services/order_service.dart';
 import '../themes/app_theme.dart';
 import '../utils/reasons.dart';
 import 'coupon_controller.dart';
+import '../data/product_model.dart';
 
 class RazorpayErrorCodes {
   static const int PAYMENT_CANCELLED = 0;
@@ -58,14 +59,12 @@ class UserInfo {
 class OrderTotals {
   final double subtotal;
   final double deliveryCharge;
-  final double gst;
   final double discount;
   final double total;
 
   OrderTotals({
     required this.subtotal,
     required this.deliveryCharge,
-    required this.gst,
     required this.discount,
     required this.total,
   });
@@ -162,6 +161,7 @@ class OrderController extends GetxController {
   var isLoading = false.obs;
   var orderHistory = <OrderModel>[].obs;
   var orderHistoryErrorMessage = ''.obs;
+  var gstNumber = ''.obs; // Add this line
   late Razorpay _razorpay;
 
   // FIXED: Store complete order data instead of just IDs
@@ -211,18 +211,39 @@ class OrderController extends GetxController {
   }
 
   double _calculateSubtotal() {
-    return _cartController.cartItems.fold(0.0, (sum, item) {
-      final productData = item['productId'] as Map?;
-      if (productData != null && productData.containsKey('sellingPrice') && productData['sellingPrice'] is List) {
-        final List sellingPrices = productData['sellingPrice'];
-        if (sellingPrices.isNotEmpty && sellingPrices[0] is Map) {
-          final double price = (sellingPrices[0]['price'] as num?)?.toDouble() ?? 0.0;
-          final int quantity = (item['quantity'] as num?)?.toInt() ?? 1;
-          return sum + (price * quantity);
+    double total = 0.0;
+    for (var item in _cartController.cartItems) {
+      final productData = item['productId'];
+      final quantity = (item['quantity'] as int?) ?? 1;
+      final itemVariantName = item['variantName'] as String? ?? 'Default'; // Get variant name from cart item
+      print('Calculating subtotal for item: ${productData['name']}, variant: $itemVariantName, quantity: $quantity');
+
+      if (productData is Map<String, dynamic>) {
+        final product = ProductModel.fromJson(productData);
+        print('Product selling prices: ${product.sellingPrice.map((e) => '${e.variantName}: ${e.price}').toList()}');
+
+        // Find the selling price for the specific variant
+        final sellingPriceForVariant = product.sellingPrice.firstWhereOrNull(
+          (sp) => sp.variantName == itemVariantName,
+        );
+
+        if (sellingPriceForVariant != null && sellingPriceForVariant.price != null) {
+          final itemPrice = sellingPriceForVariant.price!.toDouble();
+          print('Found matching variant. Price: $itemPrice');
+          total += itemPrice * quantity;
+        } else {
+          print('Variant not found. Using fallback.');
+          // Fallback if variant price not found, use last selling price if available
+          if (product.sellingPrice.isNotEmpty && product.sellingPrice.last.price != null) {
+            final itemPrice = product.sellingPrice.last.price!.toDouble();
+            print('Fallback price: $itemPrice');
+            total += itemPrice * quantity;
+          }
         }
       }
-      return sum;
-    });
+    }
+    print('Total subtotal: $total');
+    return total;
   }
 
   @override
@@ -822,7 +843,7 @@ class OrderController extends GetxController {
       orderAmount: totals.total,
       discount: totals.discount,
       deliveryCharge: totals.deliveryCharge,
-      gst: totals.gst,
+      gst: gstNumber.value, // Add this line
       subtotal: totals.subtotal,
       address: fullAddress,
       method: method,
@@ -840,16 +861,14 @@ class OrderController extends GetxController {
   OrderTotals _calculateOrderTotals() {
     final double subtotal = _calculateSubtotal();
     final double deliveryCharge = _cartController.calculateDeliveryCharge();
-    const double gst = 0.0;
     final double discount = _couponController.isCouponApplied.value
         ? _couponController.discountAmount.value
         : 0.0;
-    final double total = subtotal + deliveryCharge + gst - discount;
+    final double total = subtotal + deliveryCharge - discount;
 
     return OrderTotals(
       subtotal: subtotal,
       deliveryCharge: deliveryCharge,
-      gst: gst,
       discount: discount,
       total: total,
     );
@@ -1313,7 +1332,7 @@ class OrderController extends GetxController {
     debugPrint('💰 Razorpay amount: $amount paise (${amount/100} rupees)');
 
     final options = {
-      'key': paymentData['key']?.toString() ?? '',
+      'key': paymentData['key']?.toString() ?? '2tjsbbZMJeHVys4lyiTSurM0',
       'amount': amount,
       'name': 'MobiKing Wholesale',
       'description': 'Order Payment - MobiKing',

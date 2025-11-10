@@ -100,7 +100,7 @@ class CategoryTile extends StatelessWidget {
           child: SvgPicture.string(
             modifiedIcon,
             fit: BoxFit.contain,
-            placeholderBuilder: (context) => _buildLoadingWidget(),
+            placeholderBuilder: (context) => _buildFallbackWidget(),
           ),
         ),
       );
@@ -116,7 +116,7 @@ class CategoryTile extends StatelessWidget {
       return SvgPicture.network(
         url,
         fit: BoxFit.contain,
-        placeholderBuilder: (context) => _buildLoadingWidget(),
+        placeholderBuilder: (context) => _buildFallbackWidget(),
       );
     }
 
@@ -129,7 +129,7 @@ class CategoryTile extends StatelessWidget {
         if (wasSynchronouslyLoaded || frame != null) {
           return child;
         }
-        return _buildLoadingWidget();
+        return _buildFallbackWidget();
       },
       errorBuilder: (context, error, stackTrace) {
         debugPrint('Failed to load image for $title: $error');
@@ -140,18 +140,6 @@ class CategoryTile extends StatelessWidget {
     );
   }
 
-  Widget _buildLoadingWidget() {
-    return const Center(
-      child: SizedBox(
-        width: 24,
-        height: 24,
-        child: CircularProgressIndicator(
-          strokeWidth: 2.5,
-          valueColor: AlwaysStoppedAnimation<Color>(_AppColors.accent),
-        ),
-      ),
-    );
-  }
 
   Widget _buildFallbackWidget() {
     return Center(
