@@ -147,18 +147,22 @@ class FirebaseMessagingService extends GetxService {
       final size = originalImage.width < originalImage.height ? originalImage.width : originalImage.height;
       final squaredImage = img.copyCrop(originalImage, x: (originalImage.width - size) ~/ 2, y: (originalImage.height - size) ~/ 2, width: size, height: size);
 
-      // Create Circular Mask
-      final circularImage = img.Image(width: size, height: size);
+      // Create Circular Mask with Transparency (4 channels)
+      final circularImage = img.Image(width: size, height: size, numChannels: 4);
       final center = size / 2;
       final radius = size / 2;
 
       for (int y = 0; y < size; y++) {
         for (int x = 0; x < size; x++) {
-          final distance = ((x - center) * (x - center) + (y - center) * (y - center));
+          final distance = ((x - center.toDouble()) * (x - center.toDouble()) +
+              (y - center.toDouble()) * (y - center.toDouble()));
           if (distance <= radius * radius) {
-            circularImage.setPixel(x, y, squaredImage.getPixel(x, y));
+            final pixel = squaredImage.getPixel(x, y);
+            circularImage.setPixel(x, y, pixel);
+          } else {
+            // Explicitly set transparency for corners
+            circularImage.setPixelRgba(x, y, 0, 0, 0, 0);
           }
-          // Else remains transparent (0,0,0,0)
         }
       }
 

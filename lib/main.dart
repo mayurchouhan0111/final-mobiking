@@ -130,15 +130,20 @@ Future<void> _firebaseBackgroundMessagehandler(RemoteMessage message) async {
           width: size,
           height: size,
         );
-        final circularImage = img.Image(width: size, height: size);
-        final center = size / 2;
-        final radius = size / 2;
+        final circularImage =
+            img.Image(width: size, height: size, numChannels: 4);
+        final center = size / 2.0;
+        final radius = size / 2.0;
         for (int y = 0; y < size; y++) {
           for (int x = 0; x < size; x++) {
             final distance =
                 ((x - center) * (x - center) + (y - center) * (y - center));
             if (distance <= radius * radius) {
-              circularImage.setPixel(x, y, squaredImage.getPixel(x, y));
+              final pixel = squaredImage.getPixel(x, y);
+              circularImage.setPixel(x, y, pixel);
+            } else {
+              // Set background to transparent
+              circularImage.setPixelRgba(x, y, 0, 0, 0, 0);
             }
           }
         }
