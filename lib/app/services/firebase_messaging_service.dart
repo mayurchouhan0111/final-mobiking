@@ -54,9 +54,22 @@ class FirebaseMessagingService extends GetxService {
       enableVibration: true,
     );
 
-    await _localNotifications
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(channel);
+    // NEW: Silent channel for redirecting default system notifications
+    const AndroidNotificationChannel silentChannel = AndroidNotificationChannel(
+      'mobiking_silent_channel',
+      'Silent Feed',
+      description: 'Internal system redirection.',
+      importance: Importance.none, // High importance = no sound/tray entry
+      playSound: false,
+      enableVibration: false,
+      showBadge: false,
+    );
+
+    final androidPlugin = _localNotifications
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    
+    await androidPlugin?.createNotificationChannel(channel);
+    await androidPlugin?.createNotificationChannel(silentChannel);
   }
 
   Future<void> _configureFirebaseMessaging() async {
