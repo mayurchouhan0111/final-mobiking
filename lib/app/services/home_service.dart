@@ -54,119 +54,58 @@ class HomeService {
     // 2. Fetch from network if cache is not available or stale
     try {
       final url = Uri.parse('$_baseUrl/home/');
-      _log('Fetching home layout from: $url');
+      _log('Fetching home layout from: $url (Timeout: 45s)');
 
       final response = await http
           .get(url)
           .timeout(
-            const Duration(seconds: 30),
+            const Duration(seconds: 45),
             onTimeout: () {
-              _log('Request timeout while fetching home layout');
+              _log('⚠️ Request timeout while fetching home layout');
               return http.Response('Request timeout', 408);
             },
           );
-
-      _log('Raw API Response: ${response.body}');
 
       _log('Home layout response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         try {
           final jsonData = jsonDecode(response.body);
-          _log('✅ Successfully decoded JSON response');
-
-          if (jsonData == null) {
-            _log('❌ Response body is null');
-            return null;
-          }
-
-          if (jsonData is Map<String, dynamic>) {
+          if (jsonData != null && jsonData is Map<String, dynamic>) {
             final dynamic dataField = jsonData['data'];
 
-            if (dataField == null) {
-              _log('❌ No data field found in response');
-              return null;
+            if (dataField != null && dataField is Map<String, dynamic>) {
+              final homeLayout = HomeLayoutModel.fromJson(dataField);
+              
+              // 3. Store in cache
+              _box.write(cacheKey, jsonEncode(dataField));
+              _box.write(timestampKey, DateTime.now().toIso8601String());
+              _log('💾 Successfully fetched and cached new home layout.');
+              return homeLayout;
             }
-
-            if (dataField is Map<String, dynamic>) {
-              _log('🔍 HomeLayout data content validation passed');
-
-              // Log data structure for debugging
-              dataField.forEach((key, value) {
-                try {
-                  if (value is List) {
-                    _log(
-                      '➡ $key: List with ${value.length} items (${value.runtimeType})',
-                    );
-                  } else if (value is Map) {
-                    _log(
-                      '➡ $key: Map with ${value.length} keys (${value.runtimeType})',
-                    );
-                  } else {
-                    _log(
-                      '➡ $key: ${value.runtimeType} - ${value.toString().length > 100 ? '${value.toString().substring(0, 100)}...' : value}',
-                    );
-                  }
-                } catch (e) {
-                  _log('➡ $key: Error logging value - $e');
-                }
-              });
-
-              try {
-                final homeLayout = HomeLayoutModel.fromJson(dataField);
-                _log('✅ Successfully parsed HomeLayoutModel');
-
-                // 3. Store in cache
-                _box.write(cacheKey, jsonEncode(dataField));
-                _box.write(timestampKey, DateTime.now().toIso8601String());
-                _log('💾 Home layout saved to cache.');
-
-                return homeLayout;
-              } catch (modelError) {
-                _log('❌ Error parsing HomeLayoutModel: $modelError');
-                return null;
-              }
-            } else {
-              _log(
-                '❌ Data field is not a Map<String, dynamic>: ${dataField.runtimeType}',
-              );
-              return null;
-            }
-          } else {
-            _log(
-              '❌ Unexpected JSON structure. Expected Map<String, dynamic>, got: ${jsonData.runtimeType}',
-            );
-            return null;
           }
-        } catch (jsonError) {
-          _log('❌ JSON parsing error: $jsonError');
-          if (response.body.isNotEmpty) {
-            _log(
-              'Response body preview: ${response.body.length > 200 ? response.body.substring(0, 200) + '...' : response.body}',
-            );
-          }
-          return null;
+        } catch (e) {
+          _log('❌ Error parsing new network data: $e');
         }
-      } else {
-        _log(
-          '❌ Failed to load home layout. Status: ${response.statusCode} - ${response.reasonPhrase}',
-        );
-        if (response.body.isNotEmpty) {
-          try {
-            final errorData = jsonDecode(response.body);
-            _log(
-              'Error details: ${errorData['message'] ?? errorData['error'] ?? 'Unknown error'}',
-            );
-          } catch (e) {
-            _log(
-              'Response body: ${response.body.length > 200 ? response.body.substring(0, 200) + '...' : response.body}',
-            );
-          }
-        }
-        return null;
       }
+
+      // 4. FALLBACK: If network failed (timeout, 500, etc.), try to return stale cache
+      _log('🔄 Network fetch unsuccessful/stale. Checking for fallback cache...');
+      final staleData = _box.read(cacheKey);
+      if (staleData != null) {
+        _log('✅ Serving stale cache as fallback to prevent 408 breakdown.');
+        return HomeLayoutModel.fromJson(jsonDecode(staleData));
+      }
+
+      return null;
     } catch (e) {
       _log('❌ Exception during home layout fetch: $e');
+      // Final fallback to cache on exception
+      final staleData = _box.read(cacheKey);
+      if (staleData != null) {
+        _log('✅ Serving stale cache after exception.');
+        return HomeLayoutModel.fromJson(jsonDecode(staleData));
+      }
       return null;
     }
   }
