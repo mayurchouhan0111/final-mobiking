@@ -65,6 +65,7 @@ import 'firebase_options.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
+import 'package:image/image.dart' as img;
 import 'dart:io';
 
 // This handles messages when the app is in the background or terminated.
@@ -104,9 +105,46 @@ Future<void> _firebaseBackgroundMessagehandler(RemoteMessage message) async {
     try {
       final Directory directory = await getApplicationDocumentsDirectory();
       final String filePath = '${directory.path}/bg_notification_img';
+      final String circularPath =
+          '${directory.path}/bg_circular_notification_icon.png';
+
       final http.Response response = await http.get(Uri.parse(imageUrl));
+      final bytes = response.bodyBytes;
+
+      // 1. Save Big Picture
       final File file = File(filePath);
-      await file.writeAsBytes(response.bodyBytes);
+      await file.writeAsBytes(bytes);
+
+      // 2. Generate Circular Icon
+      String? finalCircularPath;
+      final originalImage = img.decodeImage(bytes);
+      if (originalImage != null) {
+        final size =
+            originalImage.width < originalImage.height
+                ? originalImage.width
+                : originalImage.height;
+        final squaredImage = img.copyCrop(
+          originalImage,
+          x: (originalImage.width - size) ~/ 2,
+          y: (originalImage.height - size) ~/ 2,
+          width: size,
+          height: size,
+        );
+        final circularImage = img.Image(width: size, height: size);
+        final center = size / 2;
+        final radius = size / 2;
+        for (int y = 0; y < size; y++) {
+          for (int x = 0; x < size; x++) {
+            final distance =
+                ((x - center) * (x - center) + (y - center) * (y - center));
+            if (distance <= radius * radius) {
+              circularImage.setPixel(x, y, squaredImage.getPixel(x, y));
+            }
+          }
+        }
+        await File(circularPath).writeAsBytes(img.encodePng(circularImage));
+        finalCircularPath = circularPath;
+      }
 
       final AndroidNotificationDetails androidDetails =
           AndroidNotificationDetails(
@@ -118,6 +156,10 @@ Future<void> _firebaseBackgroundMessagehandler(RemoteMessage message) async {
             styleInformation: BigPictureStyleInformation(
               FilePathAndroidBitmap(filePath),
             ),
+            largeIcon:
+                finalCircularPath != null
+                    ? FilePathAndroidBitmap(finalCircularPath)
+                    : null,
           );
 
       await localNotifications.show(

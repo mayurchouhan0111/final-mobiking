@@ -46,6 +46,7 @@ dependencies:
   pdf: ^3.10.8
   printing: ^5.12.0
   flutter_markdown: ^0.6.18
+  image: ^4.2.0
   path_provider: ^2.1.2
   http: ^1.2.1
   flutter_local_notifications: ^17.2.3
