@@ -18,12 +18,14 @@ class GroupWithProductsSection extends StatefulWidget {
   const GroupWithProductsSection({super.key, required this.groups});
 
   @override
-  State<GroupWithProductsSection> createState() => _GroupWithProductsSectionState();
+  State<GroupWithProductsSection> createState() =>
+      _GroupWithProductsSectionState();
 }
 
 class _GroupWithProductsSectionState extends State<GroupWithProductsSection>
     with AutomaticKeepAliveClientMixin {
-  final SubCategoryController subCategoryController = Get.find<SubCategoryController>();
+  final SubCategoryController subCategoryController =
+      Get.find<SubCategoryController>();
 
   @override
   bool get wantKeepAlive => true; // 🚀 Keep widget alive to prevent rebuilds
@@ -43,7 +45,8 @@ class _GroupWithProductsSectionState extends State<GroupWithProductsSection>
 
     if (widget.groups.isEmpty) return const SizedBox.shrink();
 
-    return RepaintBoundary( // 🚀 Isolate repaints
+    return RepaintBoundary(
+      // 🚀 Isolate repaints
       child: ListView.builder(
         itemCount: widget.groups.length,
         padding: const EdgeInsets.symmetric(vertical: 8),
@@ -65,14 +68,18 @@ class _GroupWithProductsSectionState extends State<GroupWithProductsSection>
           // 🚀 Use cached background color
           final sectionBackgroundColor = _getBackgroundColor(group);
 
-          return RepaintBoundary( // 🚀 Isolate each group item
+          return RepaintBoundary(
+            // 🚀 Isolate each group item
             key: ValueKey('group_$index'), // 🚀 Stable key for performance
             child: Container(
               color: sectionBackgroundColor,
               padding: EdgeInsets.symmetric(
-                  vertical: sectionBackgroundColor != null ? 6.0 : 0.0),
+                vertical: sectionBackgroundColor != null ? 6.0 : 0.0,
+              ),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: horizontalContentPadding),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: horizontalContentPadding,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min, // 🚀 Minimize layout
@@ -89,7 +96,8 @@ class _GroupWithProductsSectionState extends State<GroupWithProductsSection>
                               group.bannerLink != null &&
                               group.bannerLink!.isNotEmpty) {
                             String urlString = group.bannerLink!;
-                            if (!urlString.startsWith('http://') && !urlString.startsWith('https://')) {
+                            if (!urlString.startsWith('http://') &&
+                                !urlString.startsWith('https://')) {
                               urlString = 'https://' + urlString;
                             }
                             final Uri url = Uri.parse(urlString);
@@ -114,13 +122,14 @@ class _GroupWithProductsSectionState extends State<GroupWithProductsSection>
                                     strokeWidth: 2,
                                   ),
                                 ),
-                                errorWidget: (context, url, error) => const Center(
-                                  child: Icon(
-                                    Icons.broken_image,
-                                    color: AppColors.textLight,
-                                    size: 40,
-                                  ),
-                                ),
+                                errorWidget: (context, url, error) =>
+                                    const Center(
+                                      child: Icon(
+                                        Icons.broken_image,
+                                        color: AppColors.textLight,
+                                        size: 40,
+                                      ),
+                                    ),
                               ),
                             ),
                           ),
@@ -135,11 +144,11 @@ class _GroupWithProductsSectionState extends State<GroupWithProductsSection>
                     if (group.parentCategories.isNotEmpty)
                       const SizedBox(height: 12),
 
-
                     if (group.parentCategories.isNotEmpty)
                       GroupCategoriesSection(
-                          categories: group.parentCategories,
-                          subCategoryController: subCategoryController),
+                        categories: group.parentCategories,
+                        subCategoryController: subCategoryController,
+                      ),
 
                     const SizedBox(height: 12),
 
@@ -162,48 +171,51 @@ class _GroupWithProductsSectionState extends State<GroupWithProductsSection>
                     RepaintBoundary(
                       child: LayoutBuilder(
                         builder: (context, constraints) {
-                          final productsToShow = inStockProducts.take(6).toList();
+                          final productsToShow = inStockProducts
+                              .take(6)
+                              .toList();
 
                           return GridView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              padding:  EdgeInsets.zero,
-                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 3,
-                                crossAxisSpacing: 0,
-                                mainAxisSpacing: 0,
-                                childAspectRatio: 0.5,
-                              ),
-                              itemCount: productsToShow.length,
-                              // 🚀 Performance settings
-                              addAutomaticKeepAlives: true,
-                              addRepaintBoundaries: true,
-                              itemBuilder: (context, prodIndex) {
-                                final product = productsToShow[prodIndex];
-                                final String productHeroTag =
-                                    'product_image_group_section_${group.id}_${product.id}_$prodIndex';
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            padding: EdgeInsets.zero,
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 3,
+                                  crossAxisSpacing: 0,
+                                  mainAxisSpacing: 0,
+                                  childAspectRatio: 0.5,
+                                ),
+                            itemCount: productsToShow.length,
+                            // 🚀 Performance settings
+                            addAutomaticKeepAlives: true,
+                            addRepaintBoundaries: true,
+                            itemBuilder: (context, prodIndex) {
+                              final product = productsToShow[prodIndex];
+                              final String productHeroTag =
+                                  'product_image_group_section_${group.id}_${product.id}_$prodIndex';
 
-                                return AllProductGridCard(
-                                  product: product,
-                                  heroTag: productHeroTag,
-                                  onTap: (tappedProduct) {
-                                    Get.to(
-                                          () => ProductPage(
-                                        product: tappedProduct,
-                                        heroTag: productHeroTag,
-                                      ),
-                                      transition: Transition.fadeIn,
-                                      duration: const Duration(milliseconds: 300),
-                                    );
-                                  },
-                                );
-                              },
-                            );
+                              return AllProductGridCard(
+                                product: product,
+                                heroTag: productHeroTag,
+                                onTap: (tappedProduct) {
+                                  Get.to(
+                                    () => ProductPage(
+                                      product: tappedProduct,
+                                      heroTag: productHeroTag,
+                                    ),
+                                    transition: Transition.fadeIn,
+                                    duration: const Duration(milliseconds: 300),
+                                  );
+                                },
+                              );
+                            },
+                          );
                         },
                       ),
                     ),
 
-                    SizedBox(height: 4,),
+                    SizedBox(height: 4),
                     // 🚀 Button with RepaintBoundary
                     RepaintBoundary(
                       child: SizedBox(
@@ -214,7 +226,10 @@ class _GroupWithProductsSectionState extends State<GroupWithProductsSection>
                           },
                           style: TextButton.styleFrom(
                             backgroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 10,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                               side: const BorderSide(
