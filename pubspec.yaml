@@ -92,5 +92,6 @@ flutter_launcher_icons:
   ios: true
   image_path: "assets/images/logo_main.png"
   notification_icon:
+    android: true
     image_path: "assets/images/notification_silhouette.png"
     color: "#5F13C5"
