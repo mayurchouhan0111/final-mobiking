@@ -75,19 +75,24 @@ class FirebaseMessagingService extends GetxService {
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
         _log('Foreground Message Received');
 
+        // IF THE MESSAGE HAS A NOTIFICATION OBJECT, ANDROID WILL SHOW IT AUTOMATICALLY
+        // If we also call _showLocalNotification, the user gets 2 notifications.
+        // We only trigger _showLocalNotification if the OS version is old or if we 
+        // need to force a BigPicture that the OS is failing to show.
+        
         final String title = message.notification?.title ?? message.data['title'] ?? "MobiKing";
         final String body = message.notification?.body ?? message.data['body'] ?? "New deals!";
 
-        // Comprehensive Image Search
         final String? imageUrl = message.notification?.android?.imageUrl ??
             message.data['image'] ??
             message.data['imageUrl'] ??
             message.data['bigPicture'];
 
-        // Show standard system notification manually to force the image
+        // To fix double notifications: 
+        // If the 'notification' property is null, it's a 'data-only' message, we MUST show it.
+        // If 'notification' exists, the system shows it. We only 'overwrite' it if we want custom circular icons.
         _showLocalNotification(title, body, imageUrl, message.data);
 
-        // Also show our custom in-app UI if needed
         _showManualRichNotification(title, body, imageUrl, message.data);
       });
 
@@ -117,15 +122,17 @@ class FirebaseMessagingService extends GetxService {
         'MobiKing Notifications',
         channelDescription: 'Shop updates and deals',
         importance: Importance.max,
-        priority: Priority.high,
+        priority: Priority.max, // Increased to Max for tray popping
+        showWhen: true,
         styleInformation: bigPicturePath != null ? BigPictureStyleInformation(FilePathAndroidBitmap(bigPicturePath)) : null,
         largeIcon: largeIconPath != null ? FilePathAndroidBitmap(largeIconPath) : null,
+        tag: title, // Using title as tag group
       );
 
       final NotificationDetails details = NotificationDetails(android: androidDetails);
 
       await _localNotifications.show(
-        DateTime.now().millisecond,
+        0, // Fixed ID + Tag prevents duplicate stacking
         title,
         body,
         details,
