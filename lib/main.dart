@@ -96,7 +96,7 @@ Future<void> _firebaseBackgroundMessagehandler(RemoteMessage message) async {
 
     // Initialize for background isolate
     const AndroidInitializationSettings androidSettings =
-        AndroidInitializationSettings('@drawable/ic_mobiking_logo');
+        AndroidInitializationSettings('@drawable/ic_notification');
     await localNotifications.initialize(
       const InitializationSettings(android: androidSettings),
     );
@@ -158,8 +158,6 @@ Future<void> _firebaseBackgroundMessagehandler(RemoteMessage message) async {
             channelDescription: 'Shop updates and deals',
             importance: Importance.max,
             priority: Priority.high,
-            color: const Color(0xFF5F13C5),
-            icon: 'ic_mobiking_logo',
             styleInformation: BigPictureStyleInformation(
               FilePathAndroidBitmap(filePath),
             ),

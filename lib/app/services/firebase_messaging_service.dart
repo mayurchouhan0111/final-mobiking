@@ -33,7 +33,7 @@ class FirebaseMessagingService extends GetxService {
   }
 
   Future<void> _initializeLocalNotifications() async {
-    const AndroidInitializationSettings androidSettings = AndroidInitializationSettings('@drawable/ic_mobiking_logo');
+    const AndroidInitializationSettings androidSettings = AndroidInitializationSettings('@drawable/ic_notification');
     const InitializationSettings initSettings = InitializationSettings(android: androidSettings);
 
     await _localNotifications.initialize(
@@ -121,8 +121,6 @@ class FirebaseMessagingService extends GetxService {
         importance: Importance.max,
         priority: Priority.max,
         showWhen: true,
-        color: const Color(0xFF5F13C5), // FORCE THE BRAND COLOR
-        icon: 'ic_mobiking_logo', // FORCE THE NEW ICON
         styleInformation: bigPicturePath != null ? BigPictureStyleInformation(FilePathAndroidBitmap(bigPicturePath)) : null,
         largeIcon: largeIconPath != null ? FilePathAndroidBitmap(largeIconPath) : null,
         tag: 'mobiking_notify',
