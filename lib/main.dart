@@ -10,6 +10,7 @@ import 'package:hive_flutter/hive_flutter.dart'; // Add Hive import
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:mobiking/app/controllers/product_controller.dart';
 import 'package:mobiking/app/services/firebase_messaging_service.dart'; // Your FCM Service
 import 'package:mobiking/app/services/analytics_service.dart';
@@ -69,115 +70,176 @@ import 'package:image/image.dart' as img;
 import 'dart:io';
 
 // This handles messages when the app is in the background or terminated.
+// This handles messages when the app is in the background or terminated.
 @pragma('vm:entry-point')
 Future<void> _firebaseBackgroundMessagehandler(RemoteMessage message) async {
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  try {
+    // 1. Initialize Firebase
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
 
-  print("🔥 BACKGROUND MESSAGE RECEIVED! ID: ${message.messageId}");
+    // 2. Disable Google Fonts fetching in background to prevent 'AssetManifest.json' error
+    GoogleFonts.config.allowRuntimeFetching = false;
 
-  final String title =
-      message.notification?.title ?? message.data['title'] ?? "MobiKing";
-  final String body =
-      message.notification?.body ??
-      message.data['body'] ??
-      "New deals available!";
-  final String? imageUrl =
-      message.notification?.android?.imageUrl ??
-      message.data['image'] ??
-      message.data['imageUrl'] ??
-      message.data['bigPicture'];
-
-  if (imageUrl != null) {
-    print("🔥 ATTEMPTING TO SHOW BACKGROUND IMAGE: $imageUrl");
-
-    // Manual local notification to force the image
+    // 3. Initialize Local Notifications & Create Channels for this Isolate
     final FlutterLocalNotificationsPlugin localNotifications =
         FlutterLocalNotificationsPlugin();
-
-    // Initialize for background isolate
     const AndroidInitializationSettings androidSettings =
         AndroidInitializationSettings('@drawable/ic_notification');
     await localNotifications.initialize(
       const InitializationSettings(android: androidSettings),
     );
 
-    // Download image
-    try {
-      final Directory directory = await getApplicationDocumentsDirectory();
-      final String filePath = '${directory.path}/bg_notification_img';
-      final String circularPath =
-          '${directory.path}/bg_circular_notification_icon.png';
-
-      final http.Response response = await http.get(Uri.parse(imageUrl));
-      final bytes = response.bodyBytes;
-
-      // 1. Save Big Picture
-      final File file = File(filePath);
-      await file.writeAsBytes(bytes);
-
-      // 2. Generate Circular Icon
-      String? finalCircularPath;
-      final originalImage = img.decodeImage(bytes);
-      if (originalImage != null) {
-        final size =
-            originalImage.width < originalImage.height
-                ? originalImage.width
-                : originalImage.height;
-        final squaredImage = img.copyCrop(
-          originalImage,
-          x: (originalImage.width - size) ~/ 2,
-          y: (originalImage.height - size) ~/ 2,
-          width: size,
-          height: size,
+    // Ensure channels exist in this isolate
+    const AndroidNotificationChannel highChannel = AndroidNotificationChannel(
+      'mobiking_high_importance_channel',
+      'MobiKing Notifications',
+      description: 'Used for important shop updates and deals.',
+      importance: Importance.max,
+      playSound: true,
+      enableVibration: true,
+    );
+    const AndroidNotificationChannel silentChannel =
+        AndroidNotificationChannel(
+          'mobiking_silent_channel',
+          'Silent Feed',
+          description: 'Internal system redirection.',
+          importance: Importance.min, // Silent and hidden
+          playSound: false,
+          enableVibration: false,
+          showBadge: false,
         );
-        final circularImage =
-            img.Image(width: size, height: size, numChannels: 4);
-        final center = size / 2.0;
-        final radius = size / 2.0;
-        for (int y = 0; y < size; y++) {
-          for (int x = 0; x < size; x++) {
-            final distance =
-                ((x - center) * (x - center) + (y - center) * (y - center));
-            if (distance <= radius * radius) {
-              final pixel = squaredImage.getPixel(x, y);
-              circularImage.setPixel(x, y, pixel);
-            } else {
-              // Set background to transparent
-              circularImage.setPixelRgba(x, y, 0, 0, 0, 0);
+
+    final androidPlugin = localNotifications
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+    await androidPlugin?.createNotificationChannel(highChannel);
+    await androidPlugin?.createNotificationChannel(silentChannel);
+
+    print("🔥 BACKGROUND MESSAGE RECEIVED! ID: ${message.messageId}");
+
+    final String title =
+        message.notification?.title ?? message.data['title'] ?? "MobiKing";
+    final String body =
+        message.notification?.body ??
+        message.data['body'] ??
+        "New deals available!";
+    final String? imageUrl =
+        message.notification?.android?.imageUrl ??
+        message.data['image'] ??
+        message.data['imageUrl'] ??
+        message.data['bigPicture'];
+
+    if (imageUrl != null && imageUrl.isNotEmpty) {
+      print("🔥 ATTEMPTING TO SHOW BACKGROUND IMAGE: $imageUrl");
+      try {
+        final Directory directory = await getApplicationDocumentsDirectory();
+        final String filePath = '${directory.path}/bg_notification_img';
+        final String circularPath =
+            '${directory.path}/bg_circular_notification_icon.png';
+
+        final http.Response response = await http.get(Uri.parse(imageUrl));
+        final bytes = response.bodyBytes;
+
+        // 1. Save Big Picture
+        final File file = File(filePath);
+        await file.writeAsBytes(bytes);
+
+        // 2. Generate Circular Icon
+        String? finalCircularPath;
+        final originalImage = img.decodeImage(bytes);
+        if (originalImage != null) {
+          final size =
+              originalImage.width < originalImage.height
+                  ? originalImage.width
+                  : originalImage.height;
+          final squaredImage = img.copyCrop(
+            originalImage,
+            x: (originalImage.width - size) ~/ 2,
+            y: (originalImage.height - size) ~/ 2,
+            width: size,
+            height: size,
+          );
+          final circularImage = img.Image(
+            width: size,
+            height: size,
+            numChannels: 4,
+          );
+          final center = size / 2.0;
+          final radius = size / 2.0;
+          for (int y = 0; y < size; y++) {
+            for (int x = 0; x < size; x++) {
+              final distance =
+                  ((x - center) * (x - center) + (y - center) * (y - center));
+              if (distance <= radius * radius) {
+                final pixel = squaredImage.getPixel(x, y);
+                circularImage.setPixel(x, y, pixel);
+              } else {
+                circularImage.setPixelRgba(x, y, 0, 0, 0, 0);
+              }
             }
           }
+          await File(circularPath).writeAsBytes(img.encodePng(circularImage));
+          finalCircularPath = circularPath;
         }
-        await File(circularPath).writeAsBytes(img.encodePng(circularImage));
-        finalCircularPath = circularPath;
+
+        final AndroidNotificationDetails androidDetails =
+            AndroidNotificationDetails(
+              'mobiking_high_importance_channel',
+              'MobiKing Notifications',
+              channelDescription: 'Shop updates and deals',
+              importance: Importance.max,
+              priority: Priority.max,
+              styleInformation: BigPictureStyleInformation(
+                FilePathAndroidBitmap(filePath),
+              ),
+              largeIcon:
+                  finalCircularPath != null
+                      ? FilePathAndroidBitmap(finalCircularPath)
+                      : null,
+              tag: 'mobiking_notify',
+            );
+
+        await localNotifications.show(
+          0,
+          title,
+          body,
+          NotificationDetails(android: androidDetails),
+        );
+      } catch (e) {
+        print("🔥 BACKGROUND IMAGE ERROR: $e");
+        // Fallback to normal if image fails
+        _showFallbackNotification(localNotifications, title, body);
       }
-
-      final AndroidNotificationDetails androidDetails =
-          AndroidNotificationDetails(
-            'mobiking_high_importance_channel',
-            'MobiKing Notifications',
-            channelDescription: 'Shop updates and deals',
-            importance: Importance.max,
-            priority: Priority.high,
-            styleInformation: BigPictureStyleInformation(
-              FilePathAndroidBitmap(filePath),
-            ),
-            largeIcon:
-                finalCircularPath != null
-                    ? FilePathAndroidBitmap(finalCircularPath)
-                    : null,
-            tag: 'mobiking_notify', // Added tag to match Main service
-          );
-
-      await localNotifications.show(
-        0, // FIXED: Changed from millisecond to 0 to prevent stacking duplicates
-        title,
-        body,
-        NotificationDetails(android: androidDetails),
-      );
-    } catch (e) {
-      print("🔥 BACKGROUND IMAGE ERROR: $e");
+    } else {
+      _showFallbackNotification(localNotifications, title, body);
     }
+  } catch (e) {
+    print("🔥 CRITICAL BACKGROUND ERROR: $e");
   }
+}
+
+Future<void> _showFallbackNotification(
+  FlutterLocalNotificationsPlugin plugin,
+  String title,
+  String body,
+) async {
+  const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+    'mobiking_high_importance_channel',
+    'MobiKing Notifications',
+    channelDescription: 'Shop updates and deals',
+    importance: Importance.max,
+    priority: Priority.max,
+    tag: 'mobiking_notify',
+  );
+  await plugin.show(
+    0,
+    title,
+    body,
+    const NotificationDetails(android: androidDetails),
+  );
 }
 
 Future<void> main() async {

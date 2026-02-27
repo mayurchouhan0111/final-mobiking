@@ -59,7 +59,7 @@ class FirebaseMessagingService extends GetxService {
       'mobiking_silent_channel',
       'Silent Feed',
       description: 'Internal system redirection.',
-      importance: Importance.none, // High importance = no sound/tray entry
+      importance: Importance.min, // Silent and hidden, but active
       playSound: false,
       enableVibration: false,
       showBadge: false,
@@ -91,8 +91,10 @@ class FirebaseMessagingService extends GetxService {
             message.data['imageUrl'] ??
             message.data['bigPicture'];
 
-        // FIX: Only show the manual in-app overlay when the app is in the foreground.
-        // Calling _showLocalNotification here as well guarantees a duplicate.
+        // Show standard system notification manually to force the image/circular icon
+        _showLocalNotification(title, body, imageUrl, message.data);
+
+        // Also show our custom in-app UI
         _showManualRichNotification(title, body, imageUrl, message.data);
       });
 
