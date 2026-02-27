@@ -298,16 +298,10 @@ class CartService {
   }
 
   // Fetch cart with comprehensive error handling
-  Future<Map<String, dynamic>> fetchCart({required String cartId}) async {
-    // Input validation
-    if (cartId.trim().isEmpty) {
-      _log('Error: Cart ID is missing for fetch');
-      return {'success': false, 'message': 'Cart ID is missing for fetch.'};
-    }
-
+  Future<Map<String, dynamic>> fetchCart() async {
     try {
-      final url = Uri.parse('$baseUrl/carts/${cartId.trim()}');
-      _log('Fetching cart: $cartId');
+      final url = Uri.parse('$baseUrl/users/cart');
+      _log('Fetching latest cart details from: $url');
 
       final headers = _getHeaders();
       if (headers == null) {

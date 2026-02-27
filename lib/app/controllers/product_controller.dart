@@ -193,8 +193,11 @@ class ProductController extends GetxController {
 
       final results = await _productService.searchProducts(query);
 
-      searchResults.assignAll(results);
-      print("🎯 Found ${results.length} search results");
+      // Filter for active products
+      final activeResults = results.where((p) => p.active == true).toList();
+
+      searchResults.assignAll(activeResults);
+      print("🎯 Found ${activeResults.length} active search results");
 
     } catch (e) {
       print('❌ Search error: $e');
@@ -263,7 +266,8 @@ class ProductController extends GetxController {
     }
 
     final relatedProducts = allProducts.where((product) {
-      return product.id != currentProductId &&
+      return product.active == true &&
+          product.id != currentProductId &&
           product.category != null &&
           product.category!.id == parentCategory;
     }).take(6).toList(); // Limit to 6 for performance
@@ -283,6 +287,9 @@ class ProductController extends GetxController {
     }
 
     final relatedProducts = allProducts.where((product) {
+      if (product.active == false) {
+        return false;
+      }
       if (product.id == currentProductId) {
         return false;
       }

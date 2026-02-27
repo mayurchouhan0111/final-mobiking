@@ -30,6 +30,8 @@ import '../themes/app_theme.dart';
 import '../utils/reasons.dart';
 import 'coupon_controller.dart';
 import '../data/product_model.dart';
+import '../services/analytics_service.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 
 class RazorpayErrorCodes {
   static const int PAYMENT_CANCELLED = 0;
@@ -321,7 +323,7 @@ class OrderController extends GetxController {
         'shippingAddress': _currentOrderRequest!.address,
         'address': _addressController.selectedAddress.value?.toJson(),
         'createdAt': DateTime.now().toIso8601String(),
-        'items': _currentOrderRequest!.items.map((item) => item.toJson()).toList(),
+        'items': _currentOrderRequest!.items.map((item) => item.toUIFallbackJson()).toList(),
 
         // Payment details
         'paymentDetails': {
@@ -337,6 +339,24 @@ class OrderController extends GetxController {
 
       // Complete order success operations
       await _completeOrderSuccess(completeOrderData, 'Online');
+
+      // ✅ LOG ANALYTICS: Purchase
+      try {
+        final analyticsItems = _currentOrderRequest!.items.map((item) => AnalyticsEventItem(
+          itemId: item.productId,
+          itemName: item.quantity.toString(), // The model seems to have basic details, often item.name is better but checking model
+          quantity: item.quantity,
+          price: item.price.toDouble(),
+        )).toList();
+
+        Get.find<AnalyticsService>().logPurchase(
+          amount: _currentOrderRequest!.orderAmount.toDouble(),
+          transactionId: extractedOrderId,
+          items: analyticsItems,
+        );
+      } catch (e) {
+        debugPrint('📊 Analytics Purchase Error: $e');
+      }
 
       // Show success message
 
@@ -544,7 +564,7 @@ class OrderController extends GetxController {
         'customerPhone': orderRequest.phoneNo,
         'shippingAddress': orderRequest.address,
         'createdAt': orderData['createdAt'] ?? DateTime.now().toIso8601String(),
-        'items': orderRequest.items.map((item) => item.toJson()).toList(),
+        'items': orderRequest.items.map((item) => item.toUIFallbackJson()).toList(),
 
         // Payment details
         'paymentDetails': {
@@ -895,11 +915,38 @@ class OrderController extends GetxController {
       final int quantity = (cartItem['quantity'] as num?)?.toInt() ?? 1;
       final double itemPrice = _extractItemPrice(productData, productId);
 
+      // Robust product name extraction
+      String productName = 'Product';
+      if (productData['fullName'] != null && productData['fullName'].toString().trim().isNotEmpty) {
+        productName = productData['fullName'].toString().trim();
+      } else if (productData['name'] != null && productData['name'].toString().trim().isNotEmpty) {
+        productName = productData['name'].toString().trim();
+      } else if (productData['productName'] != null && productData['productName'].toString().trim().isNotEmpty) {
+        productName = productData['productName'].toString().trim();
+      } else if (productData['title'] != null && productData['title'].toString().trim().isNotEmpty) {
+        productName = productData['title'].toString().trim();
+      }
+
+      // Robust image extraction
+      final List images = productData['images'] as List? ?? [];
+      String? productImage;
+      if (images.isNotEmpty) {
+        productImage = images.first?.toString();
+      } else if (productData['image'] != null && productData['image'].toString().isNotEmpty) {
+        productImage = productData['image'].toString();
+      } else if (productData['thumbnail'] != null && productData['thumbnail'].toString().isNotEmpty) {
+        productImage = productData['thumbnail'].toString();
+      }
+
+      debugPrint('🛒 Item extraction: "$productName" ($variantName) - ID: $productId');
+
       orderItems.add(CreateOrderItemRequestModel(
         productId: productId,
         variantName: variantName,
         quantity: quantity,
         price: itemPrice,
+        productName: productName,
+        productImage: productImage,
       ));
     }
 
@@ -1101,7 +1148,7 @@ class OrderController extends GetxController {
         'shippingAddress': orderRequest.address,
         'address': _addressController.selectedAddress.value?.toJson(),
         'createdAt': orderData['createdAt'] ?? DateTime.now().toIso8601String(),
-        'items': orderRequest.items.map((item) => item.toJson()).toList(),
+        'items': orderRequest.items.map((item) => item.toUIFallbackJson()).toList(),
 
         // COD specific details
         'paymentDetails': {

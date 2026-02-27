@@ -222,6 +222,7 @@ class _ProductGridViewSectionState extends State<ProductGridViewSection> {
 
   List<ProductModel> _getOptimizedInStockProducts(List<ProductModel> products) {
     return products.where((product) {
+      if (product.active == false) return false;
       // Fast check - return early if any variant has stock
       for (final variant in product.variants.entries) {
         if (variant.value > 0) return true;

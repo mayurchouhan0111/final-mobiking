@@ -47,6 +47,14 @@ class _CategoryProductsGridScreenState extends State<CategoryProductsGridScreen>
     try {
       _isLoadingProducts.value = true;
       final products = await _categoryService.getProductsBySubCategorySlug(widget.subCategories[index].slug);
+      
+      // Sort: In stock (totalStock > 0) first, then out of stock
+      products.sort((a, b) {
+        if (a.totalStock > 0 && b.totalStock <= 0) return -1;
+        if (a.totalStock <= 0 && b.totalStock > 0) return 1;
+        return 0;
+      });
+
       displayedProducts.value = products;
     } catch (e) {
       print(e);
@@ -189,7 +197,7 @@ class _CategoryProductsGridScreenState extends State<CategoryProductsGridScreen>
                         padding: const EdgeInsets.all(16),
                         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
-                          childAspectRatio: 0.48,
+                          childAspectRatio: 0.58,
                           mainAxisSpacing: 8,
                         ),
                         itemCount: displayedProducts.length,

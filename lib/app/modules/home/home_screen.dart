@@ -17,6 +17,8 @@ import '../../widgets/CategoryTab.dart';
 import '../../widgets/CustomAppBar.dart';
 import '../../widgets/SearchTabSliverAppBar.dart' show SearchTabSliverAppBar;
 
+import 'package:mobiking/app/modules/home/widgets/HomeShimmer.dart';
+
 
 class HomeScreen extends StatefulWidget {
   HomeScreen({super.key});
@@ -86,6 +88,17 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Future<void> _onRefresh() async {
+    print("🔄 Manual refresh triggered from HomeScreen");
+    await Future.wait([
+      productController.refreshProducts(),
+      categoryController.refreshCategories(),
+      subCategoryController.refreshSubCategories(),
+      homeController.refreshAllData(),
+    ]);
+    print("✅ All data refreshed");
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -94,34 +107,43 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: null,
       body: Stack(
         children: [
-          CustomScrollView(
-            controller: _scrollController,
-            slivers: [
-              SearchTabSliverAppBar(
-                onSearchChanged: (value) {
-                  print('Search query: $value');
-                },
-              ),
-              SliverToBoxAdapter(
-                child: CustomTabBarViewSection(),
-              ),
-              Obx(() {
-                if (productController.isFetchingMore.value) {
-                  return const SliverToBoxAdapter(
-                    child: Padding(
-                      padding: EdgeInsets.all(16.0),
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          color: AppColors.primaryPurple,
+          Obx(() {
+            if (homeController.isLoading && homeController.homeData == null) {
+              return const HomeShimmer();
+            }
+            return RefreshIndicator(
+              onRefresh: _onRefresh,
+              color: AppColors.primaryPurple,
+              child: CustomScrollView(
+                controller: _scrollController,
+                slivers: [
+                  SearchTabSliverAppBar(
+                    onSearchChanged: (value) {
+                      print('Search query: $value');
+                    },
+                  ),
+                  SliverToBoxAdapter(
+                    child: CustomTabBarViewSection(),
+                  ),
+                  Obx(() {
+                    if (productController.isFetchingMore.value) {
+                      return const SliverToBoxAdapter(
+                        child: Padding(
+                          padding: EdgeInsets.all(16.0),
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: AppColors.primaryPurple,
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                  );
-                }
-                return const SliverToBoxAdapter(child: SizedBox.shrink());
-              }),
-            ],
-          ),
+                      );
+                    }
+                    return const SliverToBoxAdapter(child: SizedBox.shrink());
+                  }),
+                ],
+              ),
+            );
+          }),
           Positioned(
             bottom: 20.0,
             right: 20.0,

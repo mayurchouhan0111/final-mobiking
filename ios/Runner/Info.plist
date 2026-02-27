@@ -58,5 +58,14 @@
 
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>This app needs location access to show nearby services or track delivery.</string>
+
+	<!-- ✅ Push Notification Configuration -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
+	<key>FirebaseAppDelegateProxyEnabled</key>
+	<false/>
 </dict>
 </plist>

@@ -59,8 +59,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Future<void> _loadInitialData() async {
     
 
-    // Fetch addresses
-    await addressController.fetchAddresses();
+    // Fetch addresses and fresh cart data
+    await Future.wait([
+      addressController.fetchAddresses(),
+      cartController.fetchAndLoadCartData(),
+    ]);
 
     // Check for a default address in storage
     final defaultAddressData = _storage.read('default_address');

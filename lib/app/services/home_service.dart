@@ -18,30 +18,34 @@ class HomeService {
   }
 
   /// Get home layout with comprehensive error handling
-  Future<HomeLayoutModel?> getHomeLayout() async {
+  Future<HomeLayoutModel?> getHomeLayout({bool forceRefresh = false}) async {
     const String cacheKey = 'homeLayoutCache';
     const String timestampKey = 'homeLayoutTimestamp';
-    const Duration cacheDuration = Duration(minutes: 30); // Cache for 30 minutes
+    const Duration cacheDuration = Duration(minutes: 10); // Reduced to 10 minutes for better responsiveness
 
-    // 1. Try to load from cache first
-    final cachedData = _box.read(cacheKey);
-    final cachedTimestamp = _box.read(timestampKey);
+    // 1. Try to load from cache first (if not forcing refresh)
+    if (!forceRefresh) {
+      final cachedData = _box.read(cacheKey);
+      final cachedTimestamp = _box.read(timestampKey);
 
-    if (cachedData != null && cachedTimestamp != null) {
-      final DateTime lastFetchTime = DateTime.parse(cachedTimestamp);
-      if (DateTime.now().difference(lastFetchTime) < cacheDuration) {
-        _log('✅ Loading home layout from cache.');
-        try {
-          return HomeLayoutModel.fromJson(jsonDecode(cachedData));
-        } catch (e) {
-          _log('❌ Error decoding cached home layout: $e');
-          // If cache is corrupted, proceed to fetch from network
+      if (cachedData != null && cachedTimestamp != null) {
+        final DateTime lastFetchTime = DateTime.parse(cachedTimestamp);
+        if (DateTime.now().difference(lastFetchTime) < cacheDuration) {
+          _log('✅ Loading home layout from cache.');
+          try {
+            return HomeLayoutModel.fromJson(jsonDecode(cachedData));
+          } catch (e) {
+            _log('❌ Error decoding cached home layout: $e');
+            // If cache is corrupted, proceed to fetch from network
+          }
+        } else {
+          _log('⏳ Cached home layout is stale. Fetching new data.');
         }
       } else {
-        _log('⏳ Cached home layout is stale. Fetching new data.');
+        _log('📦 No home layout in cache or timestamp missing. Fetching new data.');
       }
     } else {
-      _log('📦 No home layout in cache or timestamp missing. Fetching new data.');
+      _log('🔄 Force refresh requested. Fetching new data from network.');
     }
 
     // 2. Fetch from network if cache is not available or stale

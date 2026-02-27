@@ -8,9 +8,11 @@ import 'package:hive_flutter/hive_flutter.dart'; // Add Hive import
 
 // Firebase imports
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:mobiking/app/controllers/product_controller.dart';
 import 'package:mobiking/app/services/firebase_messaging_service.dart'; // Your FCM Service
+import 'package:mobiking/app/services/analytics_service.dart';
 
 // Hive adapters imports - Add these imports for your models
 import 'package:mobiking/app/data/sub_category_model.dart';
@@ -60,21 +62,64 @@ import 'package:mobiking/app/modules/bottombar/Bottom_bar.dart';
 import 'firebase_options.dart';
 
 // FCM Background Message Handler - MUST be a top-level function
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
+
 // This handles messages when the app is in the background or terminated.
 @pragma('vm:entry-point')
 Future<void> _firebaseBackgroundMessagehandler(RemoteMessage message) async {
-  // Ensure Firebase is initialized for background processing.
-  // If you used FlutterFire CLI to generate 'firebase_options.dart',
-  // uncomment the options line below and ensure it's imported.
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  print("Handling a background message: ${message.messageId}");
-  print("Background message data: ${message.data}");
-  // You can also show a local notification from here if desired,
-  // but it would require creating a FlutterLocalNotificationsPlugin instance
-  // and channel setup here again, or ensuring it's available via a service.
-  // For simplicity, FirebaseMessagingService handles foreground/opened_app notifications.
+  
+  print("🔥 BACKGROUND MESSAGE RECEIVED! ID: ${message.messageId}");
+  
+  final String title = message.notification?.title ?? message.data['title'] ?? "MobiKing";
+  final String body = message.notification?.body ?? message.data['body'] ?? "New deals available!";
+  final String? imageUrl = message.notification?.android?.imageUrl ?? 
+                          message.data['image'] ?? 
+                          message.data['imageUrl'] ??
+                          message.data['bigPicture'];
+
+  if (imageUrl != null) {
+    print("🔥 ATTEMPTING TO SHOW BACKGROUND IMAGE: $imageUrl");
+    
+    // Manual local notification to force the image
+    final FlutterLocalNotificationsPlugin localNotifications = FlutterLocalNotificationsPlugin();
+    
+    // Initialize for background isolate
+    const AndroidInitializationSettings androidSettings = AndroidInitializationSettings('@drawable/ic_notification');
+    await localNotifications.initialize(const InitializationSettings(android: androidSettings));
+
+    // Download image
+    try {
+      final Directory directory = await getApplicationDocumentsDirectory();
+      final String filePath = '${directory.path}/bg_notification_img';
+      final http.Response response = await http.get(Uri.parse(imageUrl));
+      final File file = File(filePath);
+      await file.writeAsBytes(response.bodyBytes);
+
+      final AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+        'mobiking_high_importance_channel',
+        'MobiKing Notifications',
+        channelDescription: 'Shop updates and deals',
+        importance: Importance.max,
+        priority: Priority.high,
+        styleInformation: BigPictureStyleInformation(FilePathAndroidBitmap(filePath)),
+      );
+
+      await localNotifications.show(
+        DateTime.now().millisecond,
+        title,
+        body,
+        NotificationDetails(android: androidDetails),
+      );
+    } catch (e) {
+      print("🔥 BACKGROUND IMAGE ERROR: $e");
+    }
+  }
 }
 
 Future<void> main() async {
@@ -121,17 +166,21 @@ Future<void> main() async {
 
   // Put your FirebaseMessagingService into GetX dependency injection
   // Initialize it immediately as it sets up listeners for FCM messages.
-  Get.put(FirebaseMessagingService()); // Call .init() immediately after putting
+  Get.put(FirebaseMessagingService()); 
+
+  // Register the background message handler
+  FirebaseMessaging.onBackgroundMessage(_firebaseBackgroundMessagehandler);
 
   // ✅ SERVICES: Put services into GetX dependency injection (ORDER MATTERS)
   Get.put(UserService(dioInstance)); // Put UserService first
   Get.put(LoginService(dioInstance, getStorageBox, Get.find<UserService>()));
-  await Get.find<LoginService>().refreshTokenOnAppStart();
+  // await Get.find<LoginService>().refreshTokenOnAppStart(); // Removed as refresh token logic is no longer used
   Get.put(OrderService());
   Get.put(AddressService(dioInstance, getStorageBox));
   Get.put(ConnectivityService());
   Get.put(SoundService());
   Get.put(QueryService());
+  Get.put(AnalyticsService());
 
   // ✅ ADD COUPON SERVICE: Initialize CouponService with Dio and GetStorage
   Get.put(CouponService(dioInstance, getStorageBox));
@@ -250,6 +299,9 @@ class MyApp extends StatelessWidget {
       title: 'Mobiking',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
+      navigatorObservers: [
+        FirebaseAnalyticsObserver(analytics: FirebaseAnalytics.instance),
+      ],
       // IMPORTANT: Wrap your home screen's Scaffold with a SafeArea widget
       // to avoid UI overlapping with system bars (status bar, navigation bar).
       // Example:

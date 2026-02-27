@@ -17,7 +17,7 @@ class CategoryService {
   static const String metadataBoxName = 'metadata';
   static const String lastFetchCategoriesKey = 'last_fetch_categories_timestamp';
   static const String lastFetchDetailsPrefix = 'last_fetch_details_';
-  static const Duration cacheValidDuration = Duration(hours: 1);
+  static const Duration cacheValidDuration = Duration(minutes: 10);
 
   late Box<CategoryModel> _categoriesBox;    // ✅ Added generic type
   late Box<Map> _categoryDetailsBox;         // ✅ Added generic type

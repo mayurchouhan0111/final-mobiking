@@ -11,7 +11,7 @@ class SectionHeader extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Text(
         title,
-        style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 16),
+        style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 16),
       ),
     );
   }

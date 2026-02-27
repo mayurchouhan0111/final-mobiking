@@ -429,7 +429,7 @@ class AllProductGridCard extends StatelessWidget {
               ),
 
               Padding(
-                padding: const EdgeInsets.fromLTRB(8.0, 2.0, 8.0, 8.0), // Reduced padding
+                padding: const EdgeInsets.fromLTRB(8.0, 2.0, 8.0, 4.0), // Reduced bottom padding
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

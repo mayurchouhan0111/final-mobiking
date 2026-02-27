@@ -12,6 +12,9 @@
 
     <!-- 👇 NEW MICROPHONE PERMISSION FOR VOICE INPUT -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    
+    <!-- 👇 REQUIRED FOR ANDROID 13+ NOTIFICATIONS -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:label="Mobiking"
@@ -40,6 +43,19 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
+        <!-- Notification Icon and Color -->
+        <!-- Set the default notification channel ID -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="mobiking_high_importance_channel" />
+
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_notification" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/notification_color" />
     </application>
 
     <queries>

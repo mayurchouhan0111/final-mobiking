@@ -111,6 +111,13 @@ class SubCategory extends HiveObject {
         products = productsData
             .map((e) => ProductModel.fromJson(e as Map<String, dynamic>))
             .toList();
+            
+        // Sort products: In stock first
+        products.sort((a, b) {
+          if (a.totalStock > 0 && b.totalStock <= 0) return -1;
+          if (a.totalStock <= 0 && b.totalStock > 0) return 1;
+          return 0;
+        });
       }
     }
 

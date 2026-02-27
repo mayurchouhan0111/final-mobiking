@@ -8,6 +8,7 @@ import 'dart:math'; // Add this for OTP generation
 
 import '../data/login_model.dart'; // Import UserModel
 import './user_service.dart'; // Import UserService
+import './analytics_service.dart';
 
 // Custom exception for login service errors
 class LoginServiceException implements Exception {
@@ -31,11 +32,6 @@ class LoginService extends GetxService {
   final GetStorage box;
   final UserService _userService; // Inject UserService
 
-  var isTestingTokenRefresh = false.obs; // New: For testing refresh interval
-
-  // Timer for automatic token refresh
-  Timer? _tokenRefreshTimer;
-  static const Duration _refreshInterval = Duration(hours: 12); // Refresh token after 12 hours
 
   // Constructor to receive the Dio instance and GetStorage box
   LoginService(this._dio, this.box, this._userService);
@@ -46,53 +42,7 @@ class LoginService extends GetxService {
     print('[LoginService] $message');
   }
 
-  Future<void> refreshTokenOnAppStart() async {
-    if (hasValidTokens()) {
-      _log('App started, attempting to refresh token...');
-      try {
-        await refreshToken(getCurrentRefreshToken()!);
-      } catch (e) {
-        _log('Failed to refresh token on app start: $e');
-        // If refresh fails, the user might need to log in again.
-        // Depending on the error, you might want to navigate to the login screen.
-      }
-    }
-  }
 
-  void startTokenRefreshTimer() {
-    _tokenRefreshTimer?.cancel();
-
-    final tokenCreationTime = box.read('tokenCreationTime');
-    final accessToken = box.read('accessToken');
-    _log('LoginService: startTokenRefreshTimer called.');
-    _log('LoginService: tokenCreationTime: $tokenCreationTime');
-    _log('LoginService: accessToken: $accessToken');
-
-    if (tokenCreationTime == null || accessToken == null) {
-      _log('LoginService: Token creation time or access token is null. Cannot start refresh timer.');
-      return;
-    }
-
-    final now = DateTime.now().millisecondsSinceEpoch;
-    final tokenAge = now - (tokenCreationTime as num).toInt();
-
-    Duration effectiveRefreshInterval = isTestingTokenRefresh.value
-        ? const Duration(minutes: 1) // 1 minute for testing
-        : _refreshInterval; // 12 hours for normal operation
-
-    final nextRefreshTimeMs = effectiveRefreshInterval.inMilliseconds - tokenAge;
-
-    if (nextRefreshTimeMs <= 0) {
-      refreshToken(getCurrentRefreshToken()!);
-      return;
-    }
-
-    _log('LoginService: Next token refresh scheduled in ${(nextRefreshTimeMs / (1000 * 60 * 60)).toStringAsFixed(1)} hours');
-
-    _tokenRefreshTimer = Timer(Duration(milliseconds: nextRefreshTimeMs), () {
-      refreshToken(getCurrentRefreshToken()!);
-    });
-  }
 
 
   // UPDATED: Send OTP Method with improved error handling and testing display
@@ -210,13 +160,19 @@ class LoginService extends GetxService {
         if (response.data?['data']?['accessToken'] != null) {
           await box.write('accessToken', response.data['data']['accessToken']);
         }
-        if (response.data?['data']?['refreshToken'] != null) {
-          await box.write('refreshToken', response.data['data']['refreshToken']);
+        // Store token creation time removed as refresh logic is no longer used
+        
+        // ✅ LOG ANALYTICS: Login
+        try {
+          final userId = response.data?['data']?['user']?['_id'] ?? response.data?['data']?['user']?['id'];
+          if (userId != null) {
+            Get.find<AnalyticsService>().setUserId(userId.toString());
+            Get.find<AnalyticsService>().logLogin('OTP');
+          }
+        } catch (e) {
+          _log('📊 Analytics Login Error: $e');
         }
 
-        // Store token creation time for automatic refresh scheduling
-        await box.write('tokenCreationTime', DateTime.now().millisecondsSinceEpoch);
-        startTokenRefreshTimer();
         return response;
       } else {
         // Explicitly throw an exception if login is not successful
@@ -351,11 +307,6 @@ class LoginService extends GetxService {
 
   // Comprehensive token data clearing (updated to include OTP data)
   void clearAllTokenData() {
-    _tokenRefreshTimer?.cancel();
-    box.remove('accessToken');
-    box.remove('refreshToken');
-    box.remove('tokenCreationTime');
-    box.remove('accessTokenExpiry');
     box.remove('user');
     box.remove('cartId');
     box.remove('currentOtpData'); // Clear OTP data on logout
@@ -381,108 +332,18 @@ class LoginService extends GetxService {
     }
   }
 
-  // Enhanced: refreshToken method with proper token storage
-  Future<dio.Response> refreshToken(String refreshToken) async {
-    if (refreshToken.isEmpty) {
-      _log('Refresh token is empty. Cannot refresh access token.');
-      throw LoginServiceException('Refresh token missing. Please log in again.');
-    }
-
-    try {
-      _log('Attempting to refresh access token...');
-
-      final response = await _dio.post(
-        '$_baseUrl/refresh-token',
-        options: dio.Options(
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          sendTimeout: const Duration(seconds: 30),
-          receiveTimeout: const Duration(seconds: 30),
-        ),
-        data: {'refreshToken': refreshToken},
-      );
-
-      if (response.statusCode == 200 && response.data != null && response.data['success'] == true) {
-        _log('Token refresh successful');
-
-        if (response.data['data']?['accessToken'] != null) {
-          await box.write('accessToken', response.data['data']['accessToken']);
-          _log('New access token stored successfully');
-        }
-
-        if (response.data['data']?['refreshToken'] != null) {
-          await box.write('refreshToken', response.data['data']['refreshToken']);
-          _log('New refresh token stored successfully');
-        }
-
-        await box.write('tokenCreationTime', DateTime.now().millisecondsSinceEpoch);
-        startTokenRefreshTimer();
-        return response;
-      } else {
-        final errorMessage = response.data?['message'] ?? 'Failed to refresh token: Unknown server response.';
-        _log('Error refreshing token: ${response.statusCode} - $errorMessage');
-        throw LoginServiceException(errorMessage, statusCode: response.statusCode);
-      }
-    } on dio.DioException catch (e) {
-      if (e.response != null) {
-        final statusCode = e.response?.statusCode;
-        final errorMessage = e.response?.data?['message'] ?? 'Server error during token refresh.';
-
-        _log('Dio error refreshing token: $statusCode - $errorMessage');
-
-        if (statusCode == 401) {
-          clearAllTokenData();
-          throw LoginServiceException('Refresh token expired. Please log in again.', statusCode: statusCode);
-        } else if (statusCode == 403) {
-          clearAllTokenData();
-          throw LoginServiceException('Access denied. Please log in again.', statusCode: statusCode);
-        } else {
-          throw LoginServiceException(errorMessage, statusCode: statusCode);
-        }
-      } else {
-        _log('Network error during token refresh: ${e.message}');
-        throw LoginServiceException('Network error during token refresh: ${e.message}');
-      }
-    } catch (e) {
-      _log('Unexpected error during token refresh: $e');
-      throw LoginServiceException('An unexpected error occurred during token refresh: $e');
-    }
-  }
 
   // Check if tokens exist locally
   bool hasValidTokens() {
     final accessToken = box.read('accessToken');
-    final refreshToken = box.read('refreshToken');
-    final tokenCreationTime = box.read('tokenCreationTime');
-
-    return accessToken != null &&
-        refreshToken != null &&
-        tokenCreationTime != null;
+    return accessToken != null;
   }
 
-  // Get token age in hours
-  double getTokenAgeInHours() {
-    final tokenCreationTime = box.read('tokenCreationTime');
-    if (tokenCreationTime == null) return 25.0; // Return > 24 to indicate expired
 
-    final now = DateTime.now().millisecondsSinceEpoch;
-    final tokenAge = now - tokenCreationTime;
-    return tokenAge / (1000 * 60 * 60); // Convert to hours
-  }
 
-  // Check if token needs refresh - Changed to 12 hours
-  bool needsTokenRefresh() {
-    if (isTestingTokenRefresh.value) {
-      return getTokenAgeInHours() >= (1 / 60); // 1 minute for testing
-    } else {
-      return getTokenAgeInHours() >= 12.0; // 12 hours for normal operation
-    }
-  }
-
-  // Check if token is expired
+  // Check if token is expired (defaulting to false as expiration is extended)
   bool isTokenExpired() {
-    return getTokenAgeInHours() >= 24.0; // Expire after 24 hours
+    return false; 
   }
 
   // Get current access token
@@ -490,10 +351,6 @@ class LoginService extends GetxService {
     return box.read('accessToken');
   }
 
-  // Get current refresh token
-  String? getCurrentRefreshToken() {
-    return box.read('refreshToken');
-  }
 
   // Validate token format (basic validation)
   bool isValidTokenFormat(String? token) {
@@ -504,47 +361,19 @@ class LoginService extends GetxService {
     return parts.length == 3 && parts.every((part) => part.isNotEmpty);
   }
 
-  // Get token status information with 12-hour refresh logic
+  // Get token status information
   Map<String, dynamic> getTokenStatus() {
     final accessToken = getCurrentAccessToken();
-    final refreshToken = getCurrentRefreshToken();
-    final ageInHours = getTokenAgeInHours();
 
     return {
       'hasAccessToken': accessToken != null,
-      'hasRefreshToken': refreshToken != null,
       'isValidFormat': isValidTokenFormat(accessToken),
-      'ageInHours': ageInHours,
-      'needsRefresh': needsTokenRefresh(),
       'isExpired': isTokenExpired(),
-      'creationTime': box.read('tokenCreationTime'),
-      'willRefreshAt': '12 hours',
     };
   }
 
-  // Method to get a valid access token (with auto-refresh)
+  // Method to get a valid access token
   Future<String?> getValidAccessToken() async {
-    if (!hasValidTokens()) {
-      _log('No tokens available');
-      return null;
-    }
-
-    if (isTokenExpired()) {
-      _log('Tokens are expired - requiring re-login');
-      clearAllTokenData();
-      return null;
-    }
-
-    if (needsTokenRefresh()) {
-      _log('Token needs refresh - attempting refresh...');
-      try {
-        await refreshToken(getCurrentRefreshToken()!);
-      } catch (e) {
-        _log('Token refresh failed: $e');
-        return null;
-      }
-    }
-
     return getCurrentAccessToken();
   }
 

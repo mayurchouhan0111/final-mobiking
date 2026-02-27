@@ -45,10 +45,10 @@ class HomeController extends GetxController {
     await fetchHomeLayout();
   }
 
-  Future<void> fetchHomeLayout() async {
+  Future<void> fetchHomeLayout({bool forceRefresh = false}) async {
     try {
       _isLoading.value = true;
-      final result = await _service.getHomeLayout();
+      final result = await _service.getHomeLayout(forceRefresh: forceRefresh);
       if (result != null) {
         _homeData.value = result;
 
@@ -90,6 +90,6 @@ for (var group in result.groups) {
 
   /// ✅ Add method to refresh all data
   Future<void> refreshAllData() async {
-    await fetchHomeLayout();
+    await fetchHomeLayout(forceRefresh: true);
   }
 }

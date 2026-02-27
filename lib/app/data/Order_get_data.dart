@@ -32,17 +32,38 @@ class CreateOrderItemRequestModel {
   final String variantName;
   final int quantity;
   final double price; // Price at the time of order (critical for backend)
+  
+  // NEW: Fallback fields for UI display (not sent to backend)
+  final String? productName;
+  final String? productImage;
 
   CreateOrderItemRequestModel({
     required this.productId,
     required this.variantName,
     required this.quantity,
     required this.price,
+    this.productName,
+    this.productImage,
   });
 
   Map<String, dynamic> toJson() {
     return {
       'productId': productId, // Sending just the product ID string
+      'variantName': variantName,
+      'quantity': quantity,
+      'price': price,
+    };
+  }
+
+  // NEW: Formats the item for the confirmation screen fallback
+  Map<String, dynamic> toUIFallbackJson() {
+    return {
+      'productId': {
+        '_id': productId,
+        'name': productName,
+        'fullName': productName,
+        'images': productImage != null ? [productImage] : [],
+      },
       'variantName': variantName,
       'quantity': quantity,
       'price': price,

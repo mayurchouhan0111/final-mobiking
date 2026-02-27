@@ -93,8 +93,17 @@ class SubCategoryController extends GetxController {
   /// Update products for selected subcategory
   void _updateProductsForSelectedSubCategory() {
     if (selectedSubCategory.value != null) {
-      productsForSelectedSubCategory.assignAll(selectedSubCategory.value!.products);
-      print('[SubCategoryController] Updated products: ${productsForSelectedSubCategory.length} for ${selectedSubCategory.value!.name}');
+      final List<ProductModel> products = List<ProductModel>.from(selectedSubCategory.value!.products);
+      
+      // Sort: In stock first, then out of stock
+      products.sort((a, b) {
+        if (a.totalStock > 0 && b.totalStock <= 0) return -1;
+        if (a.totalStock <= 0 && b.totalStock > 0) return 1;
+        return 0;
+      });
+
+      productsForSelectedSubCategory.assignAll(products);
+      print('[SubCategoryController] Updated & Sorted products: ${productsForSelectedSubCategory.length} for ${selectedSubCategory.value!.name}');
     } else {
       productsForSelectedSubCategory.clear();
       print('[SubCategoryController] Cleared products as no subcategory selected');

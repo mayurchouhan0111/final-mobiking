@@ -114,30 +114,26 @@ class _AllProductsGridViewState extends State<AllProductsGridView>
       return _cachedFilteredProducts!;
     }
 
-    final inStockProducts = <ProductModel>[];
-    for (final product in widget.products) {
-      bool hasStock = false;
-      for (final variant in product.variants.entries) {
-        if (variant.value > 0) {
-          hasStock = true;
-          break;
-        }
-      }
-      if (hasStock) {
-        inStockProducts.add(product);
-      }
-    }
+    // Create a copy and sort by stock status
+    final sortedProducts = List<ProductModel>.from(widget.products);
+    
+    sortedProducts.sort((a, b) {
+      bool aInStock = a.totalStock > 0 || a.variants.values.any((v) => v > 0);
+      bool bInStock = b.totalStock > 0 || b.variants.values.any((v) => v > 0);
+      
+      if (aInStock && !bInStock) return -1;
+      if (!aInStock && bInStock) return 1;
+      return 0;
+    });
 
-    final result = inStockProducts.isNotEmpty ? inStockProducts : widget.products;
-
-    _cachedFilteredProducts = result;
+    _cachedFilteredProducts = sortedProducts;
     _lastProductHashCode = currentHash;
 
-    return result;
+    return sortedProducts;
   }
 
   bool _isProductOutOfStock(ProductModel product) {
-    return !product.variants.entries.any((variant) => variant.value > 0);
+    return product.totalStock <= 0 && !product.variants.values.any((v) => v > 0);
   }
 
   @override
@@ -223,7 +219,7 @@ class _AllProductsGridViewState extends State<AllProductsGridView>
         crossAxisCount: 3,
         crossAxisSpacing: 4.0,
         mainAxisSpacing: 4.0,
-        childAspectRatio: 0.52,
+        childAspectRatio: 0.56,
       ),
       cacheExtent: 1200,
       addAutomaticKeepAlives: true,

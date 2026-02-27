@@ -33,7 +33,7 @@ class InfoBox extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 title,
-                style: GoogleFonts.poppins(fontSize: 12),
+                style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w300),
               )
             ],
           ),
@@ -64,7 +64,7 @@ class ProfileListTile extends StatelessWidget {
       ),
       title: Text(
         title,
-        style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500),
+        style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500),
       ),
       trailing: const Icon(Icons.chevron_right),
       onTap: onTap,

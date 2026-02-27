@@ -45,13 +45,6 @@ class LoginController extends GetxController {
   void onInit() {
     super.onInit();
     _loadCurrentUserFromStorage();
-    checkLoginStatus();
-
-    ever(_connectivityController.isConnected, (bool isConnected) {
-      if (isConnected) {
-        _handleConnectionRestored();
-      }
-    });
   }
 
   @override
@@ -129,6 +122,9 @@ class LoginController extends GetxController {
         print('LoginController: User object before setting currentUser: $user');
         print('LoginController: User _id before setting currentUser: ${user?['_id']}');
         currentUser.value = user;
+
+        // Fetch fresh cart data immediately after login to ensure the UI shows up-to-date items
+        await _cartController.fetchAndLoadCartData();
 
         // Clear OTP related data
         _clearOtpData();
@@ -311,11 +307,10 @@ class LoginController extends GetxController {
     // Simple local validation - just check if user is logged in and has valid tokens
     final hasUser = currentUser.value != null;
     final hasAccessToken = box.read('accessToken') != null;
-    final hasRefreshToken = box.read('refreshToken') != null;
 
-    print('LoginController: canDeleteAccount - User: $hasUser, AccessToken: $hasAccessToken, RefreshToken: $hasRefreshToken');
+    print('LoginController: canDeleteAccount - User: $hasUser, AccessToken: $hasAccessToken');
 
-    return hasUser && hasAccessToken && hasRefreshToken;
+    return hasUser && hasAccessToken;
   }
 
 // OPTIONAL: Method to validate account deletion eligibility with additional checks
@@ -326,11 +321,6 @@ class LoginController extends GetxController {
         return false;
       }
 
-      // Check if tokens are not expired
-      if (loginService.isTokenExpired()) {
-        print('LoginController: Token expired, user needs to re-login for account deletion');
-        return false;
-      }
 
       // Optional: Check service health before allowing deletion
       final isHealthy = await loginService.checkServiceHealth();
@@ -377,17 +367,6 @@ class LoginController extends GetxController {
     }
   }
 
-  Future<void> _handleConnectionRestored() async {
-    print('LoginController: Internet connection restored. Attempting to refresh user data/session...');
-    if (currentUser.value != null && box.read('accessToken') != null) {
-      try {
-        await manualRefreshToken();
-        print('LoginController: User session or data re-validated/refreshed successfully.');
-      } catch (e) {
-        print('LoginController: Failed to refresh user data/session on reconnect: $e');
-      }
-    }
-  }
 
   void _loadCurrentUserFromStorage() {
     final storedUser = box.read('user');
@@ -398,76 +377,7 @@ class LoginController extends GetxController {
     }
   }
 
-  void checkLoginStatus() {
-    if (loginService.hasValidTokens()) {
-      _loadCurrentUserFromStorage();
-      loginService.startTokenRefreshTimer();
-    }
-  }
 
-  Future<void> _refreshToken({int retryCount = 0}) async {
-    print('LoginController: _refreshToken() called at ${DateTime.now()}');
-    final refreshToken = loginService.getCurrentRefreshToken();
-    if (refreshToken == null) {
-      print('LoginController: No refresh token available. Logging out...');
-      _clearLoginData();
-      return;
-    }
-
-    try {
-      print('LoginController: Refreshing access token...');
-      dio.Response response = await loginService.refreshToken(refreshToken);
-
-      if (response.statusCode == 200 && response.data['success'] == true) {
-        final responseData = response.data['data'];
-        final updatedUser = responseData['user'];
-        final updatedCart = responseData['cart'];
-        final updatedWishlist = responseData['wishlist'];
-
-        if (updatedUser != null) {
-          await box.write('user', updatedUser);
-          currentUser.value = updatedUser;
-        }
-
-        if (updatedCart != null) {
-          _cartController.updateCartFromLogin(updatedCart as Map<String, dynamic>);
-          await box.write('cartId', updatedCart['_id']);
-        }
-
-        if (updatedWishlist != null) {
-          _wishlistController.updateWishlistFromLogin(updatedWishlist as List<dynamic>);
-        }
-
-        print('LoginController: Token refreshed successfully');
-      } else {
-        print('LoginController: Token refresh failed. Response: ${response.data}');
-        _clearLoginData();
-        Get.offAll(() => PhoneAuthScreen());
-      }
-    } catch (e) {
-      print('LoginController: Token refresh error: $e');
-
-      if (e is dio.DioException) {
-        if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {
-          print('LoginController: Refresh token expired or invalid. Logging out...');
-          _clearLoginData();
-          Get.offAll(() => PhoneAuthScreen());
-        } else if (retryCount < 3) {
-          final delay = Duration(seconds: 5 * (retryCount + 1));
-          print('LoginController: Network error during refresh. Retrying in ${delay.inSeconds} seconds...');
-          Timer(delay, () => _refreshToken(retryCount: retryCount + 1));
-        } else {
-          print('LoginController: Max retry attempts reached. Logging out...');
-          _clearLoginData();
-          Get.offAll(() => PhoneAuthScreen());
-        }
-      } else {
-        print('LoginController: An unexpected error occurred during refresh. Logging out...');
-        _clearLoginData();
-        Get.offAll(() => PhoneAuthScreen());
-      }
-    }
-  }
 
   void _clearLoginData() {
     _otpResendTimer?.cancel();
@@ -515,16 +425,6 @@ class LoginController extends GetxController {
     }
   }
 
-  Future<void> manualRefreshToken() async {
-    if (isLoading.value) return;
-
-    isLoading.value = true;
-    try {
-      await _refreshToken();
-    } finally {
-      isLoading.value = false;
-    }
-  }
 
   Map<String, dynamic> getTokenStatus() {
     return loginService.getTokenStatus();

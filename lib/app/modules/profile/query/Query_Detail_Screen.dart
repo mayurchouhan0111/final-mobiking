@@ -30,80 +30,63 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> {
 
   bool _isSending = false;
 
-  // 🔥 KEYBOARD STATE TRACKING
-  bool _isKeyboardVisible = false;
-  bool _isKeyboardAnimating = false;
-  double _lastKeyboardHeight = 0;
+  bool _isOffHours() {
+    final now = DateTime.now();
+    // Business hours: Mon-Sat, 10:00 AM to 7:00 PM IST (GMT+5:30 approximate)
+    if (now.hour < 10 || now.hour >= 19) return true;
+    if (now.weekday == DateTime.sunday) return true;
+    return false;
+  }
 
   @override
   void initState() {
     super.initState();
     currentQuery = widget.order?.query;
+    if (currentQuery != null) {
+      Get.find<QueryGetXController>().setCurrentQuery(currentQuery!);
+    }
 
-    // 🔥 Pre-warm keyboard to reduce first-open lag
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      SystemChannels.textInput.invokeMethod('TextInput.hide');
+    // 🔥 Listen to keyboard focus to scroll up smoothly like WhatsApp
+    _textFieldFocusNode.addListener(() {
+      if (_textFieldFocusNode.hasFocus) {
+        _scrollToBottom(animated: true);
+      }
     });
   }
 
   @override
   void dispose() {
+    Get.find<QueryGetXController>().clearCurrentQuery();
     _textFieldFocusNode.dispose();
     _scrollController.dispose();
     _replyInputController.dispose();
     super.dispose();
   }
 
+  // Helper method to handle scrolling
+  void _scrollToBottom({bool animated = false}) {
+    // Delay allows the keyboard animation to complete and Scaffold to resize
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (mounted && _scrollController.hasClients) {
+        if (animated) {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        } else {
+          _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+        }
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final TextTheme textTheme = Theme.of(context).textTheme;
 
-    // 🔥 TRACK KEYBOARD STATE
-    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
-
-    // Detect keyboard animation
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-
-      final bool wasVisible = _isKeyboardVisible;
-      final bool isNowVisible = keyboardHeight > 100;
-
-      // Keyboard opening
-      if (!wasVisible && keyboardHeight > 0 && keyboardHeight < 200) {
-        if (!_isKeyboardAnimating) {
-          setState(() {
-            _isKeyboardAnimating = true;
-          });
-        }
-      }
-      // Keyboard fully open
-      else if (keyboardHeight >= 200 && _isKeyboardAnimating) {
-        setState(() {
-          _isKeyboardAnimating = false;
-          _isKeyboardVisible = true;
-        });
-      }
-      // Keyboard closing
-      else if (wasVisible && keyboardHeight < _lastKeyboardHeight && keyboardHeight > 0) {
-        if (!_isKeyboardAnimating) {
-          setState(() {
-            _isKeyboardAnimating = true;
-          });
-        }
-      }
-      // Keyboard fully closed
-      else if (keyboardHeight == 0 && _isKeyboardAnimating) {
-        setState(() {
-          _isKeyboardAnimating = false;
-          _isKeyboardVisible = false;
-        });
-      }
-
-      _lastKeyboardHeight = keyboardHeight;
-    });
-
     return Scaffold(
-      resizeToAvoidBottomInset: false,
+      resizeToAvoidBottomInset: true,
       backgroundColor: AppColors.neutralBackground,
       appBar: AppBar(
         title: Text(
@@ -127,6 +110,8 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> {
                   "Syncing",
                   "Refreshing conversation...",
                   snackPosition: SnackPosition.BOTTOM,
+                  backgroundColor: AppColors.primaryPurple,
+                  colorText: AppColors.white,
                   duration: const Duration(seconds: 2),
                 );
               }
@@ -134,45 +119,89 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> {
           ),
         ],
       ),
-      body: currentQuery == null
-          ? _buildNoQueryView(textTheme)
-          : SafeArea(
-            child: Column(
-                    children: [
-            // 🔥 WRAPPED IN REPAINT BOUNDARY
-            RepaintBoundary(
-              child: _OrderInfoSection(order: widget.order, query: currentQuery),
-            ),
-            
-            RepaintBoundary(
-              child: _buildConversationHeader(textTheme),
-            ),
-            
+      body: Obx(() {
+        final controller = Get.find<QueryGetXController>();
+        final liveQuery = controller.currentQuery ?? currentQuery;
+
+        if (liveQuery == null) {
+          return _buildNoQueryView(textTheme);
+        }
+
+        final initialMessage = ReplyModel(
+          userId: liveQuery.userEmail,
+          replyText: liveQuery.message,
+          timestamp: liveQuery.raisedAt ?? liveQuery.createdAt,
+          isAdmin: false,
+        );
+
+        final List<dynamic> fullConversation = [initialMessage, ...liveQuery.replies];
+        fullConversation.sort((a, b) {
+          final dateA = a.timestamp ?? a.createdAt ?? DateTime.now();
+          final dateB = b.timestamp ?? b.createdAt ?? DateTime.now();
+          return dateA.compareTo(dateB);
+        });
+
+        // Detect new messages and scroll accordingly
+        if (fullConversation.length > (_previousMessageCount ?? 0)) {
+          final isInitialLoad = _previousMessageCount == null || _previousMessageCount == 0;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _scrollToBottom(animated: !isInitialLoad);
+          });
+          _previousMessageCount = fullConversation.length;
+        }
+
+        return Column(
+          children: [
             Expanded(
-              child: RepaintBoundary(
-                child: Container(
-                  margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                  decoration: BoxDecoration(
-                    color: AppColors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.lightGreyBackground, width: 1),
-                  ),
-                  child: Obx(() {
-                    final liveQuery =
-                        Get.find<QueryGetXController>().currentQuery ?? currentQuery;
-                    return _buildConversationListFromQuery(liveQuery!, textTheme);
-                  }),
+              child: GestureDetector(
+                onTap: () => FocusScope.of(context).unfocus(),
+                child: CustomScrollView(
+                  controller: _scrollController,
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  cacheExtent: 1000, // Pre-render some bubbles for smoother scrolling
+                  slivers: [
+                    SliverToBoxAdapter(
+                      child: _OrderInfoSection(order: widget.order, query: liveQuery),
+                    ),
+                    SliverPersistentHeader(
+                      pinned: true,
+                      delegate: _SimpleSliverHeaderDelegate(
+                        child: Container(
+                          color: AppColors.neutralBackground,
+                          child: _buildConversationHeader(textTheme),
+                        ),
+                        maxHeight: 50,
+                        minHeight: 50,
+                      ),
+                    ),
+                    if (_isOffHours())
+                      SliverToBoxAdapter(child: _buildOffHoursBanner(textTheme)),
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      sliver: SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            final reply = fullConversation[index];
+                            final isUser = !reply.isAdmin;
+                            return Padding(
+                              key: ValueKey(reply.timestamp?.millisecondsSinceEpoch ?? index),
+                              padding: const EdgeInsets.only(bottom: 16),
+                              child: _MessageBubble(reply: reply, isUser: isUser),
+                            );
+                          },
+                          childCount: fullConversation.length,
+                        ),
+                      ),
+                    ),
+                    // Padding at the bottom so the last message isn't hidden by the input
+                    const SliverToBoxAdapter(child: SizedBox(height: 20)),
+                  ],
                 ),
               ),
             ),
-            
-            // 🔥 SHOW/HIDE INPUT BASED ON KEYBOARD STATE
-            if (currentQuery?.status != 'resolved')
-              Visibility(
-                visible: !_isKeyboardAnimating,
-                maintainSize: false,
-                maintainAnimation: false,
-                maintainState: true,
+            if (liveQuery.status != 'resolved')
+              SafeArea(
+                top: false,
                 child: OptimizedMessageInput(
                   controller: _replyInputController,
                   focusNode: _textFieldFocusNode,
@@ -180,9 +209,9 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> {
                   onSend: _sendMessage,
                 ),
               ),
-                    ],
-                  ),
-          ),
+          ],
+        );
+      }),
     );
   }
 
@@ -223,16 +252,44 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> {
     );
   }
 
-  Widget _buildConversationListFromQuery(QueryModel query, TextTheme textTheme) {
-    final initialMessage = ReplyModel(
-      userId: query.userEmail,
-      replyText: query.message,
-      timestamp: query.raisedAt ?? query.createdAt,
-      isAdmin: false,
+  Widget _buildOffHoursBanner(TextTheme textTheme) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.accentOrange.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.accentOrange.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.schedule_rounded, color: AppColors.accentOrange, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Currently Offline',
+                  style: textTheme.labelLarge?.copyWith(
+                    color: AppColors.accentOrange,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  'Support is available Mon-Sat, 10am-7pm. We\'ll respond soon.',
+                  style: textTheme.bodySmall?.copyWith(
+                    color: AppColors.accentOrange.withOpacity(0.8),
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
-
-    final fullConversation = [initialMessage, ...query.replies];
-    return _buildConversationList(fullConversation, textTheme);
   }
 
   Widget _buildConversationHeader(TextTheme textTheme) {
@@ -270,79 +327,6 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> {
     );
   }
 
-  Widget _buildConversationList(List<dynamic> replies, TextTheme textTheme) {
-    if (replies.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: const BoxDecoration(
-                color: AppColors.neutralBackground,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.chat_bubble_outline,
-                size: 32,
-                color: AppColors.textLight,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'No messages yet',
-              style: textTheme.titleMedium?.copyWith(
-                color: AppColors.textDark,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Start the conversation by sending a message',
-              style: textTheme.bodyMedium?.copyWith(color: AppColors.textLight),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      );
-    }
-
-    final sortedReplies = List<dynamic>.from(replies);
-    sortedReplies.sort((a, b) {
-      final dateA = a.timestamp ?? a.createdAt ?? DateTime.now();
-      final dateB = b.timestamp ?? b.createdAt ?? DateTime.now();
-      return dateA.compareTo(dateB);
-    });
-
-    // 🔥 ONLY scroll on new messages, not on keyboard open
-    if (sortedReplies.length > (_previousMessageCount ?? 0)) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && _scrollController.hasClients) {
-          _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-        }
-      });
-      _previousMessageCount = sortedReplies.length;
-    }
-
-    return ListView.builder(
-      controller: _scrollController,
-      padding: const EdgeInsets.all(20),
-      itemCount: sortedReplies.length,
-      physics: const ClampingScrollPhysics(),
-      cacheExtent: 500,
-      itemBuilder: (context, index) {
-        final reply = sortedReplies[index];
-        final isUser = !reply.isAdmin;
-        return Padding(
-          key: ValueKey(reply.timestamp ?? index),
-          padding: EdgeInsets.only(bottom: index < sortedReplies.length - 1 ? 16 : 0),
-          child: _MessageBubble(reply: reply, isUser: isUser),
-        );
-      },
-    );
-  }
-
   void _sendMessage() async {
     if (_replyInputController.text.trim().isEmpty || currentQuery == null) {
       return;
@@ -366,9 +350,8 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> {
         replyText: textToSend,
       );
 
-      if (mounted && _scrollController.hasClients) {
-        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-      }
+      _scrollToBottom(animated: true);
+
     } catch (e) {
       if (mounted) {
         Get.snackbar(
@@ -446,7 +429,36 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> {
   }
 }
 
-// 🔥 OPTIMIZED: RepaintBoundary + removed SingleChildScrollView
+class _SimpleSliverHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final Widget child;
+  final double maxHeight;
+  final double minHeight;
+
+  _SimpleSliverHeaderDelegate({
+    required this.child,
+    required this.maxHeight,
+    required this.minHeight,
+  });
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return SizedBox.expand(child: child);
+  }
+
+  @override
+  double get maxExtent => maxHeight;
+
+  @override
+  double get minExtent => minHeight;
+
+  @override
+  bool shouldRebuild(covariant _SimpleSliverHeaderDelegate oldDelegate) {
+    return child != oldDelegate.child ||
+        maxHeight != oldDelegate.maxHeight ||
+        minHeight != oldDelegate.minHeight;
+  }
+}
+
 class _OrderInfoSection extends StatelessWidget {
   final OrderModel? order;
   final QueryModel? query;
@@ -678,7 +690,6 @@ class _OrderInfoSection extends StatelessWidget {
   }
 }
 
-// 🔥 OPTIMIZED: RepaintBoundary on each bubble
 class _MessageBubble extends StatelessWidget {
   final dynamic reply;
   final bool isUser;

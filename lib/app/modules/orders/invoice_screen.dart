@@ -84,159 +84,343 @@ class InvoiceScreen extends StatelessWidget {
   Future<void> _downloadInvoice() async {
     try {
       final pdf = pw.Document();
-      final font = await PdfGoogleFonts.notoSansRegular();
-      final boldFont = await PdfGoogleFonts.notoSansBold();
+      final font = await PdfGoogleFonts.robotoRegular();
+      final boldFont = await PdfGoogleFonts.robotoBold();
+      final mediumFont = await PdfGoogleFonts.robotoMedium();
+      final italicFont = await PdfGoogleFonts.robotoItalic();
 
-      pw.MemoryImage? logo;
-      try {
-        final logoBytes =
-        (await rootBundle.load('assets/images/logo_main.png')).buffer.asUint8List();
-        logo = pw.MemoryImage(logoBytes);
-      } catch (e) {
-        logo = null;
-      }
+      // Calculation variables
+      final double totalAmount = order.orderAmount;
+      final double deliveryCharge = order.deliveryCharge;
+      final double totalGst = double.tryParse(order.gst ?? '0') ?? 0;
+      final double cgst = totalGst / 2;
+      final double sgst = totalGst / 2;
+      final double taxableSubtotal = totalAmount - totalGst - deliveryCharge;
+
+      final String invoiceNo = "GST-${order.orderId.substring(order.orderId.length >= 6 ? order.orderId.length - 6 : 0).toUpperCase()}";
+      final String actualDate = DateFormat('dd/MM/yyyy').format(order.createdAt != null ? order.createdAt.toLocal() : DateTime.now());
 
       pdf.addPage(
         pw.Page(
           pageFormat: PdfPageFormat.a4,
-          margin: const pw.EdgeInsets.all(32),
+          margin: const pw.EdgeInsets.all(20),
           build: (pw.Context context) {
             return pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                // 🏷️ Header
-                pw.Row(
-                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                // Header: TAX INVOICE
+                pw.Center(
+                  child: pw.Text('TAX INVOICE',
+                      style: pw.TextStyle(font: boldFont, fontSize: 16, letterSpacing: 2)),
+                ),
+                pw.SizedBox(height: 10),
+
+                // Company Info and Invoice Details Row (Converted to Table for equal heights)
+                pw.Table(
+                  border: pw.TableBorder.all(color: PdfColors.grey),
+                  columnWidths: {
+                    0: const pw.FlexColumnWidth(3),
+                    1: const pw.FlexColumnWidth(2),
+                  },
                   children: [
-                    pw.Column(
-                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    pw.TableRow(
                       children: [
-                        if (logo != null)
-                          pw.SizedBox(height: 60, width: 60, child: pw.Image(logo)),
-                        pw.SizedBox(height: 8),
-                        pw.Text('MobiKing Wholesale',
-                            style: pw.TextStyle(font: boldFont, fontSize: 20)),
-                      ],
-                    ),
-                    pw.Column(
-                      crossAxisAlignment: pw.CrossAxisAlignment.end,
-                      children: [
-                        pw.Text('INVOICE', style: pw.TextStyle(font: boldFont, fontSize: 32)),
-                        pw.SizedBox(height: 8),
-                        pw.Text('Order ID: ${order.orderId}',
-                            style: pw.TextStyle(font: font, fontSize: 11)),
-                        pw.Text(
-                          'Date: ${DateFormat('dd MMM yyyy').format(order.createdAt!.toLocal())}',
-                          style: pw.TextStyle(font: font, fontSize: 11),
+                        // Left: Company Details
+                        pw.Container(
+                          padding: const pw.EdgeInsets.all(8),
+                          child: pw.Column(
+                            crossAxisAlignment: pw.CrossAxisAlignment.start,
+                            children: [
+                              pw.Text('MOBIKING WHOLESALE', style: pw.TextStyle(font: boldFont, fontSize: 14)),
+                              pw.Text('3rd floor B-91 opp.isckon temple east of kailash,', style: pw.TextStyle(font: font, fontSize: 9)),
+                              pw.Text('New Delhi 110065', style: pw.TextStyle(font: font, fontSize: 9)),
+                              pw.Text('Contact: 8587901901', style: pw.TextStyle(font: font, fontSize: 9)),
+                              pw.Text('Email: mobiking507@gmail.com', style: pw.TextStyle(font: font, fontSize: 9)),
+                              pw.SizedBox(height: 5),
+                              pw.Text('GSTIN: 07BESPC8834B1ZG', style: pw.TextStyle(font: mediumFont, fontSize: 10)),
+                            ],
+                          ),
+                        ),
+                        // Right: Invoice No. and Date
+                        pw.Column(
+                          crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+                          children: [
+                            pw.Container(
+                              padding: const pw.EdgeInsets.all(8),
+                              decoration: const pw.BoxDecoration(
+                                border: pw.Border(bottom: pw.BorderSide(color: PdfColors.grey)),
+                              ),
+                              child: pw.Column(
+                                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                                children: [
+                                  pw.Text('Invoice No.', style: pw.TextStyle(font: font, fontSize: 8)),
+                                  pw.Text(invoiceNo, style: pw.TextStyle(font: mediumFont, fontSize: 10)),
+                                ],
+                              ),
+                            ),
+                            pw.Container(
+                              padding: const pw.EdgeInsets.all(8),
+                              child: pw.Column(
+                                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                                children: [
+                                  pw.Text('Date', style: pw.TextStyle(font: font, fontSize: 8)),
+                                  pw.Text(actualDate, style: pw.TextStyle(font: mediumFont, fontSize: 10)),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
                   ],
                 ),
-                pw.SizedBox(height: 24),
-                pw.Divider(thickness: 2),
-                pw.SizedBox(height: 16),
 
-                // 🧍 Billing Info
-                pw.Row(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    pw.Expanded(
-                      child: pw.Column(
-                        crossAxisAlignment: pw.CrossAxisAlignment.start,
-                        children: [
-                          pw.Text('BILL TO', style: pw.TextStyle(font: boldFont, fontSize: 12)),
-                          pw.SizedBox(height: 6),
-                          pw.Text(order.name ?? 'N/A', style: pw.TextStyle(font: font, fontSize: 11)),
-                          pw.SizedBox(height: 4),
-                          pw.Text(order.address ?? 'N/A',
-                              style: pw.TextStyle(font: font, fontSize: 10, color: PdfColors.grey700)),
-                        ],
-                      ),
+                // Bill To Section (Seamlessly attached without doubling the top border)
+                pw.Container(
+                  width: double.infinity,
+                  padding: const pw.EdgeInsets.all(8),
+                  decoration: const pw.BoxDecoration(
+                    border: pw.Border(
+                      left: pw.BorderSide(color: PdfColors.grey),
+                      right: pw.BorderSide(color: PdfColors.grey),
+                      bottom: pw.BorderSide(color: PdfColors.grey),
                     ),
-                    pw.Expanded(
-                      child: pw.Column(
-                        crossAxisAlignment: pw.CrossAxisAlignment.start,
-                        children: [
-                          pw.Text('FROM', style: pw.TextStyle(font: boldFont, fontSize: 12)),
-                          pw.SizedBox(height: 6),
-                          pw.Text('MobiKing Wholesale', style: pw.TextStyle(font: font, fontSize: 11)),
-                          pw.SizedBox(height: 4),
-                          pw.Text('123, Main Street, New Delhi, India',
-                              style: pw.TextStyle(font: font, fontSize: 10, color: PdfColors.grey700)),
-                          pw.Text('contact@mobiking.com',
-                              style: pw.TextStyle(font: font, fontSize: 10, color: PdfColors.grey700)),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                pw.SizedBox(height: 24),
-
-                // 🛍️ Items Table
-                pw.Table.fromTextArray(
-                  headers: ['Item Description', 'Qty', 'Unit Price', 'Amount'],
-                  data: order.items.map((item) {
-                    final totalPrice = item.price * item.quantity;
-                    return [
-                      item.productDetails?.fullName ?? 'N/A',
-                      item.quantity.toString(),
-                      '₹${item.price.toStringAsFixed(0)}',
-                      '₹${totalPrice.toStringAsFixed(0)}'
-                    ];
-                  }).toList(),
-                  headerStyle: pw.TextStyle(font: boldFont, fontSize: 11),
-                  cellStyle: pw.TextStyle(font: font, fontSize: 10),
-                  headerDecoration: const pw.BoxDecoration(color: PdfColors.grey300),
-                  border: pw.TableBorder.all(color: PdfColors.grey400),
-                  cellAlignment: pw.Alignment.centerLeft,
-                  cellPadding: const pw.EdgeInsets.all(8),
-                ),
-                pw.SizedBox(height: 24),
-
-                // 💰 Summary
-                pw.Row(
-                  mainAxisAlignment: pw.MainAxisAlignment.end,
-                  children: [
-                    pw.Container(
-                      width: 250,
-                      child: pw.Column(
-                        children: [
-                          _buildPdfSummaryRow('Subtotal',
-                              '₹${order.subtotal?.toStringAsFixed(0) ?? '0'}', font),
-                          _buildPdfSummaryRow(
-                              'Delivery Charge', '₹${order.deliveryCharge.toStringAsFixed(0)}', font),
-                          _buildPdfSummaryRow('GST', '₹${order.gst ?? 0}', font),
-                          pw.Divider(thickness: 1),
-                          pw.Row(
-                            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                            children: [
-                              pw.Text('TOTAL', style: pw.TextStyle(font: boldFont, fontSize: 14)),
-                              pw.Text('₹${order.orderAmount.toStringAsFixed(0)}',
-                                  style: pw.TextStyle(font: boldFont, fontSize: 16)),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                pw.Spacer(),
-
-                // 🧾 Footer
-                pw.Divider(thickness: 1),
-                pw.SizedBox(height: 12),
-                pw.Center(
+                  ),
                   child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
-                      pw.Text('Thank you for your business!',
-                          style: pw.TextStyle(font: boldFont, fontSize: 12)),
-                      pw.SizedBox(height: 4),
-                      pw.Text('For queries, contact: support@mobiking.com',
-                          style: pw.TextStyle(font: font, fontSize: 9, color: PdfColors.grey600)),
+                      pw.Text('Bill To:', style: pw.TextStyle(font: mediumFont, fontSize: 10)),
+                      pw.Text(order.name ?? 'N/A', style: pw.TextStyle(font: boldFont, fontSize: 11)),
+                      pw.Text('Contact: ${order.phoneNo ?? 'N/A'}', style: pw.TextStyle(font: font, fontSize: 9)),
+                      if (order.address != null)
+                        pw.Text('${order.address!}${order.city != null ? ", ${order.city}" : ""}', style: pw.TextStyle(font: font, fontSize: 9)),
+                      if (order.state != null || order.pincode != null)
+                        pw.Text('${order.state ?? ""} ${order.pincode ?? ""}', style: pw.TextStyle(font: font, fontSize: 9)),
                     ],
                   ),
+                ),
+
+                // Main Items Table (Omit top border to avoid 2px thickness with Bill To section)
+                pw.Table(
+                  border: const pw.TableBorder(
+                    left: pw.BorderSide(color: PdfColors.grey),
+                    right: pw.BorderSide(color: PdfColors.grey),
+                    bottom: pw.BorderSide(color: PdfColors.grey),
+                    verticalInside: pw.BorderSide(color: PdfColors.grey),
+                    horizontalInside: pw.BorderSide(color: PdfColors.grey),
+                  ),
+                  columnWidths: {
+                    0: const pw.FixedColumnWidth(30),
+                    1: const pw.FlexColumnWidth(3),
+                    2: const pw.FixedColumnWidth(60),
+                    3: const pw.FixedColumnWidth(25),
+                    4: const pw.FixedColumnWidth(60),
+                    5: const pw.FixedColumnWidth(35),
+                    6: const pw.FixedColumnWidth(60),
+                  },
+                  children: [
+                    // Header Row
+                    pw.TableRow(
+                      decoration: const pw.BoxDecoration(color: PdfColors.grey200),
+                      children: [
+                        _buildTableCell('S.No', boldFont, 8, isHeader: true),
+                        _buildTableCell('PARTICULARS', boldFont, 8, isHeader: true),
+                        _buildTableCell('HSN/SAC', boldFont, 8, isHeader: true),
+                        _buildTableCell('QTY', boldFont, 8, isHeader: true),
+                        _buildTableCell('EXCL PRICE', boldFont, 8, isHeader: true),
+                        _buildTableCell('GST %', boldFont, 8, isHeader: true),
+                        _buildTableCell('TAXABLE', boldFont, 8, isHeader: true),
+                      ],
+                    ),
+                    // Item Rows
+                    ...List.generate(order.items.length, (index) {
+                      final item = order.items[index];
+                      final double taxableValuePerItem = item.price / 1.18;
+                      final double totalTaxablePerItem = taxableValuePerItem * item.quantity;
+
+                      return pw.TableRow(
+                        children: [
+                          _buildTableCell((index + 1).toString(), font, 9, isHeader: true),
+                          _buildTableCell(item.productDetails?.fullName ?? 'N/A', font, 9),
+                          _buildTableCell('85044030', font, 9, isHeader: true),
+                          _buildTableCell(item.quantity.toString(), font, 9, isHeader: true),
+                          _buildTableCell(taxableValuePerItem.toStringAsFixed(2), font, 9, isHeader: true),
+                          _buildTableCell('18%', font, 9, isHeader: true),
+                          _buildTableCell(totalTaxablePerItem.toStringAsFixed(2), font, 9, isHeader: true),
+                        ],
+                      );
+                    }),
+                    // Total Row
+                    pw.TableRow(
+                      children: [
+                        _buildTableCell('', boldFont, 9),
+                        _buildTableCell('TOTAL', boldFont, 9, isHeader: true),
+                        _buildTableCell('', font, 9),
+                        _buildTableCell(order.items.fold(0, (sum, item) => (sum as int) + item.quantity).toString(), mediumFont, 9, isHeader: true),
+                        _buildTableCell('', font, 9),
+                        _buildTableCell('', font, 9),
+                        _buildTableCell(taxableSubtotal.toStringAsFixed(2), boldFont, 10, isHeader: true),
+                      ],
+                    ),
+                  ],
+                ),
+
+                // Combined Summary Section (Converted to Table)
+                pw.Table(
+                  border: const pw.TableBorder(
+                    left: pw.BorderSide(color: PdfColors.grey),
+                    right: pw.BorderSide(color: PdfColors.grey),
+                    bottom: pw.BorderSide(color: PdfColors.grey),
+                    verticalInside: pw.BorderSide(color: PdfColors.grey),
+                  ),
+                  columnWidths: {
+                    0: const pw.FlexColumnWidth(3),
+                    1: const pw.FlexColumnWidth(2),
+                  },
+                  children: [
+                    pw.TableRow(
+                      children: [
+                        // Amount in Words Box
+                        pw.Container(
+                          padding: const pw.EdgeInsets.all(8),
+                          child: pw.Column(
+                            crossAxisAlignment: pw.CrossAxisAlignment.start,
+                            children: [
+                              pw.Text('Amount in Words:', style: pw.TextStyle(font: mediumFont, fontSize: 9)),
+                              pw.SizedBox(height: 4),
+                              pw.Text(_numberToWords(totalAmount), style: pw.TextStyle(font: italicFont, fontSize: 9)),
+                            ],
+                          ),
+                        ),
+                        // Totals Breakdown Box
+                        pw.Column(
+                          crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+                          children: [
+                            // Small Summary Rows
+                            pw.Container(
+                              padding: const pw.EdgeInsets.all(6),
+                              child: pw.Column(
+                                children: [
+                                  _buildSummaryRowSmall('Taxable Value', 'INR ${taxableSubtotal.toStringAsFixed(2)}', font),
+                                  _buildSummaryRowSmall('CGST (9%) (+)', 'INR ${cgst.toStringAsFixed(2)}', font),
+                                  _buildSummaryRowSmall('SGST (9%) (+)', 'INR ${sgst.toStringAsFixed(2)}', font),
+                                  if (deliveryCharge > 0)
+                                    _buildSummaryRowSmall('Delivery Charge', 'INR ${deliveryCharge.toStringAsFixed(2)}', font),
+                                ],
+                              ),
+                            ),
+                            // Prominent Total Amount
+                            pw.Container(
+                              padding: const pw.EdgeInsets.all(6),
+                              decoration: const pw.BoxDecoration(
+                                color: PdfColors.grey100,
+                                border: pw.Border(
+                                  top: pw.BorderSide(color: PdfColors.grey),
+                                ),
+                              ),
+                              child: pw.Column(
+                                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                                children: [
+                                  pw.Text('TOTAL AMOUNT', style: pw.TextStyle(font: mediumFont, fontSize: 9, letterSpacing: 0.5)),
+                                  pw.Text('INR ${totalAmount.toStringAsFixed(2)}',
+                                      style: pw.TextStyle(font: boldFont, fontSize: 16)),
+                                  pw.Divider(color: PdfColors.grey, thickness: 0.5),
+                                  pw.Row(
+                                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      pw.Text('Mode', style: pw.TextStyle(font: font, fontSize: 8)),
+                                      pw.Text(order.method.toUpperCase(), style: pw.TextStyle(font: font, fontSize: 8)),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+
+                pw.SizedBox(height: 10),
+
+                // GST Breakdown Table
+                pw.Table(
+                  border: pw.TableBorder.all(color: PdfColors.grey),
+                  children: [
+                    pw.TableRow(
+                      decoration: const pw.BoxDecoration(color: PdfColors.grey200),
+                      children: [
+                        _buildTableCell('HSN/SAC', boldFont, 8, isHeader: true),
+                        _buildTableCell('Taxable Amt', boldFont, 8, isHeader: true),
+                        _buildTableCell('CGST (9%)', boldFont, 8, isHeader: true),
+                        _buildTableCell('SGST (9%)', boldFont, 8, isHeader: true),
+                        _buildTableCell('Total Tax', boldFont, 8, isHeader: true),
+                      ],
+                    ),
+                    pw.TableRow(
+                      children: [
+                        _buildTableCell('85044030', font, 9, isHeader: true),
+                        _buildTableCell(taxableSubtotal.toStringAsFixed(2), font, 9, isHeader: true),
+                        _buildTableCell(cgst.toStringAsFixed(2), font, 9, isHeader: true),
+                        _buildTableCell(sgst.toStringAsFixed(2), font, 9, isHeader: true),
+                        _buildTableCell(totalGst.toStringAsFixed(2), font, 9, isHeader: true),
+                      ],
+                    ),
+                  ],
+                ),
+
+                pw.SizedBox(height: 10),
+
+                // Terms and Bank Details block (Converted to Table)
+                pw.Table(
+                  border: pw.TableBorder.all(color: PdfColors.grey),
+                  columnWidths: {
+                    0: const pw.FlexColumnWidth(3),
+                    1: const pw.FlexColumnWidth(1),
+                  },
+                  children: [
+                    pw.TableRow(
+                      children: [
+                        // Left: Terms and Bank
+                        pw.Container(
+                          padding: const pw.EdgeInsets.all(8),
+                          child: pw.Column(
+                            crossAxisAlignment: pw.CrossAxisAlignment.start,
+                            children: [
+                              pw.Text('Terms / Declaration', style: pw.TextStyle(font: boldFont, fontSize: 9)),
+                              pw.Text('1. Goods once sold will not be taken back or exchange', style: pw.TextStyle(font: font, fontSize: 8)),
+                              pw.Text('2. Mobiking will not be responsible for any warranty', style: pw.TextStyle(font: font, fontSize: 8)),
+                              pw.Text('3. All the disputes are subject to delhi jurisdiction only', style: pw.TextStyle(font: font, fontSize: 8)),
+                              pw.SizedBox(height: 10),
+                              pw.Text('Bank Details -', style: pw.TextStyle(font: boldFont, fontSize: 9)),
+                              pw.Text('Bank Name : MOBIKING', style: pw.TextStyle(font: font, fontSize: 8)),
+                              pw.Text('Account No. : 50200048030390', style: pw.TextStyle(font: font, fontSize: 8)),
+                              pw.Text('Branch & IFSC : HDFC0000480', style: pw.TextStyle(font: font, fontSize: 8)),
+                            ],
+                          ),
+                        ),
+                        // Right: Signature
+                        pw.Container(
+                          padding: const pw.EdgeInsets.all(8),
+                          child: pw.Column(
+                            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                            children: [
+                              pw.Text('For, Mobiking', style: pw.TextStyle(font: mediumFont, fontSize: 9)),
+                              pw.SizedBox(height: 40), // Force distance between elements
+                              pw.Text('Authorised Signatory', style: pw.TextStyle(font: font, fontSize: 8)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+
+                pw.SizedBox(height: 10),
+                pw.Center(
+                  child: pw.Text('This is a computer generated invoice and does not require signature',
+                      style: pw.TextStyle(font: font, fontSize: 8, color: PdfColors.grey700)),
                 ),
               ],
             );
@@ -246,33 +430,80 @@ class InvoiceScreen extends StatelessWidget {
 
       await Printing.layoutPdf(onLayout: (PdfPageFormat format) async => pdf.save());
       Get.snackbar(
-        'Success',
-        'Invoice downloaded successfully!',
-        backgroundColor: AppColors.success,
+        'Invoice',
+        'Invoice document generated for printing/saving.',
+        backgroundColor: AppColors.primaryPurple,
         colorText: AppColors.white,
+        snackPosition: SnackPosition.BOTTOM,
       );
     } catch (e, stackTrace) {
-      print('Error downloading invoice: $e\n$stackTrace');
+      print('Error generating invoice: $e\n$stackTrace');
       Get.snackbar(
         'Error',
-        'Failed to download invoice. Please try again.',
+        'Failed to generate invoice.',
         backgroundColor: AppColors.danger,
         colorText: AppColors.white,
       );
     }
   }
 
-  pw.Widget _buildPdfSummaryRow(String label, String value, pw.Font font) {
+  // Updated to include structural wrapping for absolute centering/alignment
+  pw.Widget _buildTableCell(String text, pw.Font font, double fontSize, {bool isHeader = false}) {
+    return pw.Container(
+      padding: const pw.EdgeInsets.all(5),
+      alignment: isHeader ? pw.Alignment.center : pw.Alignment.centerLeft,
+      child: pw.Text(
+        text,
+        style: pw.TextStyle(font: font, fontSize: fontSize),
+        textAlign: isHeader ? pw.TextAlign.center : pw.TextAlign.left,
+      ),
+    );
+  }
+
+  pw.Widget _buildSummaryRowSmall(String label, String value, pw.Font font) {
     return pw.Padding(
-      padding: const pw.EdgeInsets.symmetric(vertical: 4),
+      padding: const pw.EdgeInsets.symmetric(vertical: 2),
       child: pw.Row(
         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
         children: [
-          pw.Text(label, style: pw.TextStyle(font: font, fontSize: 11)),
-          pw.Text(value, style: pw.TextStyle(font: font, fontSize: 11)),
+          pw.Text(label, style: pw.TextStyle(font: font, fontSize: 9)),
+          pw.Text(value, style: pw.TextStyle(font: font, fontSize: 9)),
         ],
       ),
     );
+  }
+
+  String _numberToWords(double amount) {
+    int total = amount.floor();
+    if (total == 0) return "Zero Rupees Only";
+
+    String words = "";
+
+    int crores = total ~/ 10000000;
+    total %= 10000000;
+    if (crores > 0) words += "${_convertLessThanThousand(crores)} Crore ";
+
+    int lakhs = total ~/ 100000;
+    total %= 100000;
+    if (lakhs > 0) words += "${_convertLessThanThousand(lakhs)} Lakh ";
+
+    int thousands = total ~/ 1000;
+    total %= 1000;
+    if (thousands > 0) words += "${_convertLessThanThousand(thousands)} Thousand ";
+
+    if (total > 0) words += _convertLessThanThousand(total);
+
+    return "${words.trim()} Rupees Only";
+  }
+
+  String _convertLessThanThousand(int n) {
+    final units = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten",
+      "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
+    final tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+
+    if (n < 20) return units[n];
+    if (n < 100) return "${tens[n ~/ 10]}${n % 10 != 0 ? " ${units[n % 10]}" : ""}";
+    return "${units[n ~/ 100]} Hundred${n % 100 != 0 ? " and ${_convertLessThanThousand(n % 100)}" : ""}";
   }
 
   // --------------------------------------------------------------------------
@@ -436,6 +667,100 @@ class InvoiceScreen extends StatelessWidget {
                   ],
                 ),
               ),
+
+              // 🚩 Rejected Request Reason (Return/Cancel)
+              ...order.requests.where((r) => r.status.toLowerCase() == 'rejected').map((request) {
+                return Container(
+                  margin: const EdgeInsets.only(top: 16),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.danger.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.danger.withOpacity(0.3)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.error_outline, color: AppColors.danger, size: 20),
+                          const SizedBox(width: 8),
+                          Text(
+                            '${request.type} Request Rejected',
+                            style: textTheme.titleSmall?.copyWith(
+                              color: AppColors.danger,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (request.reason != null && request.reason!.isNotEmpty) ...[
+                        const SizedBox(height: 10),
+                        Text(
+                          'Rejection Reason:',
+                          style: textTheme.bodySmall?.copyWith(
+                            color: AppColors.textLight,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          request.reason!,
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: AppColors.textDark,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                );
+              }),
+
+              // 🚫 Main Order Rejection/Cancellation Reason
+              if ((order.status.toLowerCase() == 'rejected' || order.status.toLowerCase() == 'cancelled') &&
+                  order.reason != null && order.reason!.isNotEmpty)
+                Container(
+                  margin: const EdgeInsets.only(top: 16),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.danger.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.danger.withOpacity(0.3)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.report_problem_outlined, color: AppColors.danger, size: 20),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Order ${order.status.capitalizeFirst}',
+                            style: textTheme.titleSmall?.copyWith(
+                              color: AppColors.danger,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        'Reason:',
+                        style: textTheme.bodySmall?.copyWith(
+                          color: AppColors.textLight,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        order.reason!,
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: AppColors.textDark,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
 
               const SizedBox(height: 16),
 

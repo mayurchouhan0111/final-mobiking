@@ -8,6 +8,7 @@ import 'package:collection/collection.dart'; // ✅ ADDED: Required for firstWhe
 import '../data/product_model.dart';
 import '../services/cart_service.dart';
 import 'connectivity_controller.dart';
+import '../services/analytics_service.dart';
 
 class CartController extends GetxController {
   RxMap<String, dynamic> cartData = <String, dynamic>{}.obs;
@@ -53,18 +54,28 @@ class CartController extends GetxController {
   void _updateProductVariantQuantities() {
     print('🛒 CartController: Recalculating product variant quantities...');
     final Map<String, int> newQuantities = {};
-    for (var item in cartItems) {
-      final itemProductId = item['productId']?['_id'];
-      final itemVariantName = item['variantName'];
-      final int quantity = item['quantity'] as int? ?? 0;
+    for (var item in (cartData['items'] as List? ?? [])) {
+      if (item is Map) {
+        final itemProductId = _extractProductId(item['productId']);
+        final itemVariantName = item['variantName'];
+        final int quantity = item['quantity'] as int? ?? 0;
 
-      if (itemProductId != null && itemVariantName != null) {
-        final key = '${itemProductId}_$itemVariantName';
-        newQuantities[key] = quantity;
+        if (itemProductId != null && itemVariantName != null) {
+          final key = '${itemProductId}_$itemVariantName';
+          newQuantities[key] = quantity;
+        }
       }
     }
     productVariantQuantities.value = newQuantities;
     print('🛒 CartController: Finished recalculating product variant quantities. Total unique variants: ${productVariantQuantities.length}');
+  }
+
+  // Helper to extract ID from either String or Map
+  String? _extractProductId(dynamic productData) {
+    if (productData == null) return null;
+    if (productData is String) return productData;
+    if (productData is Map) return productData['_id']?.toString() ?? productData['id']?.toString();
+    return null;
   }
 
   Future<void> fetchAndLoadCartData() async {
@@ -72,19 +83,23 @@ class CartController extends GetxController {
     isLoading.value = true;
 
     try {
-      final String? cartId = box.read('cartId');
-      if (userId == null || cartId == null) {
-        print('🛒 CartController: User ID or Cart ID not found, cannot fetch cart from backend. Loading from local storage fallback.');
+      if (userId == null) {
+        print('🛒 CartController: User ID not found, cannot fetch cart from backend. Loading from local storage fallback.');
         await _loadCartDataFromLocalStorage();
         return;
       }
 
-      final apiResponse = await CartService().fetchCart(cartId: cartId);
+      // Updated: fetchCart no longer requires cartId in the URL as it uses the Authorization token
+      final apiResponse = await CartService().fetchCart();
       print('🛒 CartController: Fetched cart from backend: $apiResponse');
 
-      if (apiResponse != null && apiResponse['success'] == true && apiResponse['data']?['cart'] is Map) {
-        final Map<String, dynamic> fetchedCart = Map<String, dynamic>.from(apiResponse['data']['cart']);
-        cartData.value = fetchedCart;
+      if (apiResponse != null && apiResponse['success'] == true && apiResponse['data'] is Map) {
+        final Map<String, dynamic> fetchedCart = Map<String, dynamic>.from(apiResponse['data']);
+
+        // Ensure we store the latest cart ID for other side effects if needed
+        if (fetchedCart.containsKey('_id')) {
+          await box.write('cartId', fetchedCart['_id'].toString());
+        }
 
         // ✅ FIXED: Proper type handling for GetStorage
         var userInStorage = box.read('user');
@@ -93,7 +108,9 @@ class CartController extends GetxController {
           updatedUser['cart'] = fetchedCart;
           await box.write('user', updatedUser);
         }
-        print('🛒 CartController: Cart data updated from backend: ${cartData.value}');
+
+        cartData.value = fetchedCart;
+        print('🛒 CartController: Fresh API data stored and then shown.');
       } else {
         print('🛒 CartController: Backend cart fetch failed or returned invalid data. Loading from local storage fallback.');
         await _loadCartDataFromLocalStorage();
@@ -143,7 +160,7 @@ class CartController extends GetxController {
       if (cartData.containsKey('items') && cartData['items'] is List) {
         final List<Map<String, dynamic>> validItems = [];
         for (var item in (cartData['items'] as List)) {
-          if (item is Map && item.containsKey('productId') && item['productId'] is Map) {
+          if (item is Map && item.containsKey('productId')) {
             validItems.add(Map<String, dynamic>.from(item));
           } else {
             debugPrint('🛒 CartController: Malformed cart item found: $item');
@@ -161,7 +178,7 @@ class CartController extends GetxController {
   Map<String, int> getCartItemsForProduct({required String productId}) {
     final Map<String, int> productVariantsInCart = {};
     for (var item in cartItems) {
-      final itemProductId = item['productId']?['_id'];
+      final itemProductId = _extractProductId(item['productId']);
       if (itemProductId == productId) {
         final itemVariantName = item['variantName'] as String? ?? 'Default';
         final int quantity = item['quantity'] as int? ?? 0;
@@ -183,7 +200,7 @@ class CartController extends GetxController {
   int getTotalQuantityForProduct({required String productId}) {
     int totalQuantity = 0;
     for (var item in cartItems) {
-      final itemProductId = item['productId']?['_id'];
+      final itemProductId = _extractProductId(item['productId']);
       if (itemProductId == productId) {
         totalQuantity += item['quantity'] as int? ?? 0;
       }
@@ -280,6 +297,22 @@ class CartController extends GetxController {
 
       if (response['success'] == true) {
         await _updateStorageAndCartData(response);
+
+        // ✅ LOG ANALYTICS: Add to Cart
+        try {
+          if (product != null) {
+            Get.find<AnalyticsService>().logAddToCart(
+              itemId: productId,
+              itemName: product.fullName ?? 'Product',
+              itemCategory: product.category?.name ?? 'General',
+              quantity: 1,
+              price: product.sellingPrice.isNotEmpty ? (product.sellingPrice.last.price?.toDouble() ?? 0.0) : 0.0,
+            );
+          }
+        } catch (e) {
+          debugPrint('📊 Analytics Error: $e');
+        }
+
         return true;
       } else {
         final errorMessage = response['message'] ?? 'Failed to add product to cart.';

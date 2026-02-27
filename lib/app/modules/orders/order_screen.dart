@@ -734,7 +734,7 @@ class _OrderCard extends StatelessWidget {
                     ),
                   ),
                 if (order.scans?.isNotEmpty == true) const SizedBox(width: 12),
-                if (order.status.toLowerCase() == 'delivered')
+                if (['delivered', 'accepted', 'shipped', 'cancelled', 'rejected'].contains(order.status.toLowerCase()))
                   OutlinedButton(
                     onPressed: () {
                       Get.to(() => InvoiceScreen(order: order));

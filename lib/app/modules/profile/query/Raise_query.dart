@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import '../../../controllers/order_controller.dart';
 import '../../../controllers/query_getx_controller.dart';
 import '../../../themes/app_theme.dart';
 
@@ -51,12 +52,23 @@ class _RaiseQueryDialogState extends State<RaiseQueryDialog> with TickerProvider
         message: _messageController.text.trim(),
         orderId: widget.orderId,
       );
-      _showSuccessSnackbar();
-      Get.back(); // Dismiss dialog
-      // Wait for 5 seconds and then refresh the queries
-      Future.delayed(const Duration(seconds: 5), () {
-        queryController.refreshMyQueries();
-      });
+      
+      Get.snackbar(
+        'Success',
+        'Your query has been raised successfully.',
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      
+      // Close the dialog
+      Navigator.of(context).pop(); 
+
+      // Refresh data
+      queryController.refreshMyQueries();
+      
+      final orderController = Get.find<OrderController>();
+      orderController.fetchOrderHistory();
     } catch (e) {
       debugPrint('Error submitting query: $e');
       Get.snackbar(
@@ -262,7 +274,7 @@ class _RaiseQueryDialogState extends State<RaiseQueryDialog> with TickerProvider
           child: TextButton(
             onPressed: () {
               HapticFeedback.lightImpact();
-              Get.back();
+              Navigator.of(context).pop();
             },
             style: TextButton.styleFrom(
               foregroundColor: AppColors.textMedium,

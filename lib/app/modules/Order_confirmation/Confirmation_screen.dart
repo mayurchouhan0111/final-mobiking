@@ -47,6 +47,18 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
   void initState() {
     super.initState();
     _lottieController = AnimationController(vsync: this);
+    
+    // Load fallback data immediately for instant display
+    final fallbackData = _getOrderData();
+    if (fallbackData != null) {
+      try {
+        _confirmedOrder.value = OrderModel.fromJson(fallbackData);
+        debugPrint('✅ Initialized with fallback order data');
+      } catch (e) {
+        debugPrint('⚠️ Error parsing fallback order data: $e');
+      }
+    }
+    
     _fetchOrderDetailsAndAnimate();
   }
 
@@ -67,6 +79,11 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
   }
 
   String? _getOrderId() {
+    // Try to get from confirmed order if we have it
+    if (_confirmedOrder.value != null) {
+      return _confirmedOrder.value!.id;
+    }
+    
     if (widget.orderId != null && widget.orderId!.isNotEmpty) {
       return widget.orderId;
     }
@@ -108,7 +125,7 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
     _showLottie.value = true;
     _isLoadingOrderDetails.value = true;
     _errorMessage.value = '';
-    _confirmedOrder.value = null;
+    // Don't clear _confirmedOrder here to keep fallback data visible if available
 
     final Completer<void> dataFetchCompleter = Completer<void>();
     _tryFetchWithOrderId(dataFetchCompleter);
@@ -129,7 +146,9 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
   void _tryFetchWithOrderId(Completer<void> completer) {
     final String? orderId = _getOrderId();
     if (orderId == null || orderId.isEmpty) {
-      _errorMessage.value = 'No recent order ID found. Please check your order history.';
+      if (_confirmedOrder.value == null) {
+        _errorMessage.value = 'No recent order ID found. Please check your order history.';
+      }
       completer.complete();
       return;
     }
@@ -137,20 +156,84 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
     (() async {
       try {
         final fetchedOrder = await _orderService.getOrderDetails(orderId: orderId);
+        
+        // Merge with existing fallback data if names are missing in API response
+        if (_confirmedOrder.value != null && _confirmedOrder.value!.items.isNotEmpty) {
+           final fallbackOrder = _confirmedOrder.value!;
+           bool needsMerge = false;
+           
+           for (var item in fetchedOrder.items) {
+             if (item.productDetails == null || 
+                 (item.productDetails!.name.isEmpty && item.productDetails!.fullName.isEmpty)) {
+               needsMerge = true;
+               break;
+             }
+           }
+           
+           if (needsMerge) {
+              debugPrint('🔄 API response missing product names. Merging with fallback info...');
+              
+              final List<OrderItemModel> patchedItems = fetchedOrder.items.map((item) {
+                // If this item is missing details, try to find it in the fallback
+                if (item.productDetails == null || 
+                    (item.productDetails!.name.isEmpty && item.productDetails!.fullName.isEmpty)) {
+                  
+                  // Try to find a matching item in the fallback order
+                  // Match by variant name and product ID (if available) or price
+                  final matchingFallback = fallbackOrder.items.firstWhereOrNull((fi) {
+                    if (fi.variantName != item.variantName) return false;
+                    
+                    // If we have IDs, use them
+                    if (fi.productDetails?.id != null && item.productDetails?.id != null && 
+                        fi.productDetails!.id.isNotEmpty && fi.productDetails!.id == item.productDetails!.id) {
+                      return true;
+                    }
+                    
+                    // Fallback to price matching if IDs are unavailable or don't match
+                    return (fi.price - item.price).abs() < 0.01;
+                  });
+                  
+                  if (matchingFallback != null && matchingFallback.productDetails != null) {
+                    debugPrint('✅ Found fallback details for item: ${item.variantName}');
+                    return OrderItemModel(
+                      id: item.id.isNotEmpty ? item.id : matchingFallback.id,
+                      productDetails: matchingFallback.productDetails,
+                      variantName: item.variantName,
+                      quantity: item.quantity,
+                      price: item.price,
+                    );
+                  }
+                }
+                return item;
+              }).toList();
+              
+              // Create a patched version of the order
+              final orderJson = fetchedOrder.toJson();
+              orderJson['items'] = patchedItems.map((i) => i.toJson()).toList();
+              
+              _confirmedOrder.value = OrderModel.fromJson(orderJson);
+              _errorMessage.value = '';
+              completer.complete();
+              return;
+           }
+        }
+        
         _confirmedOrder.value = fetchedOrder;
         _errorMessage.value = '';
       } catch (e) {
-        final fallbackOrderData = _getOrderData();
-        if (fallbackOrderData != null) {
-          try {
-            final OrderModel parsedOrder = OrderModel.fromJson(fallbackOrderData);
-            _confirmedOrder.value = parsedOrder;
-            _errorMessage.value = 'Could not fetch latest details. Displaying saved info.';
-          } catch (parseError) {
-            _errorMessage.value = 'Unable to load any order details. Please try again.';
-          }
-        } else {
-          _errorMessage.value = 'Unable to load order details. Please check your connection.';
+        if (_confirmedOrder.value == null) {
+           final fallbackOrderData = _getOrderData();
+           if (fallbackOrderData != null) {
+             try {
+               final OrderModel parsedOrder = OrderModel.fromJson(fallbackOrderData);
+               _confirmedOrder.value = parsedOrder;
+               _errorMessage.value = 'Could not fetch latest details. Displaying saved info.';
+             } catch (parseError) {
+               _errorMessage.value = 'Unable to load any order details. Please try again.';
+             }
+           } else {
+             _errorMessage.value = 'Unable to load order details. Please check your connection.';
+           }
         }
       } finally {
         completer.complete();
@@ -647,7 +730,13 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  item.productDetails?.name ?? item.productDetails?.fullName ?? '',
+                  () {
+                    final p = item.productDetails;
+                    if (p == null) return 'Product';
+                    if (p.fullName.isNotEmpty) return p.fullName;
+                    if (p.name.isNotEmpty) return p.name;
+                    return 'Product';
+                  }(),
                   style: textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                     fontSize: 14,

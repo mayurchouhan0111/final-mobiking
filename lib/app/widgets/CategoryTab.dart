@@ -11,6 +11,7 @@ import '../controllers/sub_category_controller.dart';
 import '../controllers/tab_controller_getx.dart';
 import '../data/Home_model.dart';
 import '../modules/home/widgets/_buildSectionView.dart';
+import 'package:shimmer/shimmer.dart';
 import '../themes/app_theme.dart';
 
 class CustomTabBarSection extends StatefulWidget {
@@ -186,12 +187,32 @@ class _CustomTabBarSectionState extends State<CustomTabBarSection> {
       final HomeLayoutModel? homeLayout = homeController.homeData;
       final List<CategoryModel> categories = homeLayout?.categories ?? [];
 
-      if (homeController.isLoading || categories.isEmpty) {
-        debugPrint('CustomTabBarSection: Loading or categories empty. isLoading: ${homeController.isLoading}, categories.length: ${categories.length}');
-        return const SizedBox(
+      if (homeController.isLoading && categories.isEmpty) {
+        return SizedBox(
           height: 70,
-          child: Center(
-            child: CircularProgressIndicator(color: AppColors.white),
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: 5,
+            itemBuilder: (_, __) => Padding(
+              padding: const EdgeInsets.only(right: 16, top: 8, bottom: 8),
+              child: Column(
+                children: [
+                  Shimmer.fromColors(
+                    baseColor: Colors.grey[300]!,
+                    highlightColor: Colors.grey[100]!,
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         );
       }
@@ -277,12 +298,53 @@ class CustomTabBarViewSection extends StatelessWidget {
       final selectedIndex = controller.selectedIndex.value;
 
       // Initial Loading State
-      if (homeController.isLoading || categories.isEmpty) {
-        return Container(
-          height: 300,
-          color: AppColors.neutralBackground,
-          child: const Center(
-            child: CircularProgressIndicator(color: AppColors.accentNeon),
+      if (homeController.isLoading && categories.isEmpty) {
+        return ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: 2,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          itemBuilder: (_, __) => Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Shimmer.fromColors(
+                  baseColor: Colors.grey[300]!,
+                  highlightColor: Colors.grey[100]!,
+                  child: Container(
+                    width: 150,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: 3,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    childAspectRatio: 0.8,
+                  ),
+                  itemBuilder: (_, __) => Shimmer.fromColors(
+                    baseColor: Colors.grey[300]!,
+                    highlightColor: Colors.grey[100]!,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       }

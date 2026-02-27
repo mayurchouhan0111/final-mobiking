@@ -25,7 +25,7 @@ void callbackDispatcher() {
       // Initialize GetX
       Get.put(LoginController());
       final loginController = Get.find<LoginController>();
-      await loginController.manualRefreshToken();
+      // await loginController.manualRefreshToken(); // Removed as refresh token logic is no longer used
       return Future.value(true);
     } catch (e) {
       print('Background task failed: $e');

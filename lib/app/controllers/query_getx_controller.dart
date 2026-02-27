@@ -340,6 +340,9 @@ class QueryGetXController extends GetxController {
       final orderController = Get.find<OrderController>();
       await orderController.fetchOrderHistory();
 
+      // Refresh the current query to update the chat UI immediately
+      await refreshCurrentQuery();
+
       _replyInputController.clear();
       _showModernSnackbar(
         title: 'Success',

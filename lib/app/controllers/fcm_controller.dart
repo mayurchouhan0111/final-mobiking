@@ -10,7 +10,7 @@ import '../services/firebase_messaging_service.dart';
 class FcmController extends GetxController {
   // Access the singleton instance of your FCM service.
   // This service handles the direct interaction with Firebase Messaging APIs.
-  final FirebaseMessagingService _firebaseMessagingService = FirebaseMessagingService();
+  final FirebaseMessagingService _firebaseMessagingService = Get.find<FirebaseMessagingService>();
 
   // Observable to store the FCM token for UI display.
   // It's initialized with a placeholder message.

@@ -286,15 +286,15 @@ class _FloatingCartButtonState extends State<FloatingCartButton>
                     children: [
                       Text(
                         widget.label, // e.g., "View Cart"
-                        style: GoogleFonts.poppins(
+                        style: GoogleFonts.inter(
                           color: Colors.white,
-                          fontWeight: FontWeight.w700, // Make it bolder
+                          fontWeight: FontWeight.w800, // Make it bolder
                           fontSize: 16, // Increased font size
                         ),
                       ),
                       Text(
                         "${widget.itemCount} items", // e.g., "2 ITEMS"
-                        style: GoogleFonts.poppins(
+                        style: GoogleFonts.inter(
                           color: Colors.white.withOpacity(0.8), // Slightly subdued color
                           fontWeight: FontWeight.w500, // Medium weight
                           fontSize: 12, // Increased font size

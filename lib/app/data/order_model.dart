@@ -179,8 +179,29 @@ class OrderItemModel {
   factory OrderItemModel.fromJson(Map<String, dynamic> json) {
     return OrderItemModel(
       id: json['_id']?.toString() ?? '',
-      productDetails: json['productId'] != null && json['productId'] is Map<String, dynamic>
-          ? OrderItemProductModel.fromJson(json['productId'] as Map<String, dynamic>)
+      productDetails: json['productId'] != null 
+          ? (json['productId'] is Map<String, dynamic>
+              ? OrderItemProductModel.fromJson(json['productId'] as Map<String, dynamic>)
+              : OrderItemProductModel(
+                  id: json['productId'].toString(),
+                  name: '',
+                  fullName: '',
+                  slug: '',
+                  description: '',
+                  active: true,
+                  newArrival: false,
+                  liked: false,
+                  bestSeller: false,
+                  recommended: false,
+                  sellingPrice: [],
+                  categoryId: '',
+                  images: [],
+                  totalStock: 0,
+                  stockIds: [],
+                  orderIds: [],
+                  groupIds: [],
+                  variants: {},
+                ))
           : null,
       variantName: json['variantName']?.toString() ?? '',
       quantity: (json['quantity'] as num?)?.toInt() ?? 0,

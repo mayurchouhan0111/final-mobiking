@@ -9,7 +9,7 @@ class SubCategoryService {
   final String baseUrl = 'https://boxbudy.com/api/v1/categories/';
   static const String boxName = 'subcategories';
   static const String lastFetchKey = 'last_fetch_timestamp';
-  static const Duration cacheValidDuration = Duration(hours: 1);
+  static const Duration cacheValidDuration = Duration(minutes: 10);
 
   late Box<SubCategory> _subCategoriesBox;  // ✅ Added generic type
   late Box<String> _metadataBox;            // ✅ Added generic type
