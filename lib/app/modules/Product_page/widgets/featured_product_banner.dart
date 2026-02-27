@@ -4,11 +4,7 @@ class FeaturedProductBanner extends StatelessWidget {
   final String imageUrl;
   final VoidCallback? onTap;
 
-  const FeaturedProductBanner({
-    super.key,
-    required this.imageUrl,
-    this.onTap,
-  });
+  const FeaturedProductBanner({super.key, required this.imageUrl, this.onTap});
 
   @override
   Widget build(BuildContext context) {

@@ -19,7 +19,8 @@ class AddressCard extends StatefulWidget {
   State<AddressCard> createState() => _AddressCardState();
 }
 
-class _AddressCardState extends State<AddressCard> with SingleTickerProviderStateMixin {
+class _AddressCardState extends State<AddressCard>
+    with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _sizeAnimation;
   bool isExpanded = false;
@@ -29,7 +30,9 @@ class _AddressCardState extends State<AddressCard> with SingleTickerProviderStat
     super.initState();
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 300), // Consistent with your theme's animation duration
+      duration: const Duration(
+        milliseconds: 300,
+      ), // Consistent with your theme's animation duration
     );
     _sizeAnimation = CurvedAnimation(
       parent: _animationController,
@@ -61,8 +64,13 @@ class _AddressCardState extends State<AddressCard> with SingleTickerProviderStat
     return GestureDetector(
       onTap: _toggleExpansion,
       child: Container(
-        padding: const EdgeInsets.all(20), // Unchanged horizontal, consistent with original
-        margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 4), // Adjusted vertical margin
+        padding: const EdgeInsets.all(
+          20,
+        ), // Unchanged horizontal, consistent with original
+        margin: const EdgeInsets.symmetric(
+          vertical: 12,
+          horizontal: 4,
+        ), // Adjusted vertical margin
         decoration: BoxDecoration(
           color: AppColors.neutralBackground,
           borderRadius: BorderRadius.circular(15),
@@ -80,7 +88,11 @@ class _AddressCardState extends State<AddressCard> with SingleTickerProviderStat
             /// Recipient Name
             Row(
               children: [
-                const Icon(Icons.person_outline, color: AppColors.textDark, size: 24),
+                const Icon(
+                  Icons.person_outline,
+                  color: AppColors.textDark,
+                  size: 24,
+                ),
                 const SizedBox(width: 12), // Unchanged horizontal spacing
                 Expanded(
                   child: Text(
@@ -115,32 +127,46 @@ class _AddressCardState extends State<AddressCard> with SingleTickerProviderStat
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 12), // Adjusted vertical spacing
-
                   /// Address Row
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.home_outlined, color: AppColors.textMedium, size: 22),
+                      const Icon(
+                        Icons.home_outlined,
+                        color: AppColors.textMedium,
+                        size: 22,
+                      ),
                       const SizedBox(width: 12), // Unchanged horizontal spacing
                       Expanded(
                         child: Text(
                           widget.addressText,
-                          style: textTheme.bodyLarge?.copyWith(color: AppColors.textDark),
+                          style: textTheme.bodyLarge?.copyWith(
+                            color: AppColors.textDark,
+                          ),
                         ),
                       ),
                     ],
                   ),
 
                   /// Phone Number
-                  if (widget.phoneNumber != null && widget.phoneNumber!.isNotEmpty) ...[
+                  if (widget.phoneNumber != null &&
+                      widget.phoneNumber!.isNotEmpty) ...[
                     const SizedBox(height: 12), // Adjusted vertical spacing
                     Row(
                       children: [
-                        const Icon(Icons.phone_outlined, color: AppColors.textMedium, size: 22),
-                        const SizedBox(width: 12), // Unchanged horizontal spacing
+                        const Icon(
+                          Icons.phone_outlined,
+                          color: AppColors.textMedium,
+                          size: 22,
+                        ),
+                        const SizedBox(
+                          width: 12,
+                        ), // Unchanged horizontal spacing
                         Text(
                           widget.phoneNumber!,
-                          style: textTheme.bodyLarge?.copyWith(color: AppColors.textDark),
+                          style: textTheme.bodyLarge?.copyWith(
+                            color: AppColors.textDark,
+                          ),
                         ),
                       ],
                     ),

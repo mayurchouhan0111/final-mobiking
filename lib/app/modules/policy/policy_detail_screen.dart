@@ -20,10 +20,7 @@ class PolicyDetailScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text(
           policy.policyName,
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 18,
-          ),
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
         ),
         elevation: 0,
         backgroundColor: AppColors.white,
@@ -31,10 +28,7 @@ class PolicyDetailScreen extends StatelessWidget {
         surfaceTintColor: Colors.transparent,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(
-            color: Colors.grey.shade200,
-            height: 1,
-          ),
+          child: Container(color: Colors.grey.shade200, height: 1),
         ),
       ),
       body: Column(
@@ -46,10 +40,7 @@ class PolicyDetailScreen extends StatelessWidget {
             decoration: BoxDecoration(
               color: AppColors.white,
               border: Border(
-                bottom: BorderSide(
-                  color: Colors.grey.shade100,
-                  width: 1,
-                ),
+                bottom: BorderSide(color: Colors.grey.shade100, width: 1),
               ),
             ),
             child: Column(
@@ -67,11 +58,7 @@ class PolicyDetailScreen extends StatelessWidget {
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    Icon(
-                      Icons.update,
-                      size: 16,
-                      color: Colors.grey.shade600,
-                    ),
+                    Icon(Icons.update, size: 16, color: Colors.grey.shade600),
                     const SizedBox(width: 6),
                     Text(
                       'Last updated: ${policy.lastUpdated != null ? _formatDate(policy.lastUpdated!) : _formatDate(policy.updatedAt)}',
@@ -118,17 +105,9 @@ class PolicyDetailScreen extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                   color: AppColors.textDark,
                 ),
-                em: const TextStyle(
-                  fontStyle: FontStyle.italic,
-                ),
-                listBullet: TextStyle(
-                  fontSize: 16,
-                  color: AppColors.textDark,
-                ),
-                tableBody: TextStyle(
-                  fontSize: 16,
-                  color: AppColors.textDark,
-                ),
+                em: const TextStyle(fontStyle: FontStyle.italic),
+                listBullet: TextStyle(fontSize: 16, color: AppColors.textDark),
+                tableBody: TextStyle(fontSize: 16, color: AppColors.textDark),
                 a: TextStyle(
                   color: Colors.blue.shade700,
                   decoration: TextDecoration.underline,
@@ -141,10 +120,7 @@ class PolicyDetailScreen extends StatelessWidget {
                 blockquoteDecoration: BoxDecoration(
                   color: Colors.grey.shade50,
                   border: Border(
-                    left: BorderSide(
-                      color: Colors.grey.shade300,
-                      width: 4,
-                    ),
+                    left: BorderSide(color: Colors.grey.shade300, width: 4),
                   ),
                 ),
               ),

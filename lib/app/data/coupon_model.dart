@@ -30,10 +30,14 @@ class CouponModel {
       value: json['value']?.toString() ?? '0',
       percent: json['percent']?.toString() ?? '0',
       startDate: _parseDateTime(json['startDate']) ?? DateTime.now(),
-      endDate: _parseDateTime(json['endDate']) ?? DateTime.now().add(Duration(days: 30)),
+      endDate:
+          _parseDateTime(json['endDate']) ??
+          DateTime.now().add(Duration(days: 30)),
       createdAt: _parseDateTime(json['createdAt']) ?? DateTime.now(),
       updatedAt: _parseDateTime(json['updatedAt']) ?? DateTime.now(),
-      version: json['__v'] is int ? json['__v'] : int.tryParse(json['__v']?.toString() ?? '0') ?? 0,
+      version: json['__v'] is int
+          ? json['__v']
+          : int.tryParse(json['__v']?.toString() ?? '0') ?? 0,
     );
   }
 
@@ -53,7 +57,9 @@ class CouponModel {
         // Handle timestamp in milliseconds
         return DateTime.fromMillisecondsSinceEpoch(dateValue);
       } else {
-        print('Unknown date type: ${dateValue.runtimeType} - Value: $dateValue');
+        print(
+          'Unknown date type: ${dateValue.runtimeType} - Value: $dateValue',
+        );
         return null;
       }
     } catch (e) {
@@ -192,7 +198,9 @@ class CouponResponse {
           : int.tryParse(json['statusCode']?.toString() ?? '0') ?? 0,
       data: couponData,
       message: json['message']?.toString() ?? '',
-      success: json['success'] == true || json['success']?.toString().toLowerCase() == 'true',
+      success:
+          json['success'] == true ||
+          json['success']?.toString().toLowerCase() == 'true',
     );
   }
 }
@@ -246,7 +254,9 @@ class CouponListResponse {
           : int.tryParse(json['statusCode']?.toString() ?? '0') ?? 0,
       data: coupons,
       message: json['message']?.toString() ?? '',
-      success: json['success'] == true || json['success']?.toString().toLowerCase() == 'true',
+      success:
+          json['success'] == true ||
+          json['success']?.toString().toLowerCase() == 'true',
       totalCount: json['totalCount'] is int
           ? json['totalCount']
           : int.tryParse(json['totalCount']?.toString() ?? '0'),

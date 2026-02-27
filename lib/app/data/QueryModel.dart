@@ -39,13 +39,14 @@ class QueryModel {
     this.rating,
     this.review,
     this.orderId,
-  })  : replies = replies ?? [],
-        createdAt = createdAt ?? DateTime.now();
+  }) : replies = replies ?? [],
+       createdAt = createdAt ?? DateTime.now();
 
   factory QueryModel.fromJson(Map<String, dynamic> json) {
     String id = json['_id']?.toString() ?? json['id']?.toString() ?? '';
     String title = json['title']?.toString() ?? '';
-    String message = json['message']?.toString() ?? json['description']?.toString() ?? '';
+    String message =
+        json['message']?.toString() ?? json['description']?.toString() ?? '';
 
     // Handle raisedBy (Map or String)
     String userEmail = '';
@@ -56,11 +57,13 @@ class QueryModel {
     }
 
     final createdAt =
-        DateTime.tryParse(json['createdAt']?.toString() ?? '') ?? DateTime.now();
+        DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
+        DateTime.now();
 
-    final replies = (json['replies'] as List<dynamic>?)
-        ?.map((e) => ReplyModel.fromJson(e))
-        .toList() ??
+    final replies =
+        (json['replies'] as List<dynamic>?)
+            ?.map((e) => ReplyModel.fromJson(e))
+            .toList() ??
         [];
 
     bool isRead = json['isRead'] ?? false;
@@ -74,7 +77,8 @@ class QueryModel {
     String? assignedTo;
     if (json['assignedTo'] is Map<String, dynamic>) {
       final a = json['assignedTo'];
-      assignedTo = a['name']?.toString() ?? a['_id']?.toString() ?? a['id']?.toString();
+      assignedTo =
+          a['name']?.toString() ?? a['_id']?.toString() ?? a['id']?.toString();
     } else {
       assignedTo = json['assignedTo']?.toString();
     }
@@ -184,13 +188,16 @@ class ReplyModel {
       userId = json['messagedBy']?.toString() ?? '';
     }
 
-    final replyText = json['replyText']?.toString() ?? json['message']?.toString() ?? '';
+    final replyText =
+        json['replyText']?.toString() ?? json['message']?.toString() ?? '';
     final timestamp =
-        DateTime.tryParse(json['messagedAt']?.toString() ?? '') ?? DateTime.now();
+        DateTime.tryParse(json['messagedAt']?.toString() ?? '') ??
+        DateTime.now();
 
-    final bool isAdmin = json['isAdmin'] ??
+    final bool isAdmin =
+        json['isAdmin'] ??
         (json['messagedBy'] is Map<String, dynamic> &&
-            ['admin', 'employee'].contains(json['messagedBy']['role'])
+                ['admin', 'employee'].contains(json['messagedBy']['role'])
             ? true
             : false);
 
@@ -205,9 +212,7 @@ class ReplyModel {
   Map<String, dynamic> toJson() {
     return {
       'message': replyText,
-      'messagedBy': {
-        '_id': userId,
-      },
+      'messagedBy': {'_id': userId},
       'messagedAt': timestamp.toIso8601String(),
     };
   }
@@ -217,11 +222,7 @@ class ReplyModel {
     required String userId,
     bool isAdmin = false,
   }) {
-    return ReplyModel(
-      userId: userId,
-      replyText: replyText,
-      isAdmin: isAdmin,
-    );
+    return ReplyModel(userId: userId, replyText: replyText, isAdmin: isAdmin);
   }
 }
 
@@ -249,7 +250,9 @@ class MessageModel {
       queryId: map['queryId']?.toString() ?? '',
       sender: map['sender']?.toString() ?? '',
       text: map['text']?.toString() ?? '',
-      timestamp: DateTime.tryParse(map['timestamp']?.toString() ?? '') ?? DateTime.now(),
+      timestamp:
+          DateTime.tryParse(map['timestamp']?.toString() ?? '') ??
+          DateTime.now(),
     );
   }
 
@@ -291,16 +294,10 @@ class ReplyQueryRequestModel {
   final String queryId;
   final String message;
 
-  ReplyQueryRequestModel({
-    required this.queryId,
-    required this.message,
-  });
+  ReplyQueryRequestModel({required this.queryId, required this.message});
 
   Map<String, dynamic> toJson() {
-    return {
-      'queryId': queryId,
-      'message': message,
-    };
+    return {'queryId': queryId, 'message': message};
   }
 }
 
@@ -308,16 +305,10 @@ class RateQueryRequestModel {
   final int rating;
   final String? review;
 
-  RateQueryRequestModel({
-    required this.rating,
-    this.review,
-  });
+  RateQueryRequestModel({required this.rating, this.review});
 
   Map<String, dynamic> toJson() {
-    return {
-      'rating': rating,
-      'review': review,
-    };
+    return {'rating': rating, 'review': review};
   }
 }
 
@@ -329,16 +320,12 @@ class ApiResponse<T> {
   final String? message;
   final T? data;
 
-  ApiResponse({
-    this.statusCode,
-    this.message,
-    this.data,
-  });
+  ApiResponse({this.statusCode, this.message, this.data});
 
   factory ApiResponse.fromJson(
-      Map<String, dynamic> json,
-      T Function(dynamic) dataParser,
-      ) {
+    Map<String, dynamic> json,
+    T Function(dynamic) dataParser,
+  ) {
     return ApiResponse<T>(
       statusCode: json['statusCode'],
       message: json['message'],

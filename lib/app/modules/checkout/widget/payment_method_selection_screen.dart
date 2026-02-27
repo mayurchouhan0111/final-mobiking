@@ -30,7 +30,10 @@ class PaymentMethodSelectionScreen extends StatelessWidget {
         backgroundColor: AppColors.white,
         elevation: 1,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textDark),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: AppColors.textDark,
+          ),
           onPressed: () => Get.back(),
         ),
       ),
@@ -48,9 +51,10 @@ class PaymentMethodSelectionScreen extends StatelessWidget {
                   onTap: orderController.isLoading.value
                       ? null
                       : () {
-                    selectedPaymentMethod.value = 'COD';
-                  },
-                  isLoading: orderController.isLoading.value &&
+                          selectedPaymentMethod.value = 'COD';
+                        },
+                  isLoading:
+                      orderController.isLoading.value &&
                       selectedPaymentMethod.value == 'COD',
                   isSelected: selectedPaymentMethod.value == 'COD',
                 );
@@ -65,78 +69,87 @@ class PaymentMethodSelectionScreen extends StatelessWidget {
                   onTap: orderController.isLoading.value
                       ? null
                       : () {
-                    selectedPaymentMethod.value = 'Online';
-                  },
-                  isLoading: orderController.isLoading.value &&
+                          selectedPaymentMethod.value = 'Online';
+                        },
+                  isLoading:
+                      orderController.isLoading.value &&
                       selectedPaymentMethod.value == 'Online',
                   isSelected: selectedPaymentMethod.value == 'Online',
                 );
               }),
               const Spacer(),
-              Obx(() => Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Get.back();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.danger.withOpacity(0.1),
-                        foregroundColor: AppColors.danger,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                        minimumSize: const Size.fromHeight(48),
-                        elevation: 0,
-                        side: const BorderSide(
-                            color: AppColors.danger, width: 1),
-                      ),
-                      child: Text(
-                        'Cancel',
-                        style: textTheme.labelLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.danger,
+              Obx(
+                () => Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Get.back();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.danger.withOpacity(0.1),
+                          foregroundColor: AppColors.danger,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          minimumSize: const Size.fromHeight(48),
+                          elevation: 0,
+                          side: const BorderSide(
+                            color: AppColors.danger,
+                            width: 1,
+                          ),
+                        ),
+                        child: Text(
+                          'Cancel',
+                          style: textTheme.labelLarge?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.danger,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: (selectedPaymentMethod.value.isEmpty ||
-                          orderController.isLoading.value)
-                          ? null
-                          : () async {
-                        Get.back(
-                            result: selectedPaymentMethod.value);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryPurple,
-                        foregroundColor: AppColors.white,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                        minimumSize: const Size.fromHeight(48),
-                        elevation: 4,
-                        disabledBackgroundColor:
-                        AppColors.lightPurple.withOpacity(0.5),
-                      ),
-                      child: orderController.isLoading.value
-                          ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                            color: AppColors.white, strokeWidth: 3),
-                      )
-                          : Text(
-                        'Select',
-                        style: textTheme.labelLarge?.copyWith(
-                          color: AppColors.white,
-                          fontWeight: FontWeight.w600,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed:
+                            (selectedPaymentMethod.value.isEmpty ||
+                                orderController.isLoading.value)
+                            ? null
+                            : () async {
+                                Get.back(result: selectedPaymentMethod.value);
+                              },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryPurple,
+                          foregroundColor: AppColors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          minimumSize: const Size.fromHeight(48),
+                          elevation: 4,
+                          disabledBackgroundColor: AppColors.lightPurple
+                              .withOpacity(0.5),
                         ),
+                        child: orderController.isLoading.value
+                            ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  color: AppColors.white,
+                                  strokeWidth: 3,
+                                ),
+                              )
+                            : Text(
+                                'Select',
+                                style: textTheme.labelLarge?.copyWith(
+                                  color: AppColors.white,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                       ),
                     ),
-                  ),
-                ],
-              )),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -188,11 +201,13 @@ class PaymentMethodSelectionScreen extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Icon(icon,
-                  color: isSelected
-                      ? AppColors.primaryPurple
-                      : AppColors.textMedium,
-                  size: 30),
+              Icon(
+                icon,
+                color: isSelected
+                    ? AppColors.primaryPurple
+                    : AppColors.textMedium,
+                size: 30,
+              ),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
@@ -217,8 +232,11 @@ class PaymentMethodSelectionScreen extends StatelessWidget {
                 ),
               ),
               if (isSelected)
-                Icon(Icons.check_circle_rounded,
-                    color: AppColors.success, size: 24),
+                Icon(
+                  Icons.check_circle_rounded,
+                  color: AppColors.success,
+                  size: 24,
+                ),
             ],
           ),
         ),

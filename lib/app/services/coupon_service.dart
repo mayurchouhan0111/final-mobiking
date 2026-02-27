@@ -35,7 +35,9 @@ class CouponService extends GetxService {
   Map<String, String> _getAuthHeaders() {
     final accessToken = box.read('accessToken');
     if (accessToken == null) {
-      throw CouponServiceException('Access token not found. Please log in again.');
+      throw CouponServiceException(
+        'Access token not found. Please log in again.',
+      );
     }
 
     return {
@@ -80,7 +82,6 @@ class CouponService extends GetxService {
           usedEndpoint = endpoint;
           _log('✅ Endpoint worked: $endpoint');
           break;
-
         } catch (e) {
           _log('❌ Endpoint failed: $endpoint - $e');
           continue;
@@ -88,10 +89,14 @@ class CouponService extends GetxService {
       }
 
       if (response == null) {
-        throw CouponServiceException('Coupon validation failed - all endpoints unavailable.');
+        throw CouponServiceException(
+          'Coupon validation failed - all endpoints unavailable.',
+        );
       }
 
-      _log('==================== COUPON VALIDATION RESPONSE ====================');
+      _log(
+        '==================== COUPON VALIDATION RESPONSE ====================',
+      );
       _log('Status Code: ${response.statusCode}');
       _log('Response Data: ${response.data}');
       _log('=================================================================');
@@ -115,16 +120,18 @@ class CouponService extends GetxService {
       }
 
       throw CouponServiceException('Invalid coupon code or coupon not found.');
-
     } on dio.DioException catch (e) {
       if (e.response != null) {
-        final errorMessage = e.response?.data?['message'] ?? 'Server error occurred.';
+        final errorMessage =
+            e.response?.data?['message'] ?? 'Server error occurred.';
         _log('🔴 Validation error: ${e.response?.statusCode} - $errorMessage');
 
         if (e.response?.statusCode == 404) {
           throw CouponServiceException('Coupon code not found.');
         } else if (e.response?.statusCode == 401) {
-          throw CouponServiceException('Authentication failed. Please log in again.');
+          throw CouponServiceException(
+            'Authentication failed. Please log in again.',
+          );
         }
 
         throw CouponServiceException(errorMessage);

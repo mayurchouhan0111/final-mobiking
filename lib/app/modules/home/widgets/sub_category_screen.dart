@@ -25,7 +25,9 @@ class AllProductsListView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (subCategoryIndex < 0 || subCategoryIndex >= subCategories.length) {
-      debugPrint('Error: subCategoryIndex $subCategoryIndex is out of bounds for subCategories list.');
+      debugPrint(
+        'Error: subCategoryIndex $subCategoryIndex is out of bounds for subCategories list.',
+      );
       return const SizedBox.shrink();
     }
 
@@ -43,7 +45,8 @@ class AllProductsListView extends StatelessWidget {
     // No need for explicit height calculations here because of shrinkWrap: true
     return GridView.builder(
       padding: const EdgeInsets.symmetric(horizontal: _gridHorizontalPadding),
-      physics: const NeverScrollableScrollPhysics(), // IMPORTANT: Defer scrolling to parent
+      physics:
+          const NeverScrollableScrollPhysics(), // IMPORTANT: Defer scrolling to parent
       shrinkWrap: true, // IMPORTANT: Size itself to its children
       itemCount: productsToShow.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -64,12 +67,7 @@ class AllProductsListView extends StatelessWidget {
             if (onProductTap != null) {
               onProductTap!(p0);
             } else {
-              Get.to(
-                    () => ProductPage(
-                  product: p0,
-                  heroTag: productHeroTag,
-                ),
-              );
+              Get.to(() => ProductPage(product: p0, heroTag: productHeroTag));
             }
           },
         );

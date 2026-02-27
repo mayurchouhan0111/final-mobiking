@@ -11,18 +11,16 @@ class NoNetworkScreen extends StatelessWidget {
   final VoidCallback onRetry;
   final String? message; // Optional custom message
 
-  const NoNetworkScreen({
-    Key? key,
-    required this.onRetry,
-    this.message,
-  }) : super(key: key);
+  const NoNetworkScreen({Key? key, required this.onRetry, this.message})
+    : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final TextTheme textTheme = Theme.of(context).textTheme; // Get TextTheme
 
     return Scaffold(
-      backgroundColor: AppColors.neutralBackground, // Use your app's background color
+      backgroundColor:
+          AppColors.neutralBackground, // Use your app's background color
       body: Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32.0),
@@ -39,20 +37,26 @@ class NoNetworkScreen extends StatelessWidget {
                 repeat: true, // Animation repeats while user is on this screen
                 errorBuilder: (context, error, stackTrace) {
                   // Fallback to a static icon if Lottie fails to load
-                  debugPrint('Error loading Lottie animation for no network: $error');
+                  debugPrint(
+                    'Error loading Lottie animation for no network: $error',
+                  );
                   return Icon(
                     Icons.cloud_off_rounded,
                     size: 150,
-                    color: AppColors.textLight.withOpacity(0.6), // Use AppColors
+                    color: AppColors.textLight.withOpacity(
+                      0.6,
+                    ), // Use AppColors
                   );
                 },
               ),
               const SizedBox(height: 40), // Increased spacing
 
               Text(
-                message ?? 'Your internet is a little wonky', // Default or custom message
+                message ??
+                    'Your internet is a little wonky', // Default or custom message
                 textAlign: TextAlign.center,
-                style: textTheme.headlineMedium?.copyWith( // Using headlineMedium
+                style: textTheme.headlineMedium?.copyWith(
+                  // Using headlineMedium
                   color: AppColors.textDark, // Use AppColors
                 ),
               ),
@@ -61,7 +65,8 @@ class NoNetworkScreen extends StatelessWidget {
               Text(
                 'Try switching to a different connection or\nreset your internet to place an order.',
                 textAlign: TextAlign.center,
-                style: textTheme.bodyLarge?.copyWith( // Using bodyLarge
+                style: textTheme.bodyLarge?.copyWith(
+                  // Using bodyLarge
                   color: AppColors.textDark.withOpacity(0.7), // Use AppColors
                 ),
               ),
@@ -70,16 +75,21 @@ class NoNetworkScreen extends StatelessWidget {
               ElevatedButton(
                 onPressed: onRetry, // Calls the provided retry function
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryPurple, // Use your primary color
+                  backgroundColor:
+                      AppColors.primaryPurple, // Use your primary color
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12), // Rounded corners
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 40,
+                    vertical: 16,
+                  ),
                   elevation: 5, // Add subtle shadow
                 ),
                 child: Text(
                   'RETRY',
-                  style: textTheme.labelLarge?.copyWith( // Using labelLarge for button text
+                  style: textTheme.labelLarge?.copyWith(
+                    // Using labelLarge for button text
                     color: Colors.white,
                     letterSpacing: 1.5, // Keep letter spacing for effect
                   ),

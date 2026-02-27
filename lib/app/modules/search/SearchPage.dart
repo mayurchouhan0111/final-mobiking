@@ -48,9 +48,10 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: fadeController, curve: Curves.easeInOut),
-    );
+    fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: fadeController, curve: Curves.easeInOut));
     fadeController.forward();
   }
 
@@ -114,7 +115,9 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
           return const SizedBox.shrink();
         }
 
-        final List<String> imageUrls = cartController.cartItems.take(3).map((item) {
+        final List<String> imageUrls = cartController.cartItems.take(3).map((
+          item,
+        ) {
           final product = item['productId'];
           String? imageUrl;
 
@@ -131,14 +134,17 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
               imageUrl = imagesData;
             }
           }
-          return imageUrl ?? 'https://placehold.co/50x50/cccccc/ffffff?text=No+Img';
+          return imageUrl ??
+              'https://placehold.co/50x50/cccccc/ffffff?text=No+Img';
         }).toList();
 
         return FloatingCartButton(
           onTap: () {
-            Get.to(() => CheckoutScreen(),
-                transition: Transition.rightToLeft,
-                duration: const Duration(milliseconds: 300));
+            Get.to(
+              () => CheckoutScreen(),
+              transition: Transition.rightToLeft,
+              duration: const Duration(milliseconds: 300),
+            );
           },
           itemCount: cartController.totalCartItemsCount,
           productImageUrls: imageUrls,
@@ -191,7 +197,10 @@ class _SearchHeader extends StatelessWidget {
                   width: 40,
                   height: 40,
                   child: IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+                    icon: const Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      size: 18,
+                    ),
                     onPressed: () => Get.back(),
                     padding: EdgeInsets.zero,
                   ),
@@ -284,9 +293,7 @@ class _SearchField extends StatelessWidget {
           textAlignVertical: TextAlignVertical.center,
           keyboardType: TextInputType.text,
           textCapitalization: TextCapitalization.none,
-          inputFormatters: [
-            FilteringTextInputFormatter.deny(RegExp(r'\n')),
-          ],
+          inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'\n'))],
           decoration: InputDecoration(
             hintText: 'Search for products...',
             hintStyle: textTheme.bodySmall?.copyWith(
@@ -304,16 +311,18 @@ class _SearchField extends StatelessWidget {
                 size: 20,
               ),
             ),
-            suffixIcon: Obx(() => searchController.showClearButton.value
-                ? IconButton(
-              icon: const Icon(
-                Icons.clear_rounded,
-                color: AppColors.textLight,
-                size: 20,
-              ),
-              onPressed: _handleClear,
-            )
-                : const SizedBox.shrink()),
+            suffixIcon: Obx(
+              () => searchController.showClearButton.value
+                  ? IconButton(
+                      icon: const Icon(
+                        Icons.clear_rounded,
+                        color: AppColors.textLight,
+                        size: 20,
+                      ),
+                      onPressed: _handleClear,
+                    )
+                  : const SizedBox.shrink(),
+            ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 12,
@@ -414,21 +423,23 @@ class _RecentSearches extends StatelessWidget {
                 spacing: 8.0,
                 runSpacing: 8.0,
                 children: searchController.recentSearches
-                    .map((search) => _RecentSearchChip(
-                  search: search,
-                  textTheme: textTheme,
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    textController.text = search;
-                  },
-                  onRemove: () {
-                    HapticFeedback.lightImpact();
-                    searchController.removeRecentSearch(search);
-                    if (textController.text == search) {
-                      textController.clear();
-                    }
-                  },
-                ))
+                    .map(
+                      (search) => _RecentSearchChip(
+                        search: search,
+                        textTheme: textTheme,
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          textController.text = search;
+                        },
+                        onRemove: () {
+                          HapticFeedback.lightImpact();
+                          searchController.removeRecentSearch(search);
+                          if (textController.text == search) {
+                            textController.clear();
+                          }
+                        },
+                      ),
+                    )
                     .toList(),
               ),
             ],
@@ -536,14 +547,17 @@ class _SearchResultsHeader extends StatelessWidget {
             Obx(() {
               if (searchController.displayedProducts.isNotEmpty) {
                 return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.primaryPurple.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     '${searchController.displayedProducts.length}'
-                        '${searchController.hasMoreProducts.value ? '+' : ''}',
+                    '${searchController.hasMoreProducts.value ? '+' : ''}',
                     style: textTheme.labelSmall?.copyWith(
                       color: AppColors.primaryPurple,
                       fontWeight: FontWeight.w600,
@@ -648,7 +662,7 @@ class _ShimmerLoadingGrid extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 2),
       sliver: SliverGrid(
         delegate: SliverChildBuilderDelegate(
-              (context, index) {
+          (context, index) {
             return Shimmer.fromColors(
               baseColor: Colors.grey.shade300,
               highlightColor: Colors.grey.shade100,
@@ -707,7 +721,8 @@ class _SearchResults extends StatelessWidget {
           icon: Icons.search_off_rounded,
           iconColor: AppColors.textLight,
           title: 'No results found',
-          subtitle: 'We couldn\'t find any products matching "${textController.text}"',
+          subtitle:
+              'We couldn\'t find any products matching "${textController.text}"',
         );
       }
 
@@ -725,19 +740,16 @@ class _SearchResults extends StatelessWidget {
       return SliverPadding(
         padding: const EdgeInsets.symmetric(horizontal: 2),
         sliver: SliverGrid(
-          delegate: SliverChildBuilderDelegate(
-                (context, index) {
-              final product = searchController.displayedProducts[index];
-              return RepaintBoundary(
-                child: AllProductGridCard(
-                  key: ValueKey('search-${product.id}-$index'),
-                  product: product,
-                  heroTag: 'search-product-image-${product.id}-$index',
-                ),
-              );
-            },
-            childCount: searchController.displayedProducts.length,
-          ),
+          delegate: SliverChildBuilderDelegate((context, index) {
+            final product = searchController.displayedProducts[index];
+            return RepaintBoundary(
+              child: AllProductGridCard(
+                key: ValueKey('search-${product.id}-$index'),
+                product: product,
+                heroTag: 'search-product-image-${product.id}-$index',
+              ),
+            );
+          }, childCount: searchController.displayedProducts.length),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 3,
             crossAxisSpacing: 1.0,
@@ -773,50 +785,50 @@ class _LoadMoreButton extends StatelessWidget {
           child: Center(
             child: searchController.isLoadingMore.value
                 ? Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: AppColors.primaryPurple,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'Loading more...',
-                  style: textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textLight,
-                  ),
-                ),
-              ],
-            )
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.primaryPurple,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Loading more...',
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: AppColors.textLight,
+                        ),
+                      ),
+                    ],
+                  )
                 : ElevatedButton.icon(
-              onPressed: () {
-                HapticFeedback.lightImpact();
-                searchController.loadMoreProducts();
-              },
-              icon: Icon(Icons.expand_more, color: AppColors.white),
-              label: Text(
-                'Load More',
-                style: textTheme.labelLarge?.copyWith(
-                  color: AppColors.white,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryPurple,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 2,
-              ),
-            ),
+                    onPressed: () {
+                      HapticFeedback.lightImpact();
+                      searchController.loadMoreProducts();
+                    },
+                    icon: Icon(Icons.expand_more, color: AppColors.white),
+                    label: Text(
+                      'Load More',
+                      style: textTheme.labelLarge?.copyWith(
+                        color: AppColors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryPurple,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 2,
+                    ),
+                  ),
           ),
         );
       }),

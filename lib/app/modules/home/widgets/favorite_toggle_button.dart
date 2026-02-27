@@ -24,11 +24,14 @@ class FavoriteToggleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final WishlistController wishlistController = Get.find<WishlistController>();
+    final WishlistController wishlistController =
+        Get.find<WishlistController>();
     final SoundService soundService = Get.find<SoundService>();
 
     return Obx(() {
-      final bool isFavorite = wishlistController.wishlist.any((p) => p.id == productId);
+      final bool isFavorite = wishlistController.wishlist.any(
+        (p) => p.id == productId,
+      );
 
       return LikeButton(
         size: iconSize + padding * 2,
@@ -47,7 +50,10 @@ class FavoriteToggleButton extends StatelessWidget {
             ),
           );
         },
-        circleColor: const CircleColor(start: Colors.redAccent, end: Colors.red),
+        circleColor: const CircleColor(
+          start: Colors.redAccent,
+          end: Colors.red,
+        ),
         bubblesColor: const BubblesColor(
           dotPrimaryColor: Colors.redAccent,
           dotSecondaryColor: Colors.red,

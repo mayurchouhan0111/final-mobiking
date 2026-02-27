@@ -27,7 +27,8 @@ class OrderConfirmationScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<OrderConfirmationScreen> createState() => _OrderConfirmationScreenState();
+  State<OrderConfirmationScreen> createState() =>
+      _OrderConfirmationScreenState();
 }
 
 class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
@@ -47,7 +48,7 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
   void initState() {
     super.initState();
     _lottieController = AnimationController(vsync: this);
-    
+
     // Load fallback data immediately for instant display
     final fallbackData = _getOrderData();
     if (fallbackData != null) {
@@ -58,7 +59,7 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
         debugPrint('⚠️ Error parsing fallback order data: $e');
       }
     }
-    
+
     _fetchOrderDetailsAndAnimate();
   }
 
@@ -83,12 +84,15 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
     if (_confirmedOrder.value != null) {
       return _confirmedOrder.value!.id;
     }
-    
+
     if (widget.orderId != null && widget.orderId!.isNotEmpty) {
       return widget.orderId;
     }
     final List<String> possibleKeys = [
-      'recent_order_id', 'last_order_id', 'latest_order_id', 'lastOrderId',
+      'recent_order_id',
+      'last_order_id',
+      'latest_order_id',
+      'lastOrderId',
     ];
     for (String key in possibleKeys) {
       final orderId = _box.read(key)?.toString();
@@ -98,7 +102,10 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
     }
     final orderData = _getOrderData();
     if (orderData != null) {
-      final orderId = orderData['orderId']?.toString() ?? orderData['_id']?.toString() ?? orderData['id']?.toString();
+      final orderId =
+          orderData['orderId']?.toString() ??
+          orderData['_id']?.toString() ??
+          orderData['id']?.toString();
       if (orderId != null && orderId.isNotEmpty) {
         return orderId;
       }
@@ -109,8 +116,10 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
   Map<String, dynamic>? _getOrderData() {
     if (widget.orderData != null) return widget.orderData!;
     final List<String> orderDataKeys = [
-      'current_order_for_confirmation', 'last_placed_order',
-      'order_confirmation_data', 'order_success_data',
+      'current_order_for_confirmation',
+      'last_placed_order',
+      'order_confirmation_data',
+      'order_success_data',
     ];
     for (String key in orderDataKeys) {
       final orderData = _box.read(key);
@@ -147,7 +156,8 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
     final String? orderId = _getOrderId();
     if (orderId == null || orderId.isEmpty) {
       if (_confirmedOrder.value == null) {
-        _errorMessage.value = 'No recent order ID found. Please check your order history.';
+        _errorMessage.value =
+            'No recent order ID found. Please check your order history.';
       }
       completer.complete();
       return;
@@ -155,85 +165,105 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
 
     (() async {
       try {
-        final fetchedOrder = await _orderService.getOrderDetails(orderId: orderId);
-        
+        final fetchedOrder = await _orderService.getOrderDetails(
+          orderId: orderId,
+        );
+
         // Merge with existing fallback data if names are missing in API response
-        if (_confirmedOrder.value != null && _confirmedOrder.value!.items.isNotEmpty) {
-           final fallbackOrder = _confirmedOrder.value!;
-           bool needsMerge = false;
-           
-           for (var item in fetchedOrder.items) {
-             if (item.productDetails == null || 
-                 (item.productDetails!.name.isEmpty && item.productDetails!.fullName.isEmpty)) {
-               needsMerge = true;
-               break;
-             }
-           }
-           
-           if (needsMerge) {
-              debugPrint('🔄 API response missing product names. Merging with fallback info...');
-              
-              final List<OrderItemModel> patchedItems = fetchedOrder.items.map((item) {
-                // If this item is missing details, try to find it in the fallback
-                if (item.productDetails == null || 
-                    (item.productDetails!.name.isEmpty && item.productDetails!.fullName.isEmpty)) {
-                  
-                  // Try to find a matching item in the fallback order
-                  // Match by variant name and product ID (if available) or price
-                  final matchingFallback = fallbackOrder.items.firstWhereOrNull((fi) {
-                    if (fi.variantName != item.variantName) return false;
-                    
-                    // If we have IDs, use them
-                    if (fi.productDetails?.id != null && item.productDetails?.id != null && 
-                        fi.productDetails!.id.isNotEmpty && fi.productDetails!.id == item.productDetails!.id) {
-                      return true;
-                    }
-                    
-                    // Fallback to price matching if IDs are unavailable or don't match
-                    return (fi.price - item.price).abs() < 0.01;
-                  });
-                  
-                  if (matchingFallback != null && matchingFallback.productDetails != null) {
-                    debugPrint('✅ Found fallback details for item: ${item.variantName}');
-                    return OrderItemModel(
-                      id: item.id.isNotEmpty ? item.id : matchingFallback.id,
-                      productDetails: matchingFallback.productDetails,
-                      variantName: item.variantName,
-                      quantity: item.quantity,
-                      price: item.price,
-                    );
+        if (_confirmedOrder.value != null &&
+            _confirmedOrder.value!.items.isNotEmpty) {
+          final fallbackOrder = _confirmedOrder.value!;
+          bool needsMerge = false;
+
+          for (var item in fetchedOrder.items) {
+            if (item.productDetails == null ||
+                (item.productDetails!.name.isEmpty &&
+                    item.productDetails!.fullName.isEmpty)) {
+              needsMerge = true;
+              break;
+            }
+          }
+
+          if (needsMerge) {
+            debugPrint(
+              '🔄 API response missing product names. Merging with fallback info...',
+            );
+
+            final List<OrderItemModel> patchedItems = fetchedOrder.items.map((
+              item,
+            ) {
+              // If this item is missing details, try to find it in the fallback
+              if (item.productDetails == null ||
+                  (item.productDetails!.name.isEmpty &&
+                      item.productDetails!.fullName.isEmpty)) {
+                // Try to find a matching item in the fallback order
+                // Match by variant name and product ID (if available) or price
+                final matchingFallback = fallbackOrder.items.firstWhereOrNull((
+                  fi,
+                ) {
+                  if (fi.variantName != item.variantName) return false;
+
+                  // If we have IDs, use them
+                  if (fi.productDetails?.id != null &&
+                      item.productDetails?.id != null &&
+                      fi.productDetails!.id.isNotEmpty &&
+                      fi.productDetails!.id == item.productDetails!.id) {
+                    return true;
                   }
+
+                  // Fallback to price matching if IDs are unavailable or don't match
+                  return (fi.price - item.price).abs() < 0.01;
+                });
+
+                if (matchingFallback != null &&
+                    matchingFallback.productDetails != null) {
+                  debugPrint(
+                    '✅ Found fallback details for item: ${item.variantName}',
+                  );
+                  return OrderItemModel(
+                    id: item.id.isNotEmpty ? item.id : matchingFallback.id,
+                    productDetails: matchingFallback.productDetails,
+                    variantName: item.variantName,
+                    quantity: item.quantity,
+                    price: item.price,
+                  );
                 }
-                return item;
-              }).toList();
-              
-              // Create a patched version of the order
-              final orderJson = fetchedOrder.toJson();
-              orderJson['items'] = patchedItems.map((i) => i.toJson()).toList();
-              
-              _confirmedOrder.value = OrderModel.fromJson(orderJson);
-              _errorMessage.value = '';
-              completer.complete();
-              return;
-           }
+              }
+              return item;
+            }).toList();
+
+            // Create a patched version of the order
+            final orderJson = fetchedOrder.toJson();
+            orderJson['items'] = patchedItems.map((i) => i.toJson()).toList();
+
+            _confirmedOrder.value = OrderModel.fromJson(orderJson);
+            _errorMessage.value = '';
+            completer.complete();
+            return;
+          }
         }
-        
+
         _confirmedOrder.value = fetchedOrder;
         _errorMessage.value = '';
       } catch (e) {
         if (_confirmedOrder.value == null) {
-           final fallbackOrderData = _getOrderData();
-           if (fallbackOrderData != null) {
-             try {
-               final OrderModel parsedOrder = OrderModel.fromJson(fallbackOrderData);
-               _confirmedOrder.value = parsedOrder;
-               _errorMessage.value = 'Could not fetch latest details. Displaying saved info.';
-             } catch (parseError) {
-               _errorMessage.value = 'Unable to load any order details. Please try again.';
-             }
-           } else {
-             _errorMessage.value = 'Unable to load order details. Please check your connection.';
-           }
+          final fallbackOrderData = _getOrderData();
+          if (fallbackOrderData != null) {
+            try {
+              final OrderModel parsedOrder = OrderModel.fromJson(
+                fallbackOrderData,
+              );
+              _confirmedOrder.value = parsedOrder;
+              _errorMessage.value =
+                  'Could not fetch latest details. Displaying saved info.';
+            } catch (parseError) {
+              _errorMessage.value =
+                  'Unable to load any order details. Please try again.';
+            }
+          } else {
+            _errorMessage.value =
+                'Unable to load order details. Please check your connection.';
+          }
         }
       } finally {
         completer.complete();
@@ -259,7 +289,9 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
       }),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: Obx(() {
-        if (_showLottie.value || _isLoadingOrderDetails.value || _confirmedOrder.value == null) {
+        if (_showLottie.value ||
+            _isLoadingOrderDetails.value ||
+            _confirmedOrder.value == null) {
           return const SizedBox.shrink();
         }
         return Padding(
@@ -268,7 +300,9 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
             onPressed: _navigateToMainScreen,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryPurple,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
               padding: const EdgeInsets.symmetric(vertical: 18),
               minimumSize: const Size.fromHeight(60),
               elevation: 8,
@@ -277,7 +311,11 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.shopping_bag_outlined, color: Colors.white, size: 22),
+                const Icon(
+                  Icons.shopping_bag_outlined,
+                  color: Colors.white,
+                  size: 22,
+                ),
                 const SizedBox(width: 10),
                 Text(
                   "Continue Shopping",
@@ -318,7 +356,7 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
             ),
             const SizedBox(height: 20),
             Obx(
-                  () => Text(
+              () => Text(
                 _isLoadingOrderDetails.value
                     ? 'Fetching your order details...'
                     : 'Confirming your order...',
@@ -331,7 +369,10 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
             if (_isLoadingOrderDetails.value)
               const Padding(
                 padding: EdgeInsets.only(top: 10),
-                child: CircularProgressIndicator(color: AppColors.primaryPurple, strokeWidth: 3),
+                child: CircularProgressIndicator(
+                  color: AppColors.primaryPurple,
+                  strokeWidth: 3,
+                ),
               ),
           ],
         ),
@@ -346,7 +387,11 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.warning_amber_rounded, size: 80, color: AppColors.danger),
+            Icon(
+              Icons.warning_amber_rounded,
+              size: 80,
+              color: AppColors.danger,
+            ),
             const SizedBox(height: 24),
             Text(
               'Oops! Something went wrong',
@@ -373,8 +418,13 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primaryPurple,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 14,
+                ),
               ),
               child: Text(
                 'Try Again',
@@ -398,7 +448,11 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.shopping_basket_outlined, size: 80, color: AppColors.primaryPurple),
+            Icon(
+              Icons.shopping_basket_outlined,
+              size: 80,
+              color: AppColors.primaryPurple,
+            ),
             const SizedBox(height: 24),
             Text(
               'No Recent Orders',
@@ -420,7 +474,11 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
             const SizedBox(height: 32),
             ElevatedButton.icon(
               onPressed: _navigateToMainScreen,
-              icon: const Icon(Icons.shopping_cart_outlined, color: Colors.white, size: 20),
+              icon: const Icon(
+                Icons.shopping_cart_outlined,
+                color: Colors.white,
+                size: 20,
+              ),
               label: Text(
                 'Start Shopping',
                 style: textTheme.labelLarge?.copyWith(
@@ -431,8 +489,13 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primaryPurple,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
+                ),
               ),
             ),
           ],
@@ -441,7 +504,11 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
     );
   }
 
-  Widget _buildOrderDetails(BuildContext context, TextTheme textTheme, OrderModel order) {
+  Widget _buildOrderDetails(
+    BuildContext context,
+    TextTheme textTheme,
+    OrderModel order,
+  ) {
     final orderTime = order.createdAt?.toLocal() != null
         ? DateFormat('dd MMM, HH:mm').format(order.createdAt!.toLocal())
         : 'N/A';
@@ -534,7 +601,13 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
     );
   }
 
-  Widget _buildSection(BuildContext context, TextTheme textTheme, String title, IconData icon, Widget content) {
+  Widget _buildSection(
+    BuildContext context,
+    TextTheme textTheme,
+    String title,
+    IconData icon,
+    Widget content,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       child: Column(
@@ -567,7 +640,11 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
     );
   }
 
-  Widget _buildAddressCard(BuildContext context, TextTheme textTheme, OrderModel order) {
+  Widget _buildAddressCard(
+    BuildContext context,
+    TextTheme textTheme,
+    OrderModel order,
+  ) {
     String fullAddress = 'Address not available.';
     String recipientName = order.name ?? 'N/A';
     String phoneNumber = order.phoneNo ?? '';
@@ -577,9 +654,11 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
         widget.address!.street,
         widget.address!.city,
         widget.address!.state,
-        widget.address!.pinCode
+        widget.address!.pinCode,
       ];
-      fullAddress = parts.where((part) => part != null && part.isNotEmpty).join(', ');
+      fullAddress = parts
+          .where((part) => part != null && part.isNotEmpty)
+          .join(', ');
     } else if (order.address is Map) {
       // If the address is a Map, concatenate the parts into a single string.
       final Map<dynamic, dynamic> addressMap = order.address! as Map;
@@ -589,7 +668,12 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
       final String pinCode = addressMap['pinCode']?.toString() ?? '';
 
       // Join the available parts with commas and spaces.
-      final List<String> parts = [street, city, state, pinCode].where((part) => part.isNotEmpty).toList();
+      final List<String> parts = [
+        street,
+        city,
+        state,
+        pinCode,
+      ].where((part) => part.isNotEmpty).toList();
       if (parts.isNotEmpty) {
         fullAddress = parts.join(', ');
       }
@@ -626,7 +710,12 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
       ),
     );
   }
-  Widget _buildShippingDetailsCard(BuildContext context, TextTheme textTheme, OrderModel order) {
+
+  Widget _buildShippingDetailsCard(
+    BuildContext context,
+    TextTheme textTheme,
+    OrderModel order,
+  ) {
     return _buildCard(
       child: Column(
         children: [
@@ -651,13 +740,15 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
               'Tracking Number',
               order.awbCode!,
             ),
-          if (order.expectedDeliveryDate != null && order.expectedDeliveryDate!.isNotEmpty)
+          if (order.expectedDeliveryDate != null &&
+              order.expectedDeliveryDate!.isNotEmpty)
             _buildDetailRow(
               textTheme,
               Icons.schedule,
               'Expected Delivery',
               DateFormat('dd MMM yyyy').format(
-                DateTime.tryParse(order.expectedDeliveryDate!) ?? DateTime.now(),
+                DateTime.tryParse(order.expectedDeliveryDate!) ??
+                    DateTime.now(),
               ),
             ),
           if (order.deliveredAt != null && order.deliveredAt!.isNotEmpty)
@@ -665,9 +756,9 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
               textTheme,
               Icons.check_circle,
               'Delivered On',
-              DateFormat('dd MMM yyyy, hh:mm a').format(
-                DateTime.tryParse(order.deliveredAt!) ?? DateTime.now(),
-              ),
+              DateFormat(
+                'dd MMM yyyy, hh:mm a',
+              ).format(DateTime.tryParse(order.deliveredAt!) ?? DateTime.now()),
             ),
           _buildDetailRow(
             textTheme,
@@ -675,7 +766,8 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
             'Payment Method',
             order.method,
           ),
-          if (order.razorpayPaymentId != null && order.razorpayPaymentId!.isNotEmpty)
+          if (order.razorpayPaymentId != null &&
+              order.razorpayPaymentId!.isNotEmpty)
             _buildDetailRow(
               textTheme,
               Icons.receipt,
@@ -687,17 +779,28 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
     );
   }
 
-  Widget _buildOrderItemsList(BuildContext context, TextTheme textTheme, OrderModel order) {
+  Widget _buildOrderItemsList(
+    BuildContext context,
+    TextTheme textTheme,
+    OrderModel order,
+  ) {
     if (order.items.isEmpty) {
       return _buildEmptyItemsCard(context, textTheme);
     }
     return Column(
-      children: order.items.map((item) => _buildOrderItemCard(context, textTheme, item)).toList(),
+      children: order.items
+          .map((item) => _buildOrderItemCard(context, textTheme, item))
+          .toList(),
     );
   }
 
-  Widget _buildOrderItemCard(BuildContext context, TextTheme textTheme, OrderItemModel item) {
-    final String imageUrl = item.productDetails != null && item.productDetails!.images.isNotEmpty
+  Widget _buildOrderItemCard(
+    BuildContext context,
+    TextTheme textTheme,
+    OrderItemModel item,
+  ) {
+    final String imageUrl =
+        item.productDetails != null && item.productDetails!.images.isNotEmpty
         ? item.productDetails!.images.first
         : 'https://via.placeholder.com/80/E8EAF0/757575?text=No+Image';
 
@@ -720,7 +823,11 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
                   color: AppColors.neutralBackground,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(Icons.image_not_supported, color: AppColors.textLight, size: 30),
+                child: Icon(
+                  Icons.image_not_supported,
+                  color: AppColors.textLight,
+                  size: 30,
+                ),
               ),
             ),
           ),
@@ -745,7 +852,8 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                if (item.variantName.isNotEmpty && item.variantName != 'Default')
+                if (item.variantName.isNotEmpty &&
+                    item.variantName != 'Default')
                   Text(
                     item.variantName,
                     style: textTheme.bodySmall?.copyWith(
@@ -768,7 +876,10 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                NumberFormat.simpleCurrency(locale: 'en_IN', decimalDigits: 2).format(item.price * item.quantity),
+                NumberFormat.simpleCurrency(
+                  locale: 'en_IN',
+                  decimalDigits: 2,
+                ).format(item.price * item.quantity),
                 style: textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700,
                   fontSize: 14,
@@ -794,7 +905,11 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
         padding: const EdgeInsets.all(24.0),
         child: Column(
           children: [
-            Icon(Icons.inventory_2_outlined, size: 48, color: AppColors.textLight),
+            Icon(
+              Icons.inventory_2_outlined,
+              size: 48,
+              color: AppColors.textLight,
+            ),
             const SizedBox(height: 12),
             Text(
               'No items listed for this order.',
@@ -810,24 +925,51 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
     );
   }
 
-  Widget _buildOrderSummary(BuildContext context, TextTheme textTheme, OrderModel order) {
+  Widget _buildOrderSummary(
+    BuildContext context,
+    TextTheme textTheme,
+    OrderModel order,
+  ) {
     return _buildCard(
       child: Column(
         children: [
           _buildSummaryRow(textTheme, "Subtotal", order.subtotal ?? 0.0),
           if (order.discount != null && order.discount! > 0)
-            _buildSummaryRow(textTheme, "Discount", -(order.discount!), isDiscount: true),
+            _buildSummaryRow(
+              textTheme,
+              "Discount",
+              -(order.discount!),
+              isDiscount: true,
+            ),
           _buildSummaryRow(textTheme, "Delivery Fee", order.deliveryCharge),
-          _buildSummaryRow(textTheme, "GST", double.tryParse(order.gst ?? '0.0') ?? 0.0),
+          _buildSummaryRow(
+            textTheme,
+            "GST",
+            double.tryParse(order.gst ?? '0.0') ?? 0.0,
+          ),
           Divider(color: AppColors.neutralBackground, height: 24),
-          _buildSummaryRow(textTheme, "Grand Total", order.orderAmount, isTotal: true),
+          _buildSummaryRow(
+            textTheme,
+            "Grand Total",
+            order.orderAmount,
+            isTotal: true,
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildSummaryRow(TextTheme textTheme, String title, double value, {bool isTotal = false, bool isDiscount = false}) {
-    final formattedValue = NumberFormat.simpleCurrency(locale: 'en_IN', decimalDigits: 2).format(value);
+  Widget _buildSummaryRow(
+    TextTheme textTheme,
+    String title,
+    double value, {
+    bool isTotal = false,
+    bool isDiscount = false,
+  }) {
+    final formattedValue = NumberFormat.simpleCurrency(
+      locale: 'en_IN',
+      decimalDigits: 2,
+    ).format(value);
     final titleStyle = textTheme.bodyMedium?.copyWith(
       fontWeight: isTotal ? FontWeight.w700 : FontWeight.w500,
       color: isTotal ? AppColors.textDark : AppColors.textMedium,
@@ -868,7 +1010,14 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
     );
   }
 
-  Widget _buildDetailRow(TextTheme textTheme, IconData icon, String label, String value, {Color? color, bool isBold = false}) {
+  Widget _buildDetailRow(
+    TextTheme textTheme,
+    IconData icon,
+    String label,
+    String value, {
+    Color? color,
+    bool isBold = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(

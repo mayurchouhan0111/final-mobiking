@@ -34,10 +34,7 @@ class _PolicyScreenState extends State<PolicyScreen> {
       appBar: AppBar(
         title: const Text(
           'Policies',
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 18,
-          ),
+          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
         ),
         elevation: 0,
         backgroundColor: AppColors.white,
@@ -45,10 +42,7 @@ class _PolicyScreenState extends State<PolicyScreen> {
         surfaceTintColor: Colors.transparent,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(
-            color: Colors.grey.shade200,
-            height: 1,
-          ),
+          child: Container(color: Colors.grey.shade200, height: 1),
         ),
       ),
       body: FutureBuilder<List<Policy>>(
@@ -169,7 +163,8 @@ class _PolicyScreenState extends State<PolicyScreen> {
                         icon: const Icon(Icons.refresh, size: 20),
                         label: const Text('Refresh'),
                         style: TextButton.styleFrom(
-                          foregroundColor: AppColors.primaryPurple ?? Colors.blue,
+                          foregroundColor:
+                              AppColors.primaryPurple ?? Colors.blue,
                         ),
                       ),
                     ],
@@ -191,7 +186,8 @@ class _PolicyScreenState extends State<PolicyScreen> {
                   vertical: 12,
                 ),
                 itemCount: policies.length,
-                separatorBuilder: (context, index) => const SizedBox(height: 12),
+                separatorBuilder: (context, index) =>
+                    const SizedBox(height: 12),
                 itemBuilder: (context, index) {
                   final policy = policies[index];
                   return _buildPolicyCard(context, policy);
@@ -237,7 +233,7 @@ class _PolicyScreenState extends State<PolicyScreen> {
       child: InkWell(
         onTap: () {
           Get.to(
-                () => PolicyDetailScreen(policy: policy),
+            () => PolicyDetailScreen(policy: policy),
             transition: Transition.cupertino,
             duration: const Duration(milliseconds: 300),
           );
@@ -246,10 +242,7 @@ class _PolicyScreenState extends State<PolicyScreen> {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: Colors.grey.shade200,
-              width: 1,
-            ),
+            border: Border.all(color: Colors.grey.shade200, width: 1),
           ),
           padding: const EdgeInsets.all(16),
           child: Row(
@@ -259,7 +252,9 @@ class _PolicyScreenState extends State<PolicyScreen> {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: (AppColors.primaryPurple ?? Colors.blue).withOpacity(0.1),
+                  color: (AppColors.primaryPurple ?? Colors.blue).withOpacity(
+                    0.1,
+                  ),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
@@ -318,7 +313,8 @@ class _PolicyScreenState extends State<PolicyScreen> {
       return Icons.assignment_return_outlined;
     } else if (lowerName.contains('terms') || lowerName.contains('condition')) {
       return Icons.article_outlined;
-    } else if (lowerName.contains('shipping') || lowerName.contains('delivery')) {
+    } else if (lowerName.contains('shipping') ||
+        lowerName.contains('delivery')) {
       return Icons.local_shipping_outlined;
     } else {
       return Icons.description_outlined;

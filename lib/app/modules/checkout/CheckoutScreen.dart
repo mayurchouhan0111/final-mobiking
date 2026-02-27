@@ -47,18 +47,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   final RxString _selectedPaymentMethod = ''.obs;
   final TextEditingController _gstController = TextEditingController();
-  
 
   @override
   void initState() {
     super.initState();
     _loadInitialData();
-    
   }
 
   Future<void> _loadInitialData() async {
-    
-
     // Fetch addresses and fresh cart data
     await Future.wait([
       addressController.fetchAddresses(),
@@ -70,7 +66,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     if (defaultAddressData != null) {
       final defaultAddress = AddressModel.fromJson(defaultAddressData);
       addressController.selectAddress(defaultAddress);
-    } else if (addressController.addresses.isNotEmpty && addressController.selectedAddress.value == null) {
+    } else if (addressController.addresses.isNotEmpty &&
+        addressController.selectedAddress.value == null) {
       final firstAddress = addressController.addresses.first;
       addressController.selectAddress(firstAddress);
       // Also save this single address as the default for next time
@@ -85,8 +82,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     });
   }
 
-  
-
   double _calculateCartTotal() {
     try {
       double total = 0.0;
@@ -96,7 +91,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
         if (productData is Map<String, dynamic>) {
           final product = ProductModel.fromJson(productData);
-          if (product.sellingPrice.isNotEmpty && product.sellingPrice.last.price != null) {
+          if (product.sellingPrice.isNotEmpty &&
+              product.sellingPrice.last.price != null) {
             final itemPrice = product.sellingPrice.last.price!.toDouble();
             total += itemPrice * quantity;
           }
@@ -108,8 +104,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       return 0.0;
     }
   }
-
-  
 
   double _calculateGST(double cartTotal) {
     return 0.0;
@@ -123,7 +117,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final couponDiscount = couponController.isCouponApplied.value
         ? couponController.discountAmount.value
         : 0.0;
-    final actualDiscount = couponDiscount > subtotal ? subtotal : couponDiscount;
+    final actualDiscount = couponDiscount > subtotal
+        ? subtotal
+        : couponDiscount;
     final finalTotal = subtotal - actualDiscount;
     return {
       'cartTotal': double.parse(cartTotal.toStringAsFixed(2)),
@@ -167,14 +163,25 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       if (coupon is Map) {
         final percentStr = coupon['percent']?.toString() ?? '0';
         final valueStr = coupon['value']?.toString() ?? '0';
-        percentValue = double.tryParse(percentStr.replaceAll(RegExp(r'[^\d.]'), '')) ?? 0.0;
-        valueAmount = double.tryParse(valueStr.replaceAll(RegExp(r'[^\d.]'), '')) ?? 0.0;
+        percentValue =
+            double.tryParse(percentStr.replaceAll(RegExp(r'[^\d.]'), '')) ??
+            0.0;
+        valueAmount =
+            double.tryParse(valueStr.replaceAll(RegExp(r'[^\d.]'), '')) ?? 0.0;
       } else {
         if (coupon.percent != null) {
-          percentValue = double.tryParse(coupon.percent.toString().replaceAll(RegExp(r'[^\d.]'), '')) ?? 0.0;
+          percentValue =
+              double.tryParse(
+                coupon.percent.toString().replaceAll(RegExp(r'[^\d.]'), ''),
+              ) ??
+              0.0;
         }
         if (coupon.value != null) {
-          valueAmount = double.tryParse(coupon.value.toString().replaceAll(RegExp(r'[^\d.]'), '')) ?? 0.0;
+          valueAmount =
+              double.tryParse(
+                coupon.value.toString().replaceAll(RegExp(r'[^\d.]'), ''),
+              ) ??
+              0.0;
         }
       }
       if (percentValue > 0) {
@@ -196,10 +203,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       if (coupon is Map) {
         final percentStr = coupon['percent']?.toString() ?? '0';
         final valueStr = coupon['value']?.toString() ?? '0';
-        final percentValue = double.tryParse(percentStr.replaceAll(RegExp(r'[^\d.]'), '')) ?? 0.0;
-        final valueAmount = double.tryParse(valueStr.replaceAll(RegExp(r'[^\d.]'), '')) ?? 0.0;
+        final percentValue =
+            double.tryParse(percentStr.replaceAll(RegExp(r'[^\d.]'), '')) ??
+            0.0;
+        final valueAmount =
+            double.tryParse(valueStr.replaceAll(RegExp(r'[^\d.]'), '')) ?? 0.0;
         hasDiscount = percentValue > 0 || valueAmount > 0;
-        if (hasDiscount && coupon['startDate'] != null && coupon['endDate'] != null) {
+        if (hasDiscount &&
+            coupon['startDate'] != null &&
+            coupon['endDate'] != null) {
           try {
             final now = DateTime.now();
             DateTime? startDate;
@@ -227,8 +239,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         }
       } else {
         try {
-          final percentValue = double.tryParse(coupon.percent?.toString()?.replaceAll(RegExp(r'[^\d.]'), '') ?? '0') ?? 0.0;
-          final valueAmount = double.tryParse(coupon.value?.toString()?.replaceAll(RegExp(r'[^\d.]'), '') ?? '0') ?? 0.0;
+          final percentValue =
+              double.tryParse(
+                coupon.percent?.toString()?.replaceAll(RegExp(r'[^\d.]'), '') ??
+                    '0',
+              ) ??
+              0.0;
+          final valueAmount =
+              double.tryParse(
+                coupon.value?.toString()?.replaceAll(RegExp(r'[^\d.]'), '') ??
+                    '0',
+              ) ??
+              0.0;
           hasDiscount = percentValue > 0 || valueAmount > 0;
           if (hasDiscount) {
             return coupon.isValid ?? true;
@@ -253,9 +275,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       } else if (coupon is CouponModel) {
         couponController.selectCoupon(coupon);
       }
-    } catch (e) {
-
-    }
+    } catch (e) {}
   }
 
   Widget _buildCouponSection(BuildContext context) {
@@ -266,10 +286,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         decoration: BoxDecoration(
           color: AppColors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: AppColors.neutralBackground,
-            width: 1,
-          ),
+          border: Border.all(color: AppColors.neutralBackground, width: 1),
         ),
         child: couponController.isCouponApplied.value
             ? _buildAppliedCouponWidget(textTheme)
@@ -289,11 +306,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               color: AppColors.success.withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(
-              Icons.local_offer,
-              color: AppColors.success,
-              size: 18,
-            ),
+            child: Icon(Icons.local_offer, color: AppColors.success, size: 18),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -302,42 +315,51 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               children: [
                 Row(
                   children: [
-                    Obx(() => Text(
-                      couponController.selectedCoupon.value?.code ?? 'COUPON',
-                      style: textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.success,
-                        letterSpacing: 1,
-                      ),
-                    )),
-                    const SizedBox(width: 8),
-                    Obx(() => Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: AppColors.success.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        "-₹${couponController.discountAmount.value.toStringAsFixed(0)}",
-                        style: textTheme.labelSmall?.copyWith(
-                          color: AppColors.success,
+                    Obx(
+                      () => Text(
+                        couponController.selectedCoupon.value?.code ?? 'COUPON',
+                        style: textTheme.labelLarge?.copyWith(
                           fontWeight: FontWeight.w700,
-                          fontSize: 10,
+                          color: AppColors.success,
+                          letterSpacing: 1,
                         ),
                       ),
-                    )),
+                    ),
+                    const SizedBox(width: 8),
+                    Obx(
+                      () => Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.success.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          "-₹${couponController.discountAmount.value.toStringAsFixed(0)}",
+                          style: textTheme.labelSmall?.copyWith(
+                            color: AppColors.success,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 2),
-                Obx(() => Text(
-                  couponController.successMessage.value.isNotEmpty
-                      ? couponController.successMessage.value
-                      : "Coupon applied successfully",
-                  style: textTheme.bodySmall?.copyWith(
-                    color: AppColors.textMedium,
-                    fontSize: 12,
+                Obx(
+                  () => Text(
+                    couponController.successMessage.value.isNotEmpty
+                        ? couponController.successMessage.value
+                        : "Coupon applied successfully",
+                    style: textTheme.bodySmall?.copyWith(
+                      color: AppColors.textMedium,
+                      fontSize: 12,
+                    ),
                   ),
-                )),
+                ),
               ],
             ),
           ),
@@ -352,11 +374,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 color: AppColors.neutralBackground,
                 borderRadius: BorderRadius.circular(6),
               ),
-              child: Icon(
-                Icons.close,
-                color: AppColors.textMedium,
-                size: 16,
-              ),
+              child: Icon(Icons.close, color: AppColors.textMedium, size: 16),
             ),
           ),
         ],
@@ -427,35 +445,39 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 ),
               ),
               const SizedBox(width: 8),
-              Obx(() => GestureDetector(
-                onTap: couponController.isLoading.value ? null : _applyCouponWithBillingUpdate,
-                child: Container(
-                  height: 40,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryPurple,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Center(
-                    child: couponController.isLoading.value
-                        ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        color: AppColors.white,
-                        strokeWidth: 2,
-                      ),
-                    )
-                        : Text(
-                      "Apply",
-                      style: textTheme.labelMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.white,
-                      ),
+              Obx(
+                () => GestureDetector(
+                  onTap: couponController.isLoading.value
+                      ? null
+                      : _applyCouponWithBillingUpdate,
+                  child: Container(
+                    height: 40,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryPurple,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Center(
+                      child: couponController.isLoading.value
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                color: AppColors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : Text(
+                              "Apply",
+                              style: textTheme.labelMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.white,
+                              ),
+                            ),
                     ),
                   ),
                 ),
-              )),
+              ),
             ],
           ),
         ),
@@ -471,7 +493,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.error_outline, color: AppColors.danger, size: 16),
+                    Icon(
+                      Icons.error_outline,
+                      color: AppColors.danger,
+                      size: 16,
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -515,7 +541,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   Wrap(
                     spacing: 6,
                     runSpacing: 6,
-                    children: couponController.availableCoupons.take(3).map((coupon) {
+                    children: couponController.availableCoupons.take(3).map((
+                      coupon,
+                    ) {
                       return _buildCompactCouponChip(coupon, textTheme);
                     }).toList(),
                   ),
@@ -559,9 +587,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             Text(
               couponCode,
               style: textTheme.labelSmall?.copyWith(
-                color: isUsable
-                    ? AppColors.primaryPurple
-                    : AppColors.textLight,
+                color: isUsable ? AppColors.primaryPurple : AppColors.textLight,
                 fontWeight: FontWeight.w600,
                 fontSize: 10,
               ),
@@ -570,9 +596,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             Text(
               discountText,
               style: textTheme.labelSmall?.copyWith(
-                color: isUsable
-                    ? AppColors.primaryPurple
-                    : AppColors.textLight,
+                color: isUsable ? AppColors.primaryPurple : AppColors.textLight,
                 fontWeight: FontWeight.w700,
                 fontSize: 10,
               ),
@@ -597,7 +621,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   void _navigateToPaymentMethodSelection(BuildContext context) async {
     final String? result = await Get.to<String?>(
-          () => PaymentMethodSelectionScreen(),
+      () => PaymentMethodSelectionScreen(),
       fullscreenDialog: true,
       transition: Transition.rightToLeft,
     );
@@ -607,8 +631,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   void _handlePlaceOrder(BuildContext context) async {
-    
-
     final isAddressSelected = addressController.selectedAddress.value != null;
     final isCartEmpty = cartController.cartItems.isEmpty;
     final isPaymentMethodSelected = _selectedPaymentMethod.value.isNotEmpty;
@@ -618,7 +640,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
     if (!isAddressSelected) {
       Fluttertoast.showToast(
-          msg: "Please select or add an address before placing the order.");
+        msg: "Please select or add an address before placing the order.",
+      );
       Get.to(() => AddressPage()); // This will now show address list first
       return;
     }
@@ -628,10 +651,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final userMap = loginController.currentUser.value;
     final userPhone = userMap?['phoneNo'] as String? ?? '';
 
-    if (userName.isEmpty || userPhone.isEmpty) { // Email can be optional, as per AddressPage.dart
+    if (userName.isEmpty || userPhone.isEmpty) {
+      // Email can be optional, as per AddressPage.dart
       Fluttertoast.showToast(
-          msg: "Please complete your user information before placing the order.");
-      Get.to(() => AddressPage(initialShowUserSection: true)); // Explicitly show user info section
+        msg: "Please complete your user information before placing the order.",
+      );
+      Get.to(
+        () => AddressPage(initialShowUserSection: true),
+      ); // Explicitly show user info section
       return;
     }
 
@@ -645,7 +672,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
     orderController.isLoading.value = true;
     orderController.gstNumber.value = _gstController.text; // Add this line
-    print('[CheckoutScreen] GST Number added to orderController: ${_gstController.text}');
+    print(
+      '[CheckoutScreen] GST Number added to orderController: ${_gstController.text}',
+    );
     try {
       final orderData = {
         'items': cartController.cartItems,
@@ -656,7 +685,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         'couponDiscount': billingBreakdown['couponDiscount'],
         'finalTotal': billingBreakdown['finalTotal'],
         'gst': _gstController.text, // Add this line
-        
+
         'userPhone': loginController.currentUser.value?['phoneNo'] ?? '',
         ...couponController.getOrderCouponData(),
       };
@@ -664,7 +693,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       if (_selectedPaymentMethod.value == 'COD') {
         await orderController.placeOrder(method: 'COD');
       } else if (_selectedPaymentMethod.value == 'Online') {
-        
         await orderController.placeOrder(method: 'Online');
       }
     } finally {
@@ -672,7 +700,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
   }
 
-  List<ProductModel> _getRelatedProducts(List<Map<String, dynamic>> cartProductsWithDetails) {
+  List<ProductModel> _getRelatedProducts(
+    List<Map<String, dynamic>> cartProductsWithDetails,
+  ) {
     final allProducts = productController.allProducts;
     final Set<String> cartCategoryIds = {};
     for (var entry in cartProductsWithDetails) {
@@ -687,9 +717,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       cartProductIds.add(product.id);
     }
     final relatedProducts = allProducts.where((product) {
-      final bool isSameCategory = product.category != null && cartCategoryIds.contains(product.category!.id);
+      final bool isSameCategory =
+          product.category != null &&
+          cartCategoryIds.contains(product.category!.id);
       final bool isNotInCart = !cartProductIds.contains(product.id);
-      final bool isAvailable = product.active &&
+      final bool isAvailable =
+          product.active &&
           product.variants.entries.any((variant) => variant.value > 0);
       return isSameCategory && isNotInCart && isAvailable;
     }).toList();
@@ -702,181 +735,188 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final TextTheme textTheme = Theme.of(context).textTheme;
     final Color blinkitBackground = AppColors.neutralBackground;
     return WillPopScope(
-        onWillPop: () async {
-          if (cartController.cartItems.isEmpty) {
-            Get.offAll(() => MainContainerScreen());
-            return false;
-          } else {
-            return true;
-          }
-        },
-        child: Scaffold(
-          backgroundColor: blinkitBackground,
-          appBar: AppBar(
-            title: Text(
-              "Checkout",
-              style: textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: AppColors.textDark,
-              ),
-            ),
-            backgroundColor: AppColors.white,
-            foregroundColor: AppColors.textDark,
-            elevation: 0.5,
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new_rounded),
-              onPressed: () => Get.back(),
+      onWillPop: () async {
+        if (cartController.cartItems.isEmpty) {
+          Get.offAll(() => MainContainerScreen());
+          return false;
+        } else {
+          return true;
+        }
+      },
+      child: Scaffold(
+        backgroundColor: blinkitBackground,
+        appBar: AppBar(
+          title: Text(
+            "Checkout",
+            style: textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: AppColors.textDark,
             ),
           ),
-          body: Obx(() {
-            final cartItems = cartController.cartItems;
-            final cartProductsWithDetails = cartItems
-                .where((item) => item['productId'] is Map<String, dynamic>)
-                .map((item) {
-              final productData = item['productId'] as Map<String, dynamic>;
-              final product = ProductModel.fromJson(productData);
-              final quantity = item['quantity'] as int? ?? 1;
-              final variantName = item['variantName'] as String? ?? 'Default';
-              return {
-                'product': product,
-                'quantity': quantity,
-                'variantName': variantName
-              };
-            }).toList();
-            final billingBreakdown = _calculateBillingBreakdown();
-            final relatedProducts = _getRelatedProducts(cartProductsWithDetails);
-            return SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  
-                  Container(
-                    decoration: BoxDecoration(
-                      color: AppColors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: AppColors.neutralBackground,
-                        width: 1,
-                      ),
-                    ),
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Cart Items (${cartProductsWithDetails.length})",
-                          style: textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textDark,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: cartProductsWithDetails.length,
-                          itemBuilder: (context, index) {
-                            final entry = cartProductsWithDetails[index];
-                            final product = entry['product'] as ProductModel;
-                            final quantity = entry['quantity'] as int;
-                            final variantName = entry['variantName'].toString();
-                            return CartItemTile(
-                              product: product,
-                              quantity: quantity,
-                              variantName: variantName,
-                            );
-                          },
-                        ),
-                      ],
+          backgroundColor: AppColors.white,
+          foregroundColor: AppColors.textDark,
+          elevation: 0.5,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded),
+            onPressed: () => Get.back(),
+          ),
+        ),
+        body: Obx(() {
+          final cartItems = cartController.cartItems;
+          final cartProductsWithDetails = cartItems
+              .where((item) => item['productId'] is Map<String, dynamic>)
+              .map((item) {
+                final productData = item['productId'] as Map<String, dynamic>;
+                final product = ProductModel.fromJson(productData);
+                final quantity = item['quantity'] as int? ?? 1;
+                final variantName = item['variantName'] as String? ?? 'Default';
+                return {
+                  'product': product,
+                  'quantity': quantity,
+                  'variantName': variantName,
+                };
+              })
+              .toList();
+          final billingBreakdown = _calculateBillingBreakdown();
+          final relatedProducts = _getRelatedProducts(cartProductsWithDetails);
+          return SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppColors.neutralBackground,
+                      width: 1,
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  _buildCouponSection(context),
-                  const SizedBox(height: 20),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: AppColors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: AppColors.neutralBackground,
-                        width: 1,
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Cart Items (${cartProductsWithDetails.length})",
+                        style: textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textDark,
+                        ),
                       ),
-                    ),
-                    child: BillSection(
-                      itemTotal: billingBreakdown['cartTotal']!.toInt(),
-                      deliveryCharge: billingBreakdown['deliveryCharge']!.toInt(),
-                      couponDiscount: billingBreakdown['couponDiscount']!.toInt(),
-                      gstNumberController: _gstController, // Pass the controller here
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  if (relatedProducts.isNotEmpty) ...[
-                    Row(
-                      children: [
-                        Text(
-                          "You might also like",
-                          style: textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textDark,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: AppColors.primaryPurple.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            '${relatedProducts.length}',
-                            style: textTheme.labelSmall?.copyWith(
-                              color: AppColors.primaryPurple,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      height: 230,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: relatedProducts.length,
+                      const SizedBox(height: 12),
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: cartProductsWithDetails.length,
                         itemBuilder: (context, index) {
-                          final relatedProduct = relatedProducts[index];
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 5),
-                            child: SizedBox(
-                              width: 120,
-                              child: AllProductGridCard(
-                                product: relatedProduct,
-                                heroTag: 'product_image_checkout_related_${relatedProduct.id}_$index',
-                                onTap: (tappedProduct) {
-                                  Get.to(
-                                        () => ProductPage(
-                                      product: tappedProduct,
-                                      heroTag: 'product_image_checkout_related_${tappedProduct.id}_$index',
-                                    ),
-                                    transition: Transition.fadeIn,
-                                    duration: const Duration(milliseconds: 300),
-                                  );
-                                },
-                              ),
-                            ),
+                          final entry = cartProductsWithDetails[index];
+                          final product = entry['product'] as ProductModel;
+                          final quantity = entry['quantity'] as int;
+                          final variantName = entry['variantName'].toString();
+                          return CartItemTile(
+                            product: product,
+                            quantity: quantity,
+                            variantName: variantName,
                           );
                         },
                       ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                _buildCouponSection(context),
+                const SizedBox(height: 20),
+                Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppColors.neutralBackground,
+                      width: 1,
                     ),
-                  ],
-                  const SizedBox(height: 100),
+                  ),
+                  child: BillSection(
+                    itemTotal: billingBreakdown['cartTotal']!.toInt(),
+                    deliveryCharge: billingBreakdown['deliveryCharge']!.toInt(),
+                    couponDiscount: billingBreakdown['couponDiscount']!.toInt(),
+                    gstNumberController:
+                        _gstController, // Pass the controller here
+                  ),
+                ),
+                const SizedBox(height: 24),
+                if (relatedProducts.isNotEmpty) ...[
+                  Row(
+                    children: [
+                      Text(
+                        "You might also like",
+                        style: textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textDark,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryPurple.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          '${relatedProducts.length}',
+                          style: textTheme.labelSmall?.copyWith(
+                            color: AppColors.primaryPurple,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    height: 230,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: relatedProducts.length,
+                      itemBuilder: (context, index) {
+                        final relatedProduct = relatedProducts[index];
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 5),
+                          child: SizedBox(
+                            width: 120,
+                            child: AllProductGridCard(
+                              product: relatedProduct,
+                              heroTag:
+                                  'product_image_checkout_related_${relatedProduct.id}_$index',
+                              onTap: (tappedProduct) {
+                                Get.to(
+                                  () => ProductPage(
+                                    product: tappedProduct,
+                                    heroTag:
+                                        'product_image_checkout_related_${tappedProduct.id}_$index',
+                                  ),
+                                  transition: Transition.fadeIn,
+                                  duration: const Duration(milliseconds: 300),
+                                );
+                              },
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
                 ],
-              ),
-            );
-          }),
-          bottomNavigationBar: _buildDynamicBottomAppBar(context),
-        ));
+                const SizedBox(height: 100),
+              ],
+            ),
+          );
+        }),
+        bottomNavigationBar: _buildDynamicBottomAppBar(context),
+      ),
+    );
   }
 
   Widget _buildDynamicBottomAppBar(BuildContext context) {
@@ -888,7 +928,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           topLeft: Radius.circular(20),
           topRight: Radius.circular(20),
         ),
-        border: Border(top: BorderSide(color: AppColors.neutralBackground, width: 1)),
+        border: Border(
+          top: BorderSide(color: AppColors.neutralBackground, width: 1),
+        ),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       height: 230,
@@ -916,7 +958,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 children: [
                   Icon(
                     Icons.location_pin,
-                    color: selected != null ? AppColors.success : AppColors.textLight,
+                    color: selected != null
+                        ? AppColors.success
+                        : AppColors.textLight,
                     size: 24,
                   ),
                   const SizedBox(width: 10),
@@ -928,30 +972,40 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           selected?.label ?? 'No Address Selected',
                           style: textTheme.bodyLarge?.copyWith(
                             fontWeight: FontWeight.w600,
-                            color: selected != null ? AppColors.textDark : AppColors.textLight,
+                            color: selected != null
+                                ? AppColors.textDark
+                                : AppColors.textLight,
                           ),
                         ),
                         if (selected != null) ...[
                           Text(
                             "${selected.street}, ${selected.city},",
-                            style: textTheme.bodySmall?.copyWith(color: AppColors.textMedium),
+                            style: textTheme.bodySmall?.copyWith(
+                              color: AppColors.textMedium,
+                            ),
                             overflow: TextOverflow.ellipsis,
                           ),
                           Text(
                             "${selected.state} - ${selected.pinCode}",
-                            style: textTheme.bodySmall?.copyWith(color: AppColors.textMedium),
+                            style: textTheme.bodySmall?.copyWith(
+                              color: AppColors.textMedium,
+                            ),
                           ),
                         ] else
                           Text(
                             "Please add or select an address for delivery.",
-                            style: textTheme.bodySmall?.copyWith(color: AppColors.textMedium),
+                            style: textTheme.bodySmall?.copyWith(
+                              color: AppColors.textMedium,
+                            ),
                           ),
                       ],
                     ),
                   ),
                   TextButton(
                     onPressed: () async {
-                      final result = await Get.to(() => AddressPage(showAddressListFirst: true));
+                      final result = await Get.to(
+                        () => AddressPage(showAddressListFirst: true),
+                      );
                       if (result == true) {
                         _loadInitialData();
                       }
@@ -999,18 +1053,25 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           children: [
                             orderController.isLoading.value
                                 ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                  color: AppColors.white, strokeWidth: 2),
-                            )
-                                : const Icon(Icons.account_balance_wallet_rounded,
-                                color: AppColors.white, size: 20),
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      color: AppColors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Icon(
+                                    Icons.account_balance_wallet_rounded,
+                                    color: AppColors.white,
+                                    size: 20,
+                                  ),
                             const SizedBox(width: 8),
                             Text(
                               orderController.isLoading.value
                                   ? "Processing..."
-                                  : (_selectedPaymentMethod.value.isEmpty ? "Pay Using" : _selectedPaymentMethod.value),
+                                  : (_selectedPaymentMethod.value.isEmpty
+                                        ? "Pay Using"
+                                        : _selectedPaymentMethod.value),
                               style: textTheme.bodyMedium?.copyWith(
                                 color: AppColors.white,
                                 fontWeight: FontWeight.w600,
@@ -1028,12 +1089,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   child: Obx(() {
                     final billingBreakdown = _calculateBillingBreakdown();
                     final displayTotal = billingBreakdown['finalTotal']!;
-                    final isAddressSelected = addressController.selectedAddress.value != null;
+                    final isAddressSelected =
+                        addressController.selectedAddress.value != null;
                     final isCartEmpty = cartController.cartItems.isEmpty;
-                    final isPaymentMethodSelected = _selectedPaymentMethod.value.isNotEmpty;
-                    final bool isPlaceOrderDisabled = orderController.isLoading.value || isCartEmpty;
+                    final isPaymentMethodSelected =
+                        _selectedPaymentMethod.value.isNotEmpty;
+                    final bool isPlaceOrderDisabled =
+                        orderController.isLoading.value || isCartEmpty;
                     return InkWell(
-                      onTap: isPlaceOrderDisabled ? null : () => _handlePlaceOrder(context),
+                      onTap: isPlaceOrderDisabled
+                          ? null
+                          : () => _handlePlaceOrder(context),
                       borderRadius: BorderRadius.circular(14),
                       child: Container(
                         height: 52,
@@ -1061,11 +1127,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
-                                      if (couponController.isCouponApplied.value) ...[
+                                      if (couponController
+                                          .isCouponApplied
+                                          .value) ...[
                                         const SizedBox(width: 4),
                                         Icon(
                                           Icons.local_offer,
-                                          color: AppColors.white.withOpacity(0.8),
+                                          color: AppColors.white.withOpacity(
+                                            0.8,
+                                          ),
                                           size: 12,
                                         ),
                                       ],
@@ -1088,7 +1158,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                       width: 20,
                                       height: 20,
                                       child: CircularProgressIndicator(
-                                          color: AppColors.white, strokeWidth: 2),
+                                        color: AppColors.white,
+                                        strokeWidth: 2,
+                                      ),
                                     )
                                   else
                                     Text(
@@ -1100,10 +1172,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                     ),
                                   const SizedBox(width: 6),
                                   if (!orderController.isLoading.value)
-                                    const Icon(Icons.arrow_forward_ios_rounded,
-                                        color: AppColors.white, size: 18),
+                                    const Icon(
+                                      Icons.arrow_forward_ios_rounded,
+                                      color: AppColors.white,
+                                      size: 18,
+                                    ),
                                 ],
-                              )
+                              ),
                             ],
                           ),
                         ),
@@ -1112,7 +1187,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   }),
                 ),
               ],
-            )
+            ),
           ],
         ),
       ),

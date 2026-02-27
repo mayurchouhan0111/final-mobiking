@@ -18,7 +18,11 @@ class RecentOrdersScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.shopping_bag_outlined, color: Colors.grey, size: 80),
+              const Icon(
+                Icons.shopping_bag_outlined,
+                color: Colors.grey,
+                size: 80,
+              ),
               const SizedBox(height: 24),
               const Text(
                 'Your recent orders will appear here!',
@@ -33,15 +37,12 @@ class RecentOrdersScreen extends StatelessWidget {
               const Text(
                 'Start shopping now to see your order history.',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
-                ),
+                style: TextStyle(fontSize: 16, color: Colors.grey),
               ),
               const SizedBox(height: 32),
               ElevatedButton.icon(
                 onPressed: () {
-                 /* ScaffoldMessenger.of(context).showSnackBar(
+                  /* ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Navigating to Shopping Screen... (Mock)')),
                   );*/
                 },
@@ -50,7 +51,10 @@ class RecentOrdersScreen extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.teal,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 30,
+                    vertical: 15,
+                  ),
                   textStyle: const TextStyle(fontSize: 16),
                 ),
               ),

@@ -23,14 +23,19 @@ class WishlistScreen extends StatelessWidget {
       backgroundColor: AppColors.neutralBackground, // Consistent background
       appBar: AppBar(
         elevation: 0.5, // Subtle elevation
-        backgroundColor: AppColors.white, // White AppBar background (Blinkit style)
+        backgroundColor:
+            AppColors.white, // White AppBar background (Blinkit style)
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textDark), // Dark back arrow
+          icon: const Icon(
+            Icons.arrow_back,
+            color: AppColors.textDark,
+          ), // Dark back arrow
           onPressed: () => Get.back(),
         ),
         title: Text(
           'My Wishlist',
-          style: textTheme.titleLarge?.copyWith( // Consistent title style
+          style: textTheme.titleLarge?.copyWith(
+            // Consistent title style
             fontWeight: FontWeight.w700,
             color: AppColors.textDark, // Dark text
           ),
@@ -43,11 +48,15 @@ class WishlistScreen extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                CircularProgressIndicator(color: AppColors.primaryGreen), // Blinkit green loader
+                CircularProgressIndicator(
+                  color: AppColors.primaryGreen,
+                ), // Blinkit green loader
                 const SizedBox(height: 16),
                 Text(
                   'Loading your wishlist...',
-                  style: textTheme.bodyLarge?.copyWith(color: AppColors.textMedium), // Softer text color
+                  style: textTheme.bodyLarge?.copyWith(
+                    color: AppColors.textMedium,
+                  ), // Softer text color
                 ),
               ],
             ),
@@ -79,14 +88,15 @@ class WishlistScreen extends StatelessWidget {
                   Text(
                     'Add the products you love to your wishlist and keep track of them here. It’s the perfect way to save items for later!',
                     textAlign: TextAlign.center,
-                    style: textTheme.bodyLarge?.copyWith(color: AppColors.textMedium),
+                    style: textTheme.bodyLarge?.copyWith(
+                      color: AppColors.textMedium,
+                    ),
                   ),
                 ],
               ),
             ),
           );
         }
-
 
         // Use ListView.separated for consistent spacing with dividers if desired,
         // or just rely on item padding as implemented in WishlistCard.
@@ -96,14 +106,17 @@ class WishlistScreen extends StatelessWidget {
           itemBuilder: (context, index) {
             final product = controller.wishlist[index];
             return Padding(
-              padding: const EdgeInsets.only(bottom: 12), // Consistent bottom padding for each card
+              padding: const EdgeInsets.only(
+                bottom: 12,
+              ), // Consistent bottom padding for each card
               child: WishlistCard(
                 product: product,
                 onRemove: () {
                   // Show confirmation dialog before removing, good UX
                   Get.defaultDialog(
                     title: "Remove from Wishlist?",
-                    middleText: "Are you sure you want to remove '${product.name}' from your wishlist?",
+                    middleText:
+                        "Are you sure you want to remove '${product.name}' from your wishlist?",
                     textConfirm: "Remove",
                     textCancel: "Cancel",
                     confirmTextColor: AppColors.white,
@@ -117,16 +130,19 @@ class WishlistScreen extends StatelessWidget {
                 },
                 onAddToCart: () async {
                   final cartController = Get.find<CartController>();
-                  final availableVariants = product.variants.entries.where((entry) => entry.value > 0).toList();
+                  final availableVariants = product.variants.entries
+                      .where((entry) => entry.value > 0)
+                      .toList();
 
                   if (availableVariants.isNotEmpty) {
-                    // For simplicity, add the first available variant. 
+                    // For simplicity, add the first available variant.
                     // A more complex solution would involve a variant selection UI.
                     final singleVariant = availableVariants.first;
                     final success = await cartController.addToCart(
                       productId: product.id,
                       variantName: singleVariant.key,
-                      product: product, // Pass product model for potential use in CartController
+                      product:
+                          product, // Pass product model for potential use in CartController
                     );
 
                     if (success) {

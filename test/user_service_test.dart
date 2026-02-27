@@ -29,13 +29,11 @@ void main() {
         departments: ['sales', 'support'],
         documents: ['doc1', 'doc2'],
         permissions: {'canOrder': true},
-        cart: [
-          CartModel(productId: 'p1', quantity: 2, price: 100.0),
-        ],
+        cart: [CartModel(productId: 'p1', quantity: 2, price: 100.0)],
       );
 
       when(mockDio.post('/users', data: anyNamed('data'))).thenAnswer(
-            (_) async => Response(
+        (_) async => Response(
           data: user.toJson(),
           statusCode: 201,
           requestOptions: RequestOptions(path: '/users'),
@@ -62,12 +60,12 @@ void main() {
         "documents": ["docX", "docY"],
         "permissions": {"canEdit": true},
         "cart": [
-          {"productId": "prod1", "quantity": 1, "price": 150.0}
-        ]
+          {"productId": "prod1", "quantity": 1, "price": 150.0},
+        ],
       };
 
       when(mockDio.get('/users/u1')).thenAnswer(
-            (_) async => Response(
+        (_) async => Response(
           data: userJson,
           statusCode: 200,
           requestOptions: RequestOptions(path: '/users/u1'),

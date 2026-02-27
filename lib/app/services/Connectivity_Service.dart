@@ -14,7 +14,8 @@ class ConnectivityService extends GetxService {
   ///
   /// **Correction**: The `onConnectivityChanged` stream from the `connectivity_plus`
   /// package emits a single `ConnectivityResult`, not a list.
-  Stream<ConnectivityResult> get connectivityStream => _connectivity.onConnectivityChanged;
+  Stream<ConnectivityResult> get connectivityStream =>
+      _connectivity.onConnectivityChanged;
 
   /// Checks the current connectivity status of the device.
   ///

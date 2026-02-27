@@ -27,15 +27,16 @@ class SearchProductCard extends StatelessWidget {
     final String productName = product.name ?? 'Unnamed Product';
 
     // Safe price handling
-    final String priceText = (product.sellingPrice.isNotEmpty &&
-        product.sellingPrice[0].price != null)
+    final String priceText =
+        (product.sellingPrice.isNotEmpty &&
+            product.sellingPrice[0].price != null)
         ? '₹${product.sellingPrice[0].price!.toStringAsFixed(0)}'
         : 'N/A';
 
     return InkWell(
       onTap: () {
         Get.to(
-              () => ProductPage(
+          () => ProductPage(
             product: product,
             heroTag: 'search-product-image-${product.id}',
           ),
@@ -57,16 +58,20 @@ class SearchProductCard extends StatelessWidget {
                 aspectRatio: 1,
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(10),
-                  child: (product.images != null &&
-                      product.images!.isNotEmpty &&
-                      product.images!.first != null)
+                  child:
+                      (product.images != null &&
+                          product.images!.isNotEmpty &&
+                          product.images!.first != null)
                       ? Image.network(
-                    product.images!.first!,
-                    fit: BoxFit.fill,
-                    errorBuilder: (_, __, ___) =>
-                    const Icon(Icons.broken_image_outlined, size: 32),
-                  )
-                      : const Icon(Icons.image_not_supported_outlined, size: 32),
+                          product.images!.first!,
+                          fit: BoxFit.fill,
+                          errorBuilder: (_, __, ___) =>
+                              const Icon(Icons.broken_image_outlined, size: 32),
+                        )
+                      : const Icon(
+                          Icons.image_not_supported_outlined,
+                          size: 32,
+                        ),
                 ),
               ),
             ),

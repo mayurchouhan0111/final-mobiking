@@ -9,7 +9,6 @@ import 'QueryModel.dart';
 // QUERY MODEL (Included from previous context for completeness)
 // ===================================================================
 
-
 // ===================================================================
 // SELLING PRICE & PRODUCT MODELS (Unchanged)
 // ===================================================================
@@ -19,7 +18,12 @@ class SellingPrice {
   final double price;
   final int quantity;
 
-  SellingPrice({required this.id, required this.variantName, required this.price, required this.quantity});
+  SellingPrice({
+    required this.id,
+    required this.variantName,
+    required this.price,
+    required this.quantity,
+  });
 
   factory SellingPrice.fromJson(Map<String, dynamic> json) {
     return SellingPrice(
@@ -99,29 +103,34 @@ class OrderItemProductModel {
       liked: json['liked'] as bool? ?? false,
       bestSeller: json['bestSeller'] as bool? ?? false,
       recommended: json['recommended'] as bool? ?? false,
-      sellingPrice: (json['sellingPrice'] as List<dynamic>?)
-          ?.map((e) => SellingPrice.fromJson(e as Map<String, dynamic>))
-          .toList() ??
+      sellingPrice:
+          (json['sellingPrice'] as List<dynamic>?)
+              ?.map((e) => SellingPrice.fromJson(e as Map<String, dynamic>))
+              .toList() ??
           [],
       categoryId: (json['category'] is Map && json['category'] != null)
           ? json['category']['_id']?.toString() ?? ''
           : (json['category'] is String ? json['category'].toString() : ''),
-      images: (json['images'] as List<dynamic>?)
-          ?.map((e) => e.toString())
-          .toList() ??
+      images:
+          (json['images'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
           [],
       totalStock: (json['totalStock'] as num?)?.toInt() ?? 0,
-      stockIds: (json['stock'] as List<dynamic>?)
-          ?.map((e) => e.toString())
-          .toList() ??
+      stockIds:
+          (json['stock'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
           [],
-      orderIds: (json['orders'] as List<dynamic>?)
-          ?.map((e) => e.toString())
-          .toList() ??
+      orderIds:
+          (json['orders'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
           [],
-      groupIds: (json['groups'] as List<dynamic>?)
-          ?.map((e) => e.toString())
-          .toList() ??
+      groupIds:
+          (json['groups'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
           [],
       variants: Map<String, int>.from(json['variants'] ?? {}),
       createdAt: json['createdAt'] != null
@@ -179,29 +188,31 @@ class OrderItemModel {
   factory OrderItemModel.fromJson(Map<String, dynamic> json) {
     return OrderItemModel(
       id: json['_id']?.toString() ?? '',
-      productDetails: json['productId'] != null 
+      productDetails: json['productId'] != null
           ? (json['productId'] is Map<String, dynamic>
-              ? OrderItemProductModel.fromJson(json['productId'] as Map<String, dynamic>)
-              : OrderItemProductModel(
-                  id: json['productId'].toString(),
-                  name: '',
-                  fullName: '',
-                  slug: '',
-                  description: '',
-                  active: true,
-                  newArrival: false,
-                  liked: false,
-                  bestSeller: false,
-                  recommended: false,
-                  sellingPrice: [],
-                  categoryId: '',
-                  images: [],
-                  totalStock: 0,
-                  stockIds: [],
-                  orderIds: [],
-                  groupIds: [],
-                  variants: {},
-                ))
+                ? OrderItemProductModel.fromJson(
+                    json['productId'] as Map<String, dynamic>,
+                  )
+                : OrderItemProductModel(
+                    id: json['productId'].toString(),
+                    name: '',
+                    fullName: '',
+                    slug: '',
+                    description: '',
+                    active: true,
+                    newArrival: false,
+                    liked: false,
+                    bestSeller: false,
+                    recommended: false,
+                    sellingPrice: [],
+                    categoryId: '',
+                    images: [],
+                    totalStock: 0,
+                    stockIds: [],
+                    orderIds: [],
+                    groupIds: [],
+                    variants: {},
+                  ))
           : null,
       variantName: json['variantName']?.toString() ?? '',
       quantity: (json['quantity'] as num?)?.toInt() ?? 0,
@@ -225,11 +236,7 @@ class OrderUserModel {
   final String? email;
   final String? phoneNo;
 
-  OrderUserModel({
-    required this.id,
-    this.email,
-    this.phoneNo,
-  });
+  OrderUserModel({required this.id, this.email, this.phoneNo});
 
   factory OrderUserModel.fromJson(Map<String, dynamic> json) {
     return OrderUserModel(
@@ -240,11 +247,7 @@ class OrderUserModel {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      '_id': id,
-      'email': email,
-      'phoneNo': phoneNo,
-    };
+    return {'_id': id, 'email': email, 'phoneNo': phoneNo};
   }
 }
 
@@ -303,7 +306,6 @@ class RequestModel {
     };
   }
 }
-
 
 // ===================================================================
 // FULLY ALIGNED ORDER MODEL
@@ -394,7 +396,6 @@ class OrderModel {
   final DateTime updatedAt;
   final int? v;
 
-
   OrderModel({
     required this.id,
     required this.orderId,
@@ -473,7 +474,9 @@ class OrderModel {
           .toList(),
       returnData: json['returnData'] as Map<String, dynamic>?, // ADDED
       paymentStatus: json['paymentStatus']?.toString() ?? 'Pending',
-      paymentDate: DateTime.tryParse(json['paymentDate']?.toString() ?? ''), // ADDED
+      paymentDate: DateTime.tryParse(
+        json['paymentDate']?.toString() ?? '',
+      ), // ADDED
       isReviewed: json['isReviewed'] as bool? ?? false,
 
       shipmentId: json['shipmentId']?.toString(),
@@ -481,7 +484,9 @@ class OrderModel {
       shiprocketChannelId: json['shiprocketChannelId']?.toString(),
       awbCode: json['awbCode']?.toString(),
       courierName: json['courierName']?.toString(),
-      courierAssignedAt: DateTime.tryParse(json['courierAssignedAt']?.toString() ?? ''),
+      courierAssignedAt: DateTime.tryParse(
+        json['courierAssignedAt']?.toString() ?? '',
+      ),
       pickupScheduled: json['pickupScheduled'] as bool? ?? false,
       pickupTokenNumber: json['pickupTokenNumber']?.toString(),
       pickupDate: json['pickupDate']?.toString(),
@@ -497,16 +502,19 @@ class OrderModel {
       razorpayOrderId: json['razorpayOrderId']?.toString(),
       razorpayPaymentId: json['razorpayPaymentId']?.toString(),
 
-      requests: (json['requests'] as List<dynamic>?)
-          ?.map((e) => RequestModel.fromJson(e as Map<String, dynamic>))
-          .toList() ?? [],
+      requests:
+          (json['requests'] as List<dynamic>?)
+              ?.map((e) => RequestModel.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
 
       type: json['type']?.toString() ?? 'Regular',
       method: json['method']?.toString() ?? 'COD',
       isAppOrder: json['isAppOrder'] as bool? ?? false,
       abondonedOrder: json['abondonedOrder'] as bool? ?? true,
 
-      couponId: (json['coupon'] is Map ? json['coupon']['_id'] : json['coupon'])?.toString(), // ADDED
+      couponId: (json['coupon'] is Map ? json['coupon']['_id'] : json['coupon'])
+          ?.toString(), // ADDED
 
       orderAmount: (json['orderAmount'] as num?)?.toDouble() ?? 0.0,
       deliveryCharge: (json['deliveryCharge'] as num?)?.toDouble() ?? 0.0,
@@ -530,21 +538,30 @@ class OrderModel {
           ? OrderUserModel.fromJson(json['userId'] as Map<String, dynamic>)
           : null,
 
-      query: json['query'] != null && json['query'] is Map // ADDED
+      query:
+          json['query'] != null &&
+              json['query']
+                  is Map // ADDED
           ? QueryModel.fromJson(json['query'] as Map<String, dynamic>)
           : null,
 
-      items: (json['items'] as List<dynamic>?)
-          ?.map((e) => OrderItemModel.fromJson(e as Map<String, dynamic>))
-          .toList() ?? [],
+      items:
+          (json['items'] as List<dynamic>?)
+              ?.map((e) => OrderItemModel.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
 
       length: (json['length'] as num?)?.toDouble(), // ADDED
       breadth: (json['breadth'] as num?)?.toDouble(), // ADDED
       height: (json['height'] as num?)?.toDouble(), // ADDED
       weight: (json['weight'] as num?)?.toDouble(), // ADDED
 
-      createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ?? DateTime.now(),
-      updatedAt: DateTime.tryParse(json['updatedAt']?.toString() ?? '') ?? DateTime.now(),
+      createdAt:
+          DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
+          DateTime.now(),
+      updatedAt:
+          DateTime.tryParse(json['updatedAt']?.toString() ?? '') ??
+          DateTime.now(),
       v: json['__v'] as int?,
     );
   }
@@ -632,9 +649,10 @@ class OrdersResponse {
   factory OrdersResponse.fromJson(Map<String, dynamic> json) {
     return OrdersResponse(
       statusCode: json['statusCode'] as int? ?? 0,
-      data: (json['data'] as List<dynamic>?)
-          ?.map((e) => OrderModel.fromJson(e as Map<String, dynamic>))
-          .toList() ??
+      data:
+          (json['data'] as List<dynamic>?)
+              ?.map((e) => OrderModel.fromJson(e as Map<String, dynamic>))
+              .toList() ??
           [],
       message: json['message'] as String? ?? '',
       success: json['success'] as bool? ?? false,

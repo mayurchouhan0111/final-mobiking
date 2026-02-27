@@ -3,7 +3,8 @@ import 'package:get/get.dart';
 
 // This controller manages the TabController for your categories/tabs.
 // It uses GetSingleTickerProviderStateMixin because TabController requires a TickerProvider.
-class TabControllerGetX extends GetxController with GetSingleTickerProviderStateMixin {
+class TabControllerGetX extends GetxController
+    with GetSingleTickerProviderStateMixin {
   // late keyword means it will be initialized before first use, but not in the constructor.
   // It's initialized in onInit().
   late TabController controller;
@@ -49,7 +50,8 @@ class TabControllerGetX extends GetxController with GetSingleTickerProviderState
   void changeTab(int index) {
     if (index >= 0 && index < controller.length) {
       controller.animateTo(index);
-      selectedIndex.value = index; // Update the observable value manually if not already updated by listener
+      selectedIndex.value =
+          index; // Update the observable value manually if not already updated by listener
     }
   }
 

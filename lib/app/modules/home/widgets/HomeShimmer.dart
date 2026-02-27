@@ -14,16 +14,16 @@ class HomeShimmer extends StatelessWidget {
         children: [
           // 1. Shimmer for Search & Banner Area
           _buildBannerShimmer(context),
-          
+
           // 2. Shimmer for Category Tabs
           _buildCategoryTabsShimmer(),
-          
+
           // 3. Shimmer for Categories Section (Grid)
           _buildGridShimmer(context, "Categories", 6),
-          
+
           // 4. Shimmer for another section (Groups)
           _buildGridShimmer(context, "Featured Products", 4),
-          
+
           const SizedBox(height: 100), // Space for bottom bar
         ],
       ),
@@ -77,11 +77,7 @@ class HomeShimmer extends StatelessWidget {
                 Shimmer.fromColors(
                   baseColor: Colors.grey[300]!,
                   highlightColor: Colors.grey[100]!,
-                  child: Container(
-                    width: 40,
-                    height: 10,
-                    color: Colors.white,
-                  ),
+                  child: Container(width: 40, height: 10, color: Colors.white),
                 ),
               ],
             ),

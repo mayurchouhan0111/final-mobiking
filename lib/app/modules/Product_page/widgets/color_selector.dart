@@ -51,12 +51,19 @@ class _CustomColorSelectorState extends State<CustomColorSelector> {
                 },
                 child: Container(
                   margin: const EdgeInsets.only(right: 12),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
-                    color: isSelected ? Colors.deepPurple.shade50 : Colors.white,
+                    color: isSelected
+                        ? Colors.deepPurple.shade50
+                        : Colors.white,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: isSelected ? Colors.deepPurple : Colors.grey.shade400,
+                      color: isSelected
+                          ? Colors.deepPurple
+                          : Colors.grey.shade400,
                       width: 1,
                     ),
                   ),

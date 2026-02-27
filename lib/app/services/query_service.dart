@@ -30,10 +30,14 @@ class QueryService {
   }
 
   /// Internal generic response handler
-  Future<T> _handleDioResponse<T>(Response response, T Function(dynamic jsonData) dataParser) async {
+  Future<T> _handleDioResponse<T>(
+    Response response,
+    T Function(dynamic jsonData) dataParser,
+  ) async {
     if (response.statusCode! >= 200 && response.statusCode! < 300) {
       final data = response.data;
-      if (data is String && (!data.trim().startsWith('{') && !data.trim().startsWith('['))) {
+      if (data is String &&
+          (!data.trim().startsWith('{') && !data.trim().startsWith('['))) {
         // Backend mistake: returned plain string instead of JSON
         throw DioException(
           requestOptions: response.requestOptions,
@@ -129,7 +133,10 @@ class QueryService {
     };
     try {
       final response = await _dio.post(url, data: requestBody);
-      return await _handleDioResponse(response, (json) => QueryModel.fromJson(json as Map<String, dynamic>));
+      return await _handleDioResponse(
+        response,
+        (json) => QueryModel.fromJson(json as Map<String, dynamic>),
+      );
     } on DioException catch (e) {
       throw Exception('Failed to rate query: ${_getDioErrorMessage(e)}');
     } catch (e) {
@@ -142,10 +149,7 @@ class QueryService {
     required String replyText,
   }) async {
     final url = '$_baseUrl/queries/reply';
-    final requestBody = {
-      'queryId': queryId,
-      'message': replyText,
-    };
+    final requestBody = {'queryId': queryId, 'message': replyText};
     try {
       await _dio.post(url, data: requestBody);
     } on DioException catch (e) {
@@ -182,18 +186,15 @@ class QueryService {
     final url = '$_baseUrl/queries/$queryId';
     try {
       final response = await _dio.get(url);
-      return await _handleDioResponse(
-          response,
-              (json) {
-                if (json is List && json.isNotEmpty) {
-                  return QueryModel.fromJson(json.first as Map<String, dynamic>);
-                } else if (json is Map<String, dynamic>) {
-                  return QueryModel.fromJson(json);
-                } else {
-                  throw Exception('Unexpected response format from getQueryById');
-                }
-              }
-      );
+      return await _handleDioResponse(response, (json) {
+        if (json is List && json.isNotEmpty) {
+          return QueryModel.fromJson(json.first as Map<String, dynamic>);
+        } else if (json is Map<String, dynamic>) {
+          return QueryModel.fromJson(json);
+        } else {
+          throw Exception('Unexpected response format from getQueryById');
+        }
+      });
     } on DioException catch (e) {
       throw Exception('Failed to get query by ID: ${_getDioErrorMessage(e)}');
     } catch (e) {

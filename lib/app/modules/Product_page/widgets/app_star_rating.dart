@@ -57,11 +57,8 @@ class AppStarRating extends StatelessWidget {
           svgString,
           width: starSize,
           height: starSize,
-          placeholderBuilder: (context) => Icon(
-            fallbackIcon,
-            color: starColor,
-            size: starSize,
-          ),
+          placeholderBuilder: (context) =>
+              Icon(fallbackIcon, color: starColor, size: starSize),
         );
       }),
     );

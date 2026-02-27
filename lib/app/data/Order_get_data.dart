@@ -17,11 +17,7 @@ class CreateUserReferenceRequestModel {
   });
 
   Map<String, dynamic> toJson() {
-    return {
-      '_id': id,
-      'email': email,
-      'phoneNo': phoneNo,
-    };
+    return {'_id': id, 'email': email, 'phoneNo': phoneNo};
   }
 }
 
@@ -32,7 +28,7 @@ class CreateOrderItemRequestModel {
   final String variantName;
   final int quantity;
   final double price; // Price at the time of order (critical for backend)
-  
+
   // NEW: Fallback fields for UI display (not sent to backend)
   final String? productName;
   final String? productImage;
@@ -75,7 +71,8 @@ class CreateOrderItemRequestModel {
 // This is the model for the payload you send when placing a new order.
 class CreateOrderRequestModel {
   // These fields are provided by the client
-  final CreateUserReferenceRequestModel userId; // Reference to the user placing the order
+  final CreateUserReferenceRequestModel
+  userId; // Reference to the user placing the order
   final String cartId; // Reference to the cart
   final String name; // Recipient name (can be self or other)
   final String email; // Recipient email
@@ -87,13 +84,14 @@ class CreateOrderRequestModel {
   final double subtotal;
   final String address; // Full shipping address string
   final String method; // Payment method (e.g., 'COD')
-  final List<CreateOrderItemRequestModel> items; // List of order items for the request
+  final List<CreateOrderItemRequestModel>
+  items; // List of order items for the request
   final String? addressId; // <--- NEW FIELD: The ID of the selected address
   final bool isAppOrder; // <--- NEW FIELD: Added for app identification
 
   // === NEW COUPON FIELDS ===
-  final String? couponId;       // Coupon ID if applied
-  final String? couponCode;     // Coupon code string if applied
+  final String? couponId; // Coupon ID if applied
+  final String? couponCode; // Coupon code string if applied
   final double? discountAmount; // Discount amount if applied
 
   CreateOrderRequestModel({
@@ -112,8 +110,8 @@ class CreateOrderRequestModel {
     required this.items,
     required this.addressId, // <--- existing optional field
     this.isAppOrder = true, // <--- existing optional field with default
-    this.couponId,       // <--- newly added
-    this.couponCode,     // <--- newly added
+    this.couponId, // <--- newly added
+    this.couponCode, // <--- newly added
     this.discountAmount, // <--- newly added
   });
 
@@ -134,11 +132,11 @@ class CreateOrderRequestModel {
       'items': items.map((item) => item.toJson()).toList(),
       'addressId': addressId,
       'isAppOrder': isAppOrder, // <--- existing field
-
       // New coupon fields only added if not null:
       if (couponId != null) 'couponId': couponId,
       if (couponCode != null) 'couponCode': couponCode,
-      if (discountAmount != null && discountAmount! > 0) 'discountAmount': discountAmount,
+      if (discountAmount != null && discountAmount! > 0)
+        'discountAmount': discountAmount,
     };
   }
 }

@@ -23,17 +23,14 @@ void main() {
           "_id": "123",
           "name": "Electronics",
           "active": true,
-          "subCategories": ["sub1", "sub2"]
+          "subCategories": ["sub1", "sub2"],
         },
-        {
-          "_id": "124",
-          "name": "Fashion",
-          "active": true,
-          "subCategories": []
-        },
+        {"_id": "124", "name": "Fashion", "active": true, "subCategories": []},
       ];
 
-      when(mockClient.get(Uri.parse('https://boxbudy.com/api/v1/categories'))).thenAnswer(
+      when(
+        mockClient.get(Uri.parse('https://boxbudy.com/api/v1/categories')),
+      ).thenAnswer(
         (_) async => http.Response(jsonEncode({'data': dummyData}), 200),
       );
 

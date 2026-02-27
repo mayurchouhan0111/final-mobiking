@@ -31,12 +31,16 @@ class OrderSummaryCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildRow("Subtotal", subtotal),
-            if (discount > 0) _buildRow("Discount", -discount, isDiscount: true),
+            if (discount > 0)
+              _buildRow("Discount", -discount, isDiscount: true),
             _buildRow("Delivery Fee", delivery),
             _buildRow("GST", gst),
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 14),
-              child: Divider(thickness: 1.2, color: AppColors.lightGreyBackground),
+              child: Divider(
+                thickness: 1.2,
+                color: AppColors.lightGreyBackground,
+              ),
             ),
             _buildRow("Grand Total", total, isTotal: true),
           ],
@@ -45,7 +49,12 @@ class OrderSummaryCard extends StatelessWidget {
     );
   }
 
-  Widget _buildRow(String title, double value, {bool isDiscount = false, bool isTotal = false}) {
+  Widget _buildRow(
+    String title,
+    double value, {
+    bool isDiscount = false,
+    bool isTotal = false,
+  }) {
     final valueColor = isDiscount
         ? Colors.red
         : isTotal

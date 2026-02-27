@@ -23,7 +23,8 @@ class SoundService extends GetxService {
 
   @override
   void onClose() {
-    _audioPlayer.dispose(); // Release resources when the service is no longer needed
+    _audioPlayer
+        .dispose(); // Release resources when the service is no longer needed
     super.onClose();
   }
 }

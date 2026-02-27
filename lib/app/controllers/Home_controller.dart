@@ -11,7 +11,9 @@ import 'package:cached_network_image/cached_network_image.dart'; // For CachedNe
 
 class HomeController extends GetxController {
   final GetStorage _box = GetStorage(); // GetStorage instance
-  late final HomeService _service = HomeService(_box); // Pass GetStorage to HomeService
+  late final HomeService _service = HomeService(
+    _box,
+  ); // Pass GetStorage to HomeService
   final ConnectivityController _connectivityController = Get.find();
 
   /// Only expose loading state when needed for UI
@@ -27,7 +29,6 @@ class HomeController extends GetxController {
   Map<String, List<GroupModel>> get categoryGroups => _categoryGroups;
 
   /// ✅ Add loading state tracking for individual category groups
-  
 
   @override
   void onInit() {
@@ -41,7 +42,9 @@ class HomeController extends GetxController {
   }
 
   Future<void> _handleConnectionRestored() async {
-    print('[HomeController] ✅ Internet reconnected. Re-fetching home layout...');
+    print(
+      '[HomeController] ✅ Internet reconnected. Re-fetching home layout...',
+    );
     await fetchHomeLayout();
   }
 
@@ -54,18 +57,26 @@ class HomeController extends GetxController {
 
         // Pre-load banner images for all categories
         for (var category in result.categories) {
-          if (category.upperBanner != null && category.upperBanner!.isNotEmpty) {
-            precacheImage(CachedNetworkImageProvider(category.upperBanner!), Get.context!); // Pre-cache upper banner
+          if (category.upperBanner != null &&
+              category.upperBanner!.isNotEmpty) {
+            precacheImage(
+              CachedNetworkImageProvider(category.upperBanner!),
+              Get.context!,
+            ); // Pre-cache upper banner
           }
-          if (category.lowerBanner != null && category.lowerBanner!.isNotEmpty) {
-            precacheImage(CachedNetworkImageProvider(category.lowerBanner!), Get.context!); // Pre-cache lower banner
+          if (category.lowerBanner != null &&
+              category.lowerBanner!.isNotEmpty) {
+            precacheImage(
+              CachedNetworkImageProvider(category.lowerBanner!),
+              Get.context!,
+            ); // Pre-cache lower banner
           }
         }
         print("🖼️ All banner images pre-cached.");
 
         // Process groups and group them by category
         _categoryGroups.clear();
-for (var group in result.groups) {
+        for (var group in result.groups) {
           for (var categoryId in group.categories) {
             if (_categoryGroups.containsKey(categoryId)) {
               _categoryGroups[categoryId]!.add(group);
@@ -81,7 +92,6 @@ for (var group in result.groups) {
       _isLoading.value = false;
     }
   }
-
 
   /// ✅ Add method to clear all group data (useful for refresh)
   void clearAllGroups() {

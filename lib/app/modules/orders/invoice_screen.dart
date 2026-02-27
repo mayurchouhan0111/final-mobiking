@@ -97,8 +97,11 @@ class InvoiceScreen extends StatelessWidget {
       final double sgst = totalGst / 2;
       final double taxableSubtotal = totalAmount - totalGst - deliveryCharge;
 
-      final String invoiceNo = "GST-${order.orderId.substring(order.orderId.length >= 6 ? order.orderId.length - 6 : 0).toUpperCase()}";
-      final String actualDate = DateFormat('dd/MM/yyyy').format(order.createdAt != null ? order.createdAt.toLocal() : DateTime.now());
+      final String invoiceNo =
+          "GST-${order.orderId.substring(order.orderId.length >= 6 ? order.orderId.length - 6 : 0).toUpperCase()}";
+      final String actualDate = DateFormat('dd/MM/yyyy').format(
+        order.createdAt != null ? order.createdAt.toLocal() : DateTime.now(),
+      );
 
       pdf.addPage(
         pw.Page(
@@ -110,8 +113,14 @@ class InvoiceScreen extends StatelessWidget {
               children: [
                 // Header: TAX INVOICE
                 pw.Center(
-                  child: pw.Text('TAX INVOICE',
-                      style: pw.TextStyle(font: boldFont, fontSize: 16, letterSpacing: 2)),
+                  child: pw.Text(
+                    'TAX INVOICE',
+                    style: pw.TextStyle(
+                      font: boldFont,
+                      fontSize: 16,
+                      letterSpacing: 2,
+                    ),
+                  ),
                 ),
                 pw.SizedBox(height: 10),
 
@@ -131,13 +140,37 @@ class InvoiceScreen extends StatelessWidget {
                           child: pw.Column(
                             crossAxisAlignment: pw.CrossAxisAlignment.start,
                             children: [
-                              pw.Text('MOBIKING WHOLESALE', style: pw.TextStyle(font: boldFont, fontSize: 14)),
-                              pw.Text('3rd floor B-91 opp.isckon temple east of kailash,', style: pw.TextStyle(font: font, fontSize: 9)),
-                              pw.Text('New Delhi 110065', style: pw.TextStyle(font: font, fontSize: 9)),
-                              pw.Text('Contact: 8587901901', style: pw.TextStyle(font: font, fontSize: 9)),
-                              pw.Text('Email: mobiking507@gmail.com', style: pw.TextStyle(font: font, fontSize: 9)),
+                              pw.Text(
+                                'MOBIKING WHOLESALE',
+                                style: pw.TextStyle(
+                                  font: boldFont,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              pw.Text(
+                                '3rd floor B-91 opp.isckon temple east of kailash,',
+                                style: pw.TextStyle(font: font, fontSize: 9),
+                              ),
+                              pw.Text(
+                                'New Delhi 110065',
+                                style: pw.TextStyle(font: font, fontSize: 9),
+                              ),
+                              pw.Text(
+                                'Contact: 8587901901',
+                                style: pw.TextStyle(font: font, fontSize: 9),
+                              ),
+                              pw.Text(
+                                'Email: mobiking507@gmail.com',
+                                style: pw.TextStyle(font: font, fontSize: 9),
+                              ),
                               pw.SizedBox(height: 5),
-                              pw.Text('GSTIN: 07BESPC8834B1ZG', style: pw.TextStyle(font: mediumFont, fontSize: 10)),
+                              pw.Text(
+                                'GSTIN: 07BESPC8834B1ZG',
+                                style: pw.TextStyle(
+                                  font: mediumFont,
+                                  fontSize: 10,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -148,13 +181,27 @@ class InvoiceScreen extends StatelessWidget {
                             pw.Container(
                               padding: const pw.EdgeInsets.all(8),
                               decoration: const pw.BoxDecoration(
-                                border: pw.Border(bottom: pw.BorderSide(color: PdfColors.grey)),
+                                border: pw.Border(
+                                  bottom: pw.BorderSide(color: PdfColors.grey),
+                                ),
                               ),
                               child: pw.Column(
                                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                                 children: [
-                                  pw.Text('Invoice No.', style: pw.TextStyle(font: font, fontSize: 8)),
-                                  pw.Text(invoiceNo, style: pw.TextStyle(font: mediumFont, fontSize: 10)),
+                                  pw.Text(
+                                    'Invoice No.',
+                                    style: pw.TextStyle(
+                                      font: font,
+                                      fontSize: 8,
+                                    ),
+                                  ),
+                                  pw.Text(
+                                    invoiceNo,
+                                    style: pw.TextStyle(
+                                      font: mediumFont,
+                                      fontSize: 10,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
@@ -163,8 +210,20 @@ class InvoiceScreen extends StatelessWidget {
                               child: pw.Column(
                                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                                 children: [
-                                  pw.Text('Date', style: pw.TextStyle(font: font, fontSize: 8)),
-                                  pw.Text(actualDate, style: pw.TextStyle(font: mediumFont, fontSize: 10)),
+                                  pw.Text(
+                                    'Date',
+                                    style: pw.TextStyle(
+                                      font: font,
+                                      fontSize: 8,
+                                    ),
+                                  ),
+                                  pw.Text(
+                                    actualDate,
+                                    style: pw.TextStyle(
+                                      font: mediumFont,
+                                      fontSize: 10,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
@@ -189,13 +248,28 @@ class InvoiceScreen extends StatelessWidget {
                   child: pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
-                      pw.Text('Bill To:', style: pw.TextStyle(font: mediumFont, fontSize: 10)),
-                      pw.Text(order.name ?? 'N/A', style: pw.TextStyle(font: boldFont, fontSize: 11)),
-                      pw.Text('Contact: ${order.phoneNo ?? 'N/A'}', style: pw.TextStyle(font: font, fontSize: 9)),
+                      pw.Text(
+                        'Bill To:',
+                        style: pw.TextStyle(font: mediumFont, fontSize: 10),
+                      ),
+                      pw.Text(
+                        order.name ?? 'N/A',
+                        style: pw.TextStyle(font: boldFont, fontSize: 11),
+                      ),
+                      pw.Text(
+                        'Contact: ${order.phoneNo ?? 'N/A'}',
+                        style: pw.TextStyle(font: font, fontSize: 9),
+                      ),
                       if (order.address != null)
-                        pw.Text('${order.address!}${order.city != null ? ", ${order.city}" : ""}', style: pw.TextStyle(font: font, fontSize: 9)),
+                        pw.Text(
+                          '${order.address!}${order.city != null ? ", ${order.city}" : ""}',
+                          style: pw.TextStyle(font: font, fontSize: 9),
+                        ),
                       if (order.state != null || order.pincode != null)
-                        pw.Text('${order.state ?? ""} ${order.pincode ?? ""}', style: pw.TextStyle(font: font, fontSize: 9)),
+                        pw.Text(
+                          '${order.state ?? ""} ${order.pincode ?? ""}',
+                          style: pw.TextStyle(font: font, fontSize: 9),
+                        ),
                     ],
                   ),
                 ),
@@ -221,13 +295,25 @@ class InvoiceScreen extends StatelessWidget {
                   children: [
                     // Header Row
                     pw.TableRow(
-                      decoration: const pw.BoxDecoration(color: PdfColors.grey200),
+                      decoration: const pw.BoxDecoration(
+                        color: PdfColors.grey200,
+                      ),
                       children: [
                         _buildTableCell('S.No', boldFont, 8, isHeader: true),
-                        _buildTableCell('PARTICULARS', boldFont, 8, isHeader: true),
+                        _buildTableCell(
+                          'PARTICULARS',
+                          boldFont,
+                          8,
+                          isHeader: true,
+                        ),
                         _buildTableCell('HSN/SAC', boldFont, 8, isHeader: true),
                         _buildTableCell('QTY', boldFont, 8, isHeader: true),
-                        _buildTableCell('EXCL PRICE', boldFont, 8, isHeader: true),
+                        _buildTableCell(
+                          'EXCL PRICE',
+                          boldFont,
+                          8,
+                          isHeader: true,
+                        ),
                         _buildTableCell('GST %', boldFont, 8, isHeader: true),
                         _buildTableCell('TAXABLE', boldFont, 8, isHeader: true),
                       ],
@@ -236,17 +322,42 @@ class InvoiceScreen extends StatelessWidget {
                     ...List.generate(order.items.length, (index) {
                       final item = order.items[index];
                       final double taxableValuePerItem = item.price / 1.18;
-                      final double totalTaxablePerItem = taxableValuePerItem * item.quantity;
+                      final double totalTaxablePerItem =
+                          taxableValuePerItem * item.quantity;
 
                       return pw.TableRow(
                         children: [
-                          _buildTableCell((index + 1).toString(), font, 9, isHeader: true),
-                          _buildTableCell(item.productDetails?.fullName ?? 'N/A', font, 9),
+                          _buildTableCell(
+                            (index + 1).toString(),
+                            font,
+                            9,
+                            isHeader: true,
+                          ),
+                          _buildTableCell(
+                            item.productDetails?.fullName ?? 'N/A',
+                            font,
+                            9,
+                          ),
                           _buildTableCell('85044030', font, 9, isHeader: true),
-                          _buildTableCell(item.quantity.toString(), font, 9, isHeader: true),
-                          _buildTableCell(taxableValuePerItem.toStringAsFixed(2), font, 9, isHeader: true),
+                          _buildTableCell(
+                            item.quantity.toString(),
+                            font,
+                            9,
+                            isHeader: true,
+                          ),
+                          _buildTableCell(
+                            taxableValuePerItem.toStringAsFixed(2),
+                            font,
+                            9,
+                            isHeader: true,
+                          ),
                           _buildTableCell('18%', font, 9, isHeader: true),
-                          _buildTableCell(totalTaxablePerItem.toStringAsFixed(2), font, 9, isHeader: true),
+                          _buildTableCell(
+                            totalTaxablePerItem.toStringAsFixed(2),
+                            font,
+                            9,
+                            isHeader: true,
+                          ),
                         ],
                       );
                     }),
@@ -256,10 +367,25 @@ class InvoiceScreen extends StatelessWidget {
                         _buildTableCell('', boldFont, 9),
                         _buildTableCell('TOTAL', boldFont, 9, isHeader: true),
                         _buildTableCell('', font, 9),
-                        _buildTableCell(order.items.fold(0, (sum, item) => (sum as int) + item.quantity).toString(), mediumFont, 9, isHeader: true),
+                        _buildTableCell(
+                          order.items
+                              .fold(
+                                0,
+                                (sum, item) => (sum as int) + item.quantity,
+                              )
+                              .toString(),
+                          mediumFont,
+                          9,
+                          isHeader: true,
+                        ),
                         _buildTableCell('', font, 9),
                         _buildTableCell('', font, 9),
-                        _buildTableCell(taxableSubtotal.toStringAsFixed(2), boldFont, 10, isHeader: true),
+                        _buildTableCell(
+                          taxableSubtotal.toStringAsFixed(2),
+                          boldFont,
+                          10,
+                          isHeader: true,
+                        ),
                       ],
                     ),
                   ],
@@ -286,9 +412,21 @@ class InvoiceScreen extends StatelessWidget {
                           child: pw.Column(
                             crossAxisAlignment: pw.CrossAxisAlignment.start,
                             children: [
-                              pw.Text('Amount in Words:', style: pw.TextStyle(font: mediumFont, fontSize: 9)),
+                              pw.Text(
+                                'Amount in Words:',
+                                style: pw.TextStyle(
+                                  font: mediumFont,
+                                  fontSize: 9,
+                                ),
+                              ),
                               pw.SizedBox(height: 4),
-                              pw.Text(_numberToWords(totalAmount), style: pw.TextStyle(font: italicFont, fontSize: 9)),
+                              pw.Text(
+                                _numberToWords(totalAmount),
+                                style: pw.TextStyle(
+                                  font: italicFont,
+                                  fontSize: 9,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -301,11 +439,27 @@ class InvoiceScreen extends StatelessWidget {
                               padding: const pw.EdgeInsets.all(6),
                               child: pw.Column(
                                 children: [
-                                  _buildSummaryRowSmall('Taxable Value', 'INR ${taxableSubtotal.toStringAsFixed(2)}', font),
-                                  _buildSummaryRowSmall('CGST (9%) (+)', 'INR ${cgst.toStringAsFixed(2)}', font),
-                                  _buildSummaryRowSmall('SGST (9%) (+)', 'INR ${sgst.toStringAsFixed(2)}', font),
+                                  _buildSummaryRowSmall(
+                                    'Taxable Value',
+                                    'INR ${taxableSubtotal.toStringAsFixed(2)}',
+                                    font,
+                                  ),
+                                  _buildSummaryRowSmall(
+                                    'CGST (9%) (+)',
+                                    'INR ${cgst.toStringAsFixed(2)}',
+                                    font,
+                                  ),
+                                  _buildSummaryRowSmall(
+                                    'SGST (9%) (+)',
+                                    'INR ${sgst.toStringAsFixed(2)}',
+                                    font,
+                                  ),
                                   if (deliveryCharge > 0)
-                                    _buildSummaryRowSmall('Delivery Charge', 'INR ${deliveryCharge.toStringAsFixed(2)}', font),
+                                    _buildSummaryRowSmall(
+                                      'Delivery Charge',
+                                      'INR ${deliveryCharge.toStringAsFixed(2)}',
+                                      font,
+                                    ),
                                 ],
                               ),
                             ),
@@ -321,15 +475,43 @@ class InvoiceScreen extends StatelessWidget {
                               child: pw.Column(
                                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                                 children: [
-                                  pw.Text('TOTAL AMOUNT', style: pw.TextStyle(font: mediumFont, fontSize: 9, letterSpacing: 0.5)),
-                                  pw.Text('INR ${totalAmount.toStringAsFixed(2)}',
-                                      style: pw.TextStyle(font: boldFont, fontSize: 16)),
-                                  pw.Divider(color: PdfColors.grey, thickness: 0.5),
+                                  pw.Text(
+                                    'TOTAL AMOUNT',
+                                    style: pw.TextStyle(
+                                      font: mediumFont,
+                                      fontSize: 9,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                  pw.Text(
+                                    'INR ${totalAmount.toStringAsFixed(2)}',
+                                    style: pw.TextStyle(
+                                      font: boldFont,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  pw.Divider(
+                                    color: PdfColors.grey,
+                                    thickness: 0.5,
+                                  ),
                                   pw.Row(
-                                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment:
+                                        pw.MainAxisAlignment.spaceBetween,
                                     children: [
-                                      pw.Text('Mode', style: pw.TextStyle(font: font, fontSize: 8)),
-                                      pw.Text(order.method.toUpperCase(), style: pw.TextStyle(font: font, fontSize: 8)),
+                                      pw.Text(
+                                        'Mode',
+                                        style: pw.TextStyle(
+                                          font: font,
+                                          fontSize: 8,
+                                        ),
+                                      ),
+                                      pw.Text(
+                                        order.method.toUpperCase(),
+                                        style: pw.TextStyle(
+                                          font: font,
+                                          fontSize: 8,
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ],
@@ -349,22 +531,64 @@ class InvoiceScreen extends StatelessWidget {
                   border: pw.TableBorder.all(color: PdfColors.grey),
                   children: [
                     pw.TableRow(
-                      decoration: const pw.BoxDecoration(color: PdfColors.grey200),
+                      decoration: const pw.BoxDecoration(
+                        color: PdfColors.grey200,
+                      ),
                       children: [
                         _buildTableCell('HSN/SAC', boldFont, 8, isHeader: true),
-                        _buildTableCell('Taxable Amt', boldFont, 8, isHeader: true),
-                        _buildTableCell('CGST (9%)', boldFont, 8, isHeader: true),
-                        _buildTableCell('SGST (9%)', boldFont, 8, isHeader: true),
-                        _buildTableCell('Total Tax', boldFont, 8, isHeader: true),
+                        _buildTableCell(
+                          'Taxable Amt',
+                          boldFont,
+                          8,
+                          isHeader: true,
+                        ),
+                        _buildTableCell(
+                          'CGST (9%)',
+                          boldFont,
+                          8,
+                          isHeader: true,
+                        ),
+                        _buildTableCell(
+                          'SGST (9%)',
+                          boldFont,
+                          8,
+                          isHeader: true,
+                        ),
+                        _buildTableCell(
+                          'Total Tax',
+                          boldFont,
+                          8,
+                          isHeader: true,
+                        ),
                       ],
                     ),
                     pw.TableRow(
                       children: [
                         _buildTableCell('85044030', font, 9, isHeader: true),
-                        _buildTableCell(taxableSubtotal.toStringAsFixed(2), font, 9, isHeader: true),
-                        _buildTableCell(cgst.toStringAsFixed(2), font, 9, isHeader: true),
-                        _buildTableCell(sgst.toStringAsFixed(2), font, 9, isHeader: true),
-                        _buildTableCell(totalGst.toStringAsFixed(2), font, 9, isHeader: true),
+                        _buildTableCell(
+                          taxableSubtotal.toStringAsFixed(2),
+                          font,
+                          9,
+                          isHeader: true,
+                        ),
+                        _buildTableCell(
+                          cgst.toStringAsFixed(2),
+                          font,
+                          9,
+                          isHeader: true,
+                        ),
+                        _buildTableCell(
+                          sgst.toStringAsFixed(2),
+                          font,
+                          9,
+                          isHeader: true,
+                        ),
+                        _buildTableCell(
+                          totalGst.toStringAsFixed(2),
+                          font,
+                          9,
+                          isHeader: true,
+                        ),
                       ],
                     ),
                   ],
@@ -388,15 +612,45 @@ class InvoiceScreen extends StatelessWidget {
                           child: pw.Column(
                             crossAxisAlignment: pw.CrossAxisAlignment.start,
                             children: [
-                              pw.Text('Terms / Declaration', style: pw.TextStyle(font: boldFont, fontSize: 9)),
-                              pw.Text('1. Goods once sold will not be taken back or exchange', style: pw.TextStyle(font: font, fontSize: 8)),
-                              pw.Text('2. Mobiking will not be responsible for any warranty', style: pw.TextStyle(font: font, fontSize: 8)),
-                              pw.Text('3. All the disputes are subject to delhi jurisdiction only', style: pw.TextStyle(font: font, fontSize: 8)),
+                              pw.Text(
+                                'Terms / Declaration',
+                                style: pw.TextStyle(
+                                  font: boldFont,
+                                  fontSize: 9,
+                                ),
+                              ),
+                              pw.Text(
+                                '1. Goods once sold will not be taken back or exchange',
+                                style: pw.TextStyle(font: font, fontSize: 8),
+                              ),
+                              pw.Text(
+                                '2. Mobiking will not be responsible for any warranty',
+                                style: pw.TextStyle(font: font, fontSize: 8),
+                              ),
+                              pw.Text(
+                                '3. All the disputes are subject to delhi jurisdiction only',
+                                style: pw.TextStyle(font: font, fontSize: 8),
+                              ),
                               pw.SizedBox(height: 10),
-                              pw.Text('Bank Details -', style: pw.TextStyle(font: boldFont, fontSize: 9)),
-                              pw.Text('Bank Name : MOBIKING', style: pw.TextStyle(font: font, fontSize: 8)),
-                              pw.Text('Account No. : 50200048030390', style: pw.TextStyle(font: font, fontSize: 8)),
-                              pw.Text('Branch & IFSC : HDFC0000480', style: pw.TextStyle(font: font, fontSize: 8)),
+                              pw.Text(
+                                'Bank Details -',
+                                style: pw.TextStyle(
+                                  font: boldFont,
+                                  fontSize: 9,
+                                ),
+                              ),
+                              pw.Text(
+                                'Bank Name : MOBIKING',
+                                style: pw.TextStyle(font: font, fontSize: 8),
+                              ),
+                              pw.Text(
+                                'Account No. : 50200048030390',
+                                style: pw.TextStyle(font: font, fontSize: 8),
+                              ),
+                              pw.Text(
+                                'Branch & IFSC : HDFC0000480',
+                                style: pw.TextStyle(font: font, fontSize: 8),
+                              ),
                             ],
                           ),
                         ),
@@ -404,11 +658,23 @@ class InvoiceScreen extends StatelessWidget {
                         pw.Container(
                           padding: const pw.EdgeInsets.all(8),
                           child: pw.Column(
-                            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                            mainAxisAlignment:
+                                pw.MainAxisAlignment.spaceBetween,
                             children: [
-                              pw.Text('For, Mobiking', style: pw.TextStyle(font: mediumFont, fontSize: 9)),
-                              pw.SizedBox(height: 40), // Force distance between elements
-                              pw.Text('Authorised Signatory', style: pw.TextStyle(font: font, fontSize: 8)),
+                              pw.Text(
+                                'For, Mobiking',
+                                style: pw.TextStyle(
+                                  font: mediumFont,
+                                  fontSize: 9,
+                                ),
+                              ),
+                              pw.SizedBox(
+                                height: 40,
+                              ), // Force distance between elements
+                              pw.Text(
+                                'Authorised Signatory',
+                                style: pw.TextStyle(font: font, fontSize: 8),
+                              ),
                             ],
                           ),
                         ),
@@ -419,8 +685,14 @@ class InvoiceScreen extends StatelessWidget {
 
                 pw.SizedBox(height: 10),
                 pw.Center(
-                  child: pw.Text('This is a computer generated invoice and does not require signature',
-                      style: pw.TextStyle(font: font, fontSize: 8, color: PdfColors.grey700)),
+                  child: pw.Text(
+                    'This is a computer generated invoice and does not require signature',
+                    style: pw.TextStyle(
+                      font: font,
+                      fontSize: 8,
+                      color: PdfColors.grey700,
+                    ),
+                  ),
                 ),
               ],
             );
@@ -428,7 +700,9 @@ class InvoiceScreen extends StatelessWidget {
         ),
       );
 
-      await Printing.layoutPdf(onLayout: (PdfPageFormat format) async => pdf.save());
+      await Printing.layoutPdf(
+        onLayout: (PdfPageFormat format) async => pdf.save(),
+      );
       Get.snackbar(
         'Invoice',
         'Invoice document generated for printing/saving.',
@@ -448,7 +722,12 @@ class InvoiceScreen extends StatelessWidget {
   }
 
   // Updated to include structural wrapping for absolute centering/alignment
-  pw.Widget _buildTableCell(String text, pw.Font font, double fontSize, {bool isHeader = false}) {
+  pw.Widget _buildTableCell(
+    String text,
+    pw.Font font,
+    double fontSize, {
+    bool isHeader = false,
+  }) {
     return pw.Container(
       padding: const pw.EdgeInsets.all(5),
       alignment: isHeader ? pw.Alignment.center : pw.Alignment.centerLeft,
@@ -489,7 +768,8 @@ class InvoiceScreen extends StatelessWidget {
 
     int thousands = total ~/ 1000;
     total %= 1000;
-    if (thousands > 0) words += "${_convertLessThanThousand(thousands)} Thousand ";
+    if (thousands > 0)
+      words += "${_convertLessThanThousand(thousands)} Thousand ";
 
     if (total > 0) words += _convertLessThanThousand(total);
 
@@ -497,12 +777,44 @@ class InvoiceScreen extends StatelessWidget {
   }
 
   String _convertLessThanThousand(int n) {
-    final units = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten",
-      "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
-    final tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+    final units = [
+      "",
+      "One",
+      "Two",
+      "Three",
+      "Four",
+      "Five",
+      "Six",
+      "Seven",
+      "Eight",
+      "Nine",
+      "Ten",
+      "Eleven",
+      "Twelve",
+      "Thirteen",
+      "Fourteen",
+      "Fifteen",
+      "Sixteen",
+      "Seventeen",
+      "Eighteen",
+      "Nineteen",
+    ];
+    final tens = [
+      "",
+      "",
+      "Twenty",
+      "Thirty",
+      "Forty",
+      "Fifty",
+      "Sixty",
+      "Seventy",
+      "Eighty",
+      "Ninety",
+    ];
 
     if (n < 20) return units[n];
-    if (n < 100) return "${tens[n ~/ 10]}${n % 10 != 0 ? " ${units[n % 10]}" : ""}";
+    if (n < 100)
+      return "${tens[n ~/ 10]}${n % 10 != 0 ? " ${units[n % 10]}" : ""}";
     return "${units[n ~/ 100]} Hundred${n % 100 != 0 ? " and ${_convertLessThanThousand(n % 100)}" : ""}";
   }
 
@@ -520,8 +832,11 @@ class InvoiceScreen extends StatelessWidget {
     String? deliveryTime;
     if (order.deliveredAt != null && order.deliveredAt!.isNotEmpty) {
       try {
-        final deliveredDateTime = DateTime.tryParse(order.deliveredAt!) ?? DateTime.now();
-        deliveryTime = DateFormat('dd MMM yyyy, h:mm a').format(deliveredDateTime.toLocal());
+        final deliveredDateTime =
+            DateTime.tryParse(order.deliveredAt!) ?? DateTime.now();
+        deliveryTime = DateFormat(
+          'dd MMM yyyy, h:mm a',
+        ).format(deliveredDateTime.toLocal());
       } catch (e) {
         deliveryTime = null;
       }
@@ -532,9 +847,7 @@ class InvoiceScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text(
           'Order Summary',
-          style: textTheme.headlineMedium?.copyWith(
-            color: AppColors.white,
-          ),
+          style: textTheme.headlineMedium?.copyWith(color: AppColors.white),
         ),
         backgroundColor: AppColors.primaryPurple,
         elevation: 0,
@@ -617,7 +930,10 @@ class InvoiceScreen extends StatelessWidget {
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
                             color: statusConfig['bgColor'],
                             borderRadius: BorderRadius.circular(8),
@@ -669,70 +985,87 @@ class InvoiceScreen extends StatelessWidget {
               ),
 
               // 🚩 Rejected Request Reason (Return/Cancel)
-              ...order.requests.where((r) => r.status.toLowerCase() == 'rejected').map((request) {
-                return Container(
-                  margin: const EdgeInsets.only(top: 16),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.danger.withOpacity(0.05),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.danger.withOpacity(0.3)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+              ...order.requests
+                  .where((r) => r.status.toLowerCase() == 'rejected')
+                  .map((request) {
+                    return Container(
+                      margin: const EdgeInsets.only(top: 16),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.danger.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppColors.danger.withOpacity(0.3),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(Icons.error_outline, color: AppColors.danger, size: 20),
-                          const SizedBox(width: 8),
-                          Text(
-                            '${request.type} Request Rejected',
-                            style: textTheme.titleSmall?.copyWith(
-                              color: AppColors.danger,
-                              fontWeight: FontWeight.bold,
-                            ),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.error_outline,
+                                color: AppColors.danger,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                '${request.type} Request Rejected',
+                                style: textTheme.titleSmall?.copyWith(
+                                  color: AppColors.danger,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
                           ),
+                          if (request.reason != null &&
+                              request.reason!.isNotEmpty) ...[
+                            const SizedBox(height: 10),
+                            Text(
+                              'Rejection Reason:',
+                              style: textTheme.bodySmall?.copyWith(
+                                color: AppColors.textLight,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              request.reason!,
+                              style: textTheme.bodyMedium?.copyWith(
+                                color: AppColors.textDark,
+                              ),
+                            ),
+                          ],
                         ],
                       ),
-                      if (request.reason != null && request.reason!.isNotEmpty) ...[
-                        const SizedBox(height: 10),
-                        Text(
-                          'Rejection Reason:',
-                          style: textTheme.bodySmall?.copyWith(
-                            color: AppColors.textLight,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          request.reason!,
-                          style: textTheme.bodyMedium?.copyWith(
-                            color: AppColors.textDark,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                );
-              }),
+                    );
+                  }),
 
               // 🚫 Main Order Rejection/Cancellation Reason
-              if ((order.status.toLowerCase() == 'rejected' || order.status.toLowerCase() == 'cancelled') &&
-                  order.reason != null && order.reason!.isNotEmpty)
+              if ((order.status.toLowerCase() == 'rejected' ||
+                      order.status.toLowerCase() == 'cancelled') &&
+                  order.reason != null &&
+                  order.reason!.isNotEmpty)
                 Container(
                   margin: const EdgeInsets.only(top: 16),
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: AppColors.danger.withOpacity(0.05),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.danger.withOpacity(0.3)),
+                    border: Border.all(
+                      color: AppColors.danger.withOpacity(0.3),
+                    ),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.report_problem_outlined, color: AppColors.danger, size: 20),
+                          Icon(
+                            Icons.report_problem_outlined,
+                            color: AppColors.danger,
+                            size: 20,
+                          ),
                           const SizedBox(width: 8),
                           Text(
                             'Order ${order.status.capitalizeFirst}',
@@ -792,7 +1125,11 @@ class InvoiceScreen extends StatelessWidget {
                     const SizedBox(height: 8),
                     _buildDetailRow('Phone', order.phoneNo ?? 'N/A', textTheme),
                     const SizedBox(height: 8),
-                    _buildDetailRow('Address', order.address ?? 'N/A', textTheme),
+                    _buildDetailRow(
+                      'Address',
+                      order.address ?? 'N/A',
+                      textTheme,
+                    ),
                   ],
                 ),
               ),
@@ -942,10 +1279,7 @@ class InvoiceScreen extends StatelessWidget {
                 child: ElevatedButton.icon(
                   onPressed: _downloadInvoice,
                   icon: const Icon(Icons.download_outlined),
-                  label: Text(
-                    'Download Invoice',
-                    style: textTheme.labelLarge,
-                  ),
+                  label: Text('Download Invoice', style: textTheme.labelLarge),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryPurple,
                     foregroundColor: AppColors.white,
@@ -971,9 +1305,7 @@ class InvoiceScreen extends StatelessWidget {
           flex: 2,
           child: Text(
             label,
-            style: textTheme.bodyMedium?.copyWith(
-              color: AppColors.textLight,
-            ),
+            style: textTheme.bodyMedium?.copyWith(color: AppColors.textLight),
           ),
         ),
         Expanded(
@@ -990,30 +1322,29 @@ class InvoiceScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSummaryRow(String label, String value, TextTheme textTheme, bool isTotal) {
+  Widget _buildSummaryRow(
+    String label,
+    String value,
+    TextTheme textTheme,
+    bool isTotal,
+  ) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           label,
           style: isTotal
-              ? textTheme.titleMedium?.copyWith(
-            color: AppColors.primaryPurple,
-          )
-              : textTheme.bodyMedium?.copyWith(
-            color: AppColors.textMedium,
-          ),
+              ? textTheme.titleMedium?.copyWith(color: AppColors.primaryPurple)
+              : textTheme.bodyMedium?.copyWith(color: AppColors.textMedium),
         ),
         Text(
           value,
           style: isTotal
-              ? textTheme.titleLarge?.copyWith(
-            color: AppColors.primaryPurple,
-          )
+              ? textTheme.titleLarge?.copyWith(color: AppColors.primaryPurple)
               : textTheme.bodyMedium?.copyWith(
-            color: AppColors.textDark,
-            fontWeight: FontWeight.w600,
-          ),
+                  color: AppColors.textDark,
+                  fontWeight: FontWeight.w600,
+                ),
         ),
       ],
     );

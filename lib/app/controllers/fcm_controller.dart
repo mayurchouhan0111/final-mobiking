@@ -10,7 +10,8 @@ import '../services/firebase_messaging_service.dart';
 class FcmController extends GetxController {
   // Access the singleton instance of your FCM service.
   // This service handles the direct interaction with Firebase Messaging APIs.
-  final FirebaseMessagingService _firebaseMessagingService = Get.find<FirebaseMessagingService>();
+  final FirebaseMessagingService _firebaseMessagingService =
+      Get.find<FirebaseMessagingService>();
 
   // Observable to store the FCM token for UI display.
   // It's initialized with a placeholder message.
@@ -18,7 +19,8 @@ class FcmController extends GetxController {
 
   // Observable to store the notification permission status.
   // It's initialized to 'notDetermined' as a default state.
-  Rx<AuthorizationStatus> notificationStatus = AuthorizationStatus.notDetermined.obs;
+  Rx<AuthorizationStatus> notificationStatus =
+      AuthorizationStatus.notDetermined.obs;
 
   @override
   void onInit() {
@@ -49,14 +51,16 @@ class FcmController extends GetxController {
   /// Checks the current notification permission status from the `FirebaseMessagingService`
   /// and updates the `notificationStatus` observable.
   Future<void> _checkNotificationPermissionStatus() async {
-    notificationStatus.value = await _firebaseMessagingService.getNotificationPermissionStatus();
+    notificationStatus.value = await _firebaseMessagingService
+        .getNotificationPermissionStatus();
     print("Notification Permission Status: ${notificationStatus.value}");
   }
 
   /// Requests notification permissions from the user via the `FirebaseMessagingService`.
   /// Updates the `notificationStatus` observable based on the user's response.
   Future<void> requestPermissions() async {
-      notificationStatus.value = await _firebaseMessagingService.requestNotificationPermissions();
+    notificationStatus.value = await _firebaseMessagingService
+        .requestNotificationPermissions();
     if (notificationStatus.value == AuthorizationStatus.authorized) {
       // Get.snackbar(
       //   "Success",
@@ -81,7 +85,7 @@ class FcmController extends GetxController {
   /// Example method to simulate triggering a test notification.
   /// In a real application, this would involve making an API call to your backend
   /// which then uses the Firebase Admin SDK to send a test notification.
-    void triggerTestNotification() {
+  void triggerTestNotification() {
     // Get.snackbar(
     //   "Test Notification",
     //   "Attempting to send a test notification via backend (if configured).",
@@ -93,9 +97,9 @@ class FcmController extends GetxController {
     // YourApiRepository().sendTestNotification(fcmToken.value);
   }
 
-// You can add more methods here as your FCM management needs grow,
-// such as:
-// - Handling token refresh listener (though getToken() generally provides current token)
-// - Unsubscribing from topics
-// - Subscribing to topics
+  // You can add more methods here as your FCM management needs grow,
+  // such as:
+  // - Handling token refresh listener (though getToken() generally provides current token)
+  // - Unsubscribing from topics
+  // - Subscribing to topics
 }

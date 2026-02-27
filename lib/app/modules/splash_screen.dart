@@ -22,13 +22,17 @@ class _SplashScreenState extends State<SplashScreen> {
     Future.delayed(const Duration(milliseconds: 3000), () {
       final LoginController loginController = Get.find<LoginController>();
       if (loginController.currentUser.value != null) {
-        Get.off(() => MainContainerScreen(),
-            transition: Transition.fadeIn,
-            duration: const Duration(milliseconds: 500));
+        Get.off(
+          () => MainContainerScreen(),
+          transition: Transition.fadeIn,
+          duration: const Duration(milliseconds: 500),
+        );
       } else {
-        Get.off(() => PhoneAuthScreen(),
-            transition: Transition.fadeIn,
-            duration: const Duration(milliseconds: 500));
+        Get.off(
+          () => PhoneAuthScreen(),
+          transition: Transition.fadeIn,
+          duration: const Duration(milliseconds: 500),
+        );
       }
     });
   }
@@ -40,10 +44,7 @@ class _SplashScreenState extends State<SplashScreen> {
       // Wrap the body with SafeArea to handle system insets
       body: SafeArea(
         child: Center(
-          child: Image.asset(
-            'assets/animations/splash1.gif',
-            width: 150,
-          ),
+          child: Image.asset('assets/animations/splash1.gif', width: 150),
         ),
       ),
     );

@@ -3,10 +3,7 @@ import 'package:flutter/material.dart';
 class SimilarProductsList extends StatelessWidget {
   final List<Map<String, dynamic>> similarProducts;
 
-  const SimilarProductsList({
-    super.key,
-    required this.similarProducts,
-  });
+  const SimilarProductsList({super.key, required this.similarProducts});
 
   @override
   Widget build(BuildContext context) {

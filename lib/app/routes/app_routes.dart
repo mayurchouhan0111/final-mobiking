@@ -8,5 +8,6 @@ class AppRoutes {
   static const product = '/product';
   static const stock = '/stock';
   static const subCategory = '/sub-category';
-  static const user = '/user'; // Usually used only for profile/user-specific pages
+  static const user =
+      '/user'; // Usually used only for profile/user-specific pages
 }

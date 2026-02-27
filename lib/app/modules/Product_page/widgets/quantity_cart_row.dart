@@ -8,10 +8,8 @@ import '../../../themes/app_theme.dart';
 class QuantityAndCartRow extends StatelessWidget {
   const QuantityAndCartRow({Key? key}) : super(key: key);
 
-
   @override
   Widget build(BuildContext context) {
-
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -57,14 +55,13 @@ class QuantityAndCartRow extends StatelessWidget {
         ElevatedButton(
           onPressed: () {
             final cartController = Get.find<CartController>();
-             final box = GetStorage();
-              final userData = box.read('userData') ?? {};
-              final cartId = userData['cartId'] ?? '';
+            final box = GetStorage();
+            final userData = box.read('userData') ?? {};
+            final cartId = userData['cartId'] ?? '';
 
             cartController.addToCart(
               productId: '683e8aa4352ed33496cc8193',
               variantName: 'Raging Black',
-
             );
           },
           style: ElevatedButton.styleFrom(
@@ -73,7 +70,10 @@ class QuantityAndCartRow extends StatelessWidget {
             ),
             backgroundColor: AppColors.success,
           ),
-          child: const Text('Add to Cart', style: TextStyle(color: Colors.white)),
+          child: const Text(
+            'Add to Cart',
+            style: TextStyle(color: Colors.white),
+          ),
         ),
       ],
     );

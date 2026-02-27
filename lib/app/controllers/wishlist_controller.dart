@@ -11,7 +11,8 @@ class WishlistController extends GetxController {
   var wishlist = <ProductModel>[].obs;
   var isLoading = false.obs;
 
-  final ConnectivityController _connectivityController = Get.find<ConnectivityController>();
+  final ConnectivityController _connectivityController =
+      Get.find<ConnectivityController>();
 
   @override
   void onInit() {
@@ -29,7 +30,9 @@ class WishlistController extends GetxController {
   }
 
   Future<void> _handleConnectionRestored() async {
-    print('WishlistController: Internet connection restored. Re-loading wishlist from local storage.');
+    print(
+      'WishlistController: Internet connection restored. Re-loading wishlist from local storage.',
+    );
     loadWishlistFromLocal();
   }
 

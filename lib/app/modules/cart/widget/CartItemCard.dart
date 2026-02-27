@@ -37,7 +37,8 @@ class CartItemCard extends StatelessWidget {
     int? variantStock;
 
     // ✅ CHANGED: Using .last to get the most recent price instead of the first one.
-    if (product.sellingPrice.isNotEmpty && product.sellingPrice.last.price != null) {
+    if (product.sellingPrice.isNotEmpty &&
+        product.sellingPrice.last.price != null) {
       displayPrice = product.sellingPrice.last.price!.toDouble();
     }
 
@@ -129,7 +130,8 @@ class CartItemCard extends StatelessWidget {
                                 color: AppColors.textDark,
                               ),
                             ),
-                            if (originalPrice != null && originalPrice > displayPrice)
+                            if (originalPrice != null &&
+                                originalPrice > displayPrice)
                               Padding(
                                 padding: const EdgeInsets.only(left: 8.0),
                                 child: Text(
@@ -150,67 +152,71 @@ class CartItemCard extends StatelessWidget {
                             ),
                           ),
                       ],
-                    )
+                    ),
                   ],
                 ),
               ),
               Align(
                 alignment: Alignment.bottomRight,
-                child: Obx(
-                      () {
-                    final bool isThisItemLoading = cartController.processingProductId.value == itemKey;
+                child: Obx(() {
+                  final bool isThisItemLoading =
+                      cartController.processingProductId.value == itemKey;
 
-                    final bool isDecrementDisabled = isThisItemLoading;
-                    final bool isIncrementDisabled = isThisItemLoading || (variantStock != null && quantity >= variantStock);
+                  final bool isDecrementDisabled = isThisItemLoading;
+                  final bool isIncrementDisabled =
+                      isThisItemLoading ||
+                      (variantStock != null && quantity >= variantStock);
 
-                    return Container(
-                      margin: const EdgeInsets.symmetric(vertical: 20),
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppColors.success,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: AppColors.success, width: 0.5),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _buildQuantityButton(
-                            context: context,
-                            icon: Icons.remove,
-                            onTap: isDecrementDisabled ? null : onDecrement,
-                            isDisabled: isDecrementDisabled,
-                            isLoading: false,
-                          ),
-                          const SizedBox(width: 8),
-                          isThisItemLoading
-                              ? const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: AppColors.white,
-                                  ),
-                                )
-                              : Text(
-                                  '$quantity',
-                                  style: textTheme.labelLarge?.copyWith(
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.white,
-                                  ),
+                  return Container(
+                    margin: const EdgeInsets.symmetric(vertical: 20),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.success,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppColors.success, width: 0.5),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _buildQuantityButton(
+                          context: context,
+                          icon: Icons.remove,
+                          onTap: isDecrementDisabled ? null : onDecrement,
+                          isDisabled: isDecrementDisabled,
+                          isLoading: false,
+                        ),
+                        const SizedBox(width: 8),
+                        isThisItemLoading
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: AppColors.white,
                                 ),
-                          const SizedBox(width: 8),
-                          _buildQuantityButton(
-                            context: context,
-                            icon: Icons.add,
-                            onTap: isIncrementDisabled ? null : onIncrement,
-                            isDisabled: isIncrementDisabled,
-                            isLoading: false,
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
+                              )
+                            : Text(
+                                '$quantity',
+                                style: textTheme.labelLarge?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.white,
+                                ),
+                              ),
+                        const SizedBox(width: 8),
+                        _buildQuantityButton(
+                          context: context,
+                          icon: Icons.add,
+                          onTap: isIncrementDisabled ? null : onIncrement,
+                          isDisabled: isIncrementDisabled,
+                          isLoading: false,
+                        ),
+                      ],
+                    ),
+                  );
+                }),
               ),
             ],
           ),
@@ -239,18 +245,18 @@ class CartItemCard extends StatelessWidget {
         ),
         child: isLoading
             ? SizedBox(
-          height: 18,
-          width: 18,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            valueColor: AlwaysStoppedAnimation<Color>(iconColor),
-          ),
-        )
+                height: 18,
+                width: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(iconColor),
+                ),
+              )
             : Icon(
-          icon,
-          size: 18,
-          color: isDisabled ? iconColor.withOpacity(0.5) : iconColor,
-        ),
+                icon,
+                size: 18,
+                color: isDisabled ? iconColor.withOpacity(0.5) : iconColor,
+              ),
       ),
     );
   }

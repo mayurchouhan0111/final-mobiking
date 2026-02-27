@@ -14,7 +14,8 @@ class SubCategoryController extends GetxController {
 
   // Selected subcategory and its products
   final Rx<SubCategory?> selectedSubCategory = Rx<SubCategory?>(null);
-  final RxList<ProductModel> productsForSelectedSubCategory = <ProductModel>[].obs;
+  final RxList<ProductModel> productsForSelectedSubCategory =
+      <ProductModel>[].obs;
 
   @override
   void onInit() {
@@ -37,7 +38,9 @@ class SubCategoryController extends GetxController {
       }
 
       print('[SubCategoryController] Loading subcategories...');
-      final data = await _service.fetchSubCategories(forceRefresh: forceRefresh);
+      final data = await _service.fetchSubCategories(
+        forceRefresh: forceRefresh,
+      );
       subCategories.assignAll(data);
 
       print('[SubCategoryController] Loaded ${data.length} subcategories');
@@ -48,10 +51,7 @@ class SubCategoryController extends GetxController {
       }
 
       // Show success message only for forced refresh
-      if (forceRefresh && data.isNotEmpty) {
-
-      }
-
+      if (forceRefresh && data.isNotEmpty) {}
     } catch (e, stackTrace) {
       print('[SubCategoryController] Error loading subcategories: $e');
       print(stackTrace);
@@ -76,7 +76,6 @@ class SubCategoryController extends GetxController {
       }
 
       print('[SubCategoryController] Subcategory added: ${newItem.name}');
-
     } catch (e) {
       print('[SubCategoryController] Error adding subcategory: $e');
       // Get.snackbar('Error', 'Failed to add subcategory: $e');
@@ -93,8 +92,10 @@ class SubCategoryController extends GetxController {
   /// Update products for selected subcategory
   void _updateProductsForSelectedSubCategory() {
     if (selectedSubCategory.value != null) {
-      final List<ProductModel> products = List<ProductModel>.from(selectedSubCategory.value!.products);
-      
+      final List<ProductModel> products = List<ProductModel>.from(
+        selectedSubCategory.value!.products,
+      );
+
       // Sort: In stock first, then out of stock
       products.sort((a, b) {
         if (a.totalStock > 0 && b.totalStock <= 0) return -1;
@@ -103,10 +104,14 @@ class SubCategoryController extends GetxController {
       });
 
       productsForSelectedSubCategory.assignAll(products);
-      print('[SubCategoryController] Updated & Sorted products: ${productsForSelectedSubCategory.length} for ${selectedSubCategory.value!.name}');
+      print(
+        '[SubCategoryController] Updated & Sorted products: ${productsForSelectedSubCategory.length} for ${selectedSubCategory.value!.name}',
+      );
     } else {
       productsForSelectedSubCategory.clear();
-      print('[SubCategoryController] Cleared products as no subcategory selected');
+      print(
+        '[SubCategoryController] Cleared products as no subcategory selected',
+      );
     }
   }
 
@@ -119,7 +124,6 @@ class SubCategoryController extends GetxController {
   Future<void> clearCache() async {
     try {
       await _service.clearCache();
-
     } catch (e) {
       print('[SubCategoryController] Error clearing cache: $e');
     }
@@ -136,16 +140,14 @@ class SubCategoryController extends GetxController {
       };
     } catch (e) {
       print('[SubCategoryController] Error getting cache info: $e');
-      return {
-        'cachedItemsCount': 0,
-        'lastFetch': null,
-        'isCacheValid': false,
-      };
+      return {'cachedItemsCount': 0, 'lastFetch': null, 'isCacheValid': false};
     }
   }
 
   /// Get subcategories for a specific category
   List<SubCategory> getSubCategoriesForCategory(String categoryId) {
-    return subCategories.where((sub) => sub.parentCategory?.id == categoryId).toList();
+    return subCategories
+        .where((sub) => sub.parentCategory?.id == categoryId)
+        .toList();
   }
 }

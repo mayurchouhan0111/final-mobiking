@@ -28,17 +28,14 @@ class ProductPage extends StatefulWidget {
   final ProductModel product;
   final String heroTag;
 
-  const ProductPage({
-    super.key,
-    required this.product,
-    required this.heroTag,
-  });
+  const ProductPage({super.key, required this.product, required this.heroTag});
 
   @override
   State<ProductPage> createState() => _ProductPageState();
 }
 
-class _ProductPageState extends State<ProductPage> with SingleTickerProviderStateMixin {
+class _ProductPageState extends State<ProductPage>
+    with SingleTickerProviderStateMixin {
   int selectedVariantIndex = 0;
   final TextEditingController _pincodeController = TextEditingController();
   final RxBool _isCheckingDelivery = false.obs;
@@ -71,10 +68,12 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
       }
       if (firstAvailableIndex != -1) {
         selectedVariantIndex = firstAvailableIndex;
-        _currentSelectedVariantName.value = widget.product.variants.keys.elementAt(selectedVariantIndex);
+        _currentSelectedVariantName.value = widget.product.variants.keys
+            .elementAt(selectedVariantIndex);
       } else {
         selectedVariantIndex = 0;
-        _currentSelectedVariantName.value = widget.product.variants.keys.elementAt(selectedVariantIndex);
+        _currentSelectedVariantName.value = widget.product.variants.keys
+            .elementAt(selectedVariantIndex);
       }
     } else {
       _currentSelectedVariantName.value = 'Default Variant';
@@ -89,13 +88,13 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
       duration: const Duration(milliseconds: 300),
     );
 
-    _slideAnimation = Tween<Offset>(
-      begin: Offset.zero,
-      end: const Offset(0, 1),
-    ).animate(CurvedAnimation(
-      parent: _slideAnimationController,
-      curve: Curves.easeInOut,
-    ));
+    _slideAnimation = Tween<Offset>(begin: Offset.zero, end: const Offset(0, 1))
+        .animate(
+          CurvedAnimation(
+            parent: _slideAnimationController,
+            curve: Curves.easeInOut,
+          ),
+        );
 
     _slideAnimationController.forward();
     _scrollController.addListener(_scrollListener);
@@ -127,11 +126,13 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
   }
 
   void _scrollListener() {
-    if (_scrollController.position.userScrollDirection == ScrollDirection.reverse) {
+    if (_scrollController.position.userScrollDirection ==
+        ScrollDirection.reverse) {
       if (_slideAnimationController.status != AnimationStatus.forward) {
         _slideAnimationController.forward();
       }
-    } else if (_scrollController.position.userScrollDirection == ScrollDirection.forward) {
+    } else if (_scrollController.position.userScrollDirection ==
+        ScrollDirection.forward) {
       if (_slideAnimationController.status != AnimationStatus.reverse) {
         _slideAnimationController.reverse();
       }
@@ -144,7 +145,9 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
 
     if (!isVariantOutOfStock) {
       setState(() {
-        selectedVariantIndex = widget.product.variants.keys.toList().indexOf(selectedVariantName);
+        selectedVariantIndex = widget.product.variants.keys.toList().indexOf(
+          selectedVariantName,
+        );
         _currentSelectedVariantName.value = selectedVariantName;
         _syncVariantData();
       });
@@ -168,12 +171,18 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
     if (widget.product.variants.isNotEmpty &&
         selectedVariantIndex >= 0 &&
         selectedVariantIndex < widget.product.variants.length) {
-      final variantKey = widget.product.variants.keys.elementAt(selectedVariantIndex);
+      final variantKey = widget.product.variants.keys.elementAt(
+        selectedVariantIndex,
+      );
       final variantStockValue = widget.product.variants[variantKey] ?? 0;
-      debugPrint('ProductPage: _syncVariantData - Variant: $variantKey, Stock: $variantStockValue');
+      debugPrint(
+        'ProductPage: _syncVariantData - Variant: $variantKey, Stock: $variantStockValue',
+      );
       _currentVariantStock.value = variantStockValue;
     } else {
-      debugPrint('ProductPage: _syncVariantData - Using totalStock: ${widget.product.totalStock}');
+      debugPrint(
+        'ProductPage: _syncVariantData - Using totalStock: ${widget.product.totalStock}',
+      );
       _currentVariantStock.value = widget.product.totalStock;
     }
   }
@@ -185,14 +194,18 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
       productId: productId,
       variantName: variantName,
     );
-    if (cartController.isLoading.value || _currentVariantStock.value <= 0 ||
+    if (cartController.isLoading.value ||
+        _currentVariantStock.value <= 0 ||
         _currentVariantStock.value <= quantityInCart) {
       return;
     }
 
     cartController.isLoading.value = true;
     try {
-      await cartController.addToCart(productId: productId, variantName: variantName);
+      await cartController.addToCart(
+        productId: productId,
+        variantName: variantName,
+      );
     } finally {
       cartController.isLoading.value = false;
     }
@@ -208,7 +221,10 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
     if (quantityInCart <= 0 || cartController.isLoading.value) return;
     cartController.isLoading.value = true;
     try {
-      await cartController.removeFromCart(productId: productId, variantName: variantName);
+      await cartController.removeFromCart(
+        productId: productId,
+        variantName: variantName,
+      );
     } finally {
       cartController.isLoading.value = false;
     }
@@ -219,29 +235,32 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
     if (content.isEmpty) return content;
 
     // Convert markdown images ![alt](url) to HTML <img> tags
-    String converted = content.replaceAllMapped(
-      RegExp(r'!\[([^\]]*)\]\(([^\)]+)\)'),
-          (match) {
-        final alt = match.group(1) ?? 'Product Image';
-        final url = match.group(2) ?? '';
-        return '<p style="text-align:center; margin:16px 0;"><img src="$url" alt="$alt" style="max-width:100%; height:auto; border-radius:12px;" /></p>';
-      },
-    );
+    String
+    converted = content.replaceAllMapped(RegExp(r'!\[([^\]]*)\]\(([^\)]+)\)'), (
+      match,
+    ) {
+      final alt = match.group(1) ?? 'Product Image';
+      final url = match.group(2) ?? '';
+      return '<p style="text-align:center; margin:16px 0;"><img src="$url" alt="$alt" style="max-width:100%; height:auto; border-radius:12px;" /></p>';
+    });
 
     // Convert markdown bold **text** to HTML
     converted = converted.replaceAllMapped(
       RegExp(r'\*\*([^\*]+)\*\*'),
-          (match) => '<strong>${match.group(1)}</strong>',
+      (match) => '<strong>${match.group(1)}</strong>',
     );
 
     // Convert markdown italic *text* to HTML (avoid matching **)
     converted = converted.replaceAllMapped(
       RegExp(r'(?<!\*)\*(?!\*)([^\*]+)\*(?!\*)'),
-          (match) => '<em>${match.group(1)}</em>',
+      (match) => '<em>${match.group(1)}</em>',
     );
 
     // Convert double line breaks to paragraph breaks
-    converted = converted.replaceAll(RegExp(r'\n\n+'), '</p><p style="margin:8px 0;">');
+    converted = converted.replaceAll(
+      RegExp(r'\n\n+'),
+      '</p><p style="margin:8px 0;">',
+    );
 
     // Wrap in paragraph tags if not already HTML
     if (!converted.trim().startsWith('<')) {
@@ -258,7 +277,9 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
     try {
       final document = html_parser.parse(htmlString);
 
-      document.querySelectorAll('script').forEach((element) => element.remove());
+      document
+          .querySelectorAll('script')
+          .forEach((element) => element.remove());
       document.querySelectorAll('style').forEach((element) => element.remove());
 
       document.querySelectorAll('*').forEach((element) {
@@ -274,43 +295,28 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
 
       String sanitized = htmlString
           .replaceAll(
-        RegExp(
-          r'<script[^>]*>[\s\S]*?</script>',
-          caseSensitive: false,
-        ),
-        '',
-      )
+            RegExp(r'<script[^>]*>[\s\S]*?</script>', caseSensitive: false),
+            '',
+          )
           .replaceAll(
-        RegExp(
-          r'<style[^>]*>[\s\S]*?</style>',
-          caseSensitive: false,
-        ),
-        '',
-      )
+            RegExp(r'<style[^>]*>[\s\S]*?</style>', caseSensitive: false),
+            '',
+          )
           .replaceAll(
-        RegExp(
-          r'''on\w+\s*=\s*["'][^"']*["']''',
-          caseSensitive: false,
-        ),
-        '',
-      )
-          .replaceAll(
-        RegExp(
-          r'javascript:',
-          caseSensitive: false,
-        ),
-        '',
-      );
+            RegExp(r'''on\w+\s*=\s*["'][^"']*["']''', caseSensitive: false),
+            '',
+          )
+          .replaceAll(RegExp(r'javascript:', caseSensitive: false), '');
 
       return sanitized;
     }
   }
 
   Widget _buildEnhancedProductDescription(
-      String htmlDescription,
-      TextTheme textTheme,
-      bool isExpanded,
-      ) {
+    String htmlDescription,
+    TextTheme textTheme,
+    bool isExpanded,
+  ) {
     if (htmlDescription.isEmpty) return const SizedBox.shrink();
 
     // UPDATED: First convert markdown to HTML, then sanitize
@@ -441,9 +447,7 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
             backgroundColor: Colors.grey.shade200,
             fontWeight: FontWeight.bold,
           ),
-          "tbody": Style(
-            backgroundColor: Colors.white,
-          ),
+          "tbody": Style(backgroundColor: Colors.white),
           "th": Style(
             padding: HtmlPaddings.all(8.0),
             backgroundColor: Colors.grey.shade200,
@@ -462,34 +466,18 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
             border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
           ),
 
-          "span": Style(
-            fontSize: FontSize(14.0),
-            color: AppColors.textMedium,
-          ),
+          "span": Style(fontSize: FontSize(14.0), color: AppColors.textMedium),
 
           "strong": Style(
             fontWeight: FontWeight.bold,
             color: AppColors.textDark,
           ),
-          "b": Style(
-            fontWeight: FontWeight.bold,
-            color: AppColors.textDark,
-          ),
-          "em": Style(
-            fontStyle: FontStyle.italic,
-          ),
-          "i": Style(
-            fontStyle: FontStyle.italic,
-          ),
-          "u": Style(
-            textDecoration: TextDecoration.underline,
-          ),
-          "s": Style(
-            textDecoration: TextDecoration.lineThrough,
-          ),
-          "strike": Style(
-            textDecoration: TextDecoration.lineThrough,
-          ),
+          "b": Style(fontWeight: FontWeight.bold, color: AppColors.textDark),
+          "em": Style(fontStyle: FontStyle.italic),
+          "i": Style(fontStyle: FontStyle.italic),
+          "u": Style(textDecoration: TextDecoration.underline),
+          "s": Style(textDecoration: TextDecoration.lineThrough),
+          "strike": Style(textDecoration: TextDecoration.lineThrough),
           "del": Style(
             textDecoration: TextDecoration.lineThrough,
             color: Colors.grey.shade600,
@@ -532,9 +520,7 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
             ),
           ),
 
-          "br": Style(
-            fontSize: FontSize(8.0),
-          ),
+          "br": Style(fontSize: FontSize(8.0)),
 
           "img": Style(
             margin: Margins.symmetric(vertical: 12.0),
@@ -556,18 +542,11 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
             verticalAlign: VerticalAlign.baseline,
           ),
 
-          "small": Style(
-            fontSize: FontSize(12.0),
-            color: Colors.grey.shade600,
-          ),
+          "small": Style(fontSize: FontSize(12.0), color: Colors.grey.shade600),
 
-          "center": Style(
-            alignment: Alignment.center,
-          ),
+          "center": Style(alignment: Alignment.center),
 
-          "*": Style(
-            backgroundColor: Colors.transparent,
-          ),
+          "*": Style(backgroundColor: Colors.transparent),
         },
 
         onLinkTap: (url, attributes, element) {
@@ -596,17 +575,23 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
                 final heightStr = attributes['height'];
 
                 final width = widthStr != null
-                    ? double.tryParse(widthStr.replaceAll(RegExp(r'[^0-9.]'), ''))
+                    ? double.tryParse(
+                        widthStr.replaceAll(RegExp(r'[^0-9.]'), ''),
+                      )
                     : null;
                 final height = heightStr != null
-                    ? double.tryParse(heightStr.replaceAll(RegExp(r'[^0-9.]'), ''))
+                    ? double.tryParse(
+                        heightStr.replaceAll(RegExp(r'[^0-9.]'), ''),
+                      )
                     : null;
 
                 // Handle Base64 images
                 if (src.startsWith('data:image') && src.contains('base64,')) {
                   try {
                     final parts = src.split('base64,');
-                    final base64String = parts.length > 1 ? parts[1].trim() : '';
+                    final base64String = parts.length > 1
+                        ? parts[1].trim()
+                        : '';
 
                     if (base64String.isEmpty) {
                       return _buildImageErrorWidget(alt);
@@ -718,9 +703,13 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
                                   height: 28,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2.5,
-                                    value: loadingProgress.expectedTotalBytes != null
-                                        ? loadingProgress.cumulativeBytesLoaded /
-                                        loadingProgress.expectedTotalBytes!
+                                    value:
+                                        loadingProgress.expectedTotalBytes !=
+                                            null
+                                        ? loadingProgress
+                                                  .cumulativeBytesLoaded /
+                                              loadingProgress
+                                                  .expectedTotalBytes!
                                         : null,
                                     valueColor: AlwaysStoppedAnimation<Color>(
                                       AppColors.success,
@@ -771,7 +760,10 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.video_library_outlined, color: Colors.grey.shade600),
+                      Icon(
+                        Icons.video_library_outlined,
+                        color: Colors.grey.shade600,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -844,7 +836,11 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
           children: [
             Row(
               children: [
-                Icon(Icons.info_outline, size: 16, color: Colors.orange.shade700),
+                Icon(
+                  Icons.info_outline,
+                  size: 16,
+                  color: Colors.orange.shade700,
+                ),
                 const SizedBox(width: 8),
                 Text(
                   'Displaying simplified content',
@@ -960,13 +956,17 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
     final double? originalPrice = product.regularPrice?.toDouble();
     String discountBadgeText = '';
 
-    if (product.sellingPrice.isNotEmpty && product.sellingPrice.last.price != null) {
+    if (product.sellingPrice.isNotEmpty &&
+        product.sellingPrice.last.price != null) {
       sellingPrice = product.sellingPrice.last.price!.toDouble();
     } else {
       sellingPrice = 0.0;
     }
 
-    final bool hasDiscount = originalPrice != null && originalPrice > sellingPrice && sellingPrice > 0;
+    final bool hasDiscount =
+        originalPrice != null &&
+        originalPrice > sellingPrice &&
+        sellingPrice > 0;
     if (hasDiscount) {
       double discount = ((originalPrice! - sellingPrice) / originalPrice) * 100;
       discountBadgeText = '${discount.round()}% OFF';
@@ -998,7 +998,9 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Obx(() {
-                      final isFavorite = wishlistController.wishlist.any((p) => p.id == product.id);
+                      final isFavorite = wishlistController.wishlist.any(
+                        (p) => p.id == product.id,
+                      );
                       return ProductImageBanner(
                         productRating: product.averageRating,
                         reviewCount: product.reviewCount,
@@ -1011,7 +1013,9 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
                           if (isFavorite) {
                             wishlistController.removeFromWishlist(product.id);
                           } else {
-                            wishlistController.addToWishlist(product.id.toString());
+                            wishlistController.addToWishlist(
+                              product.id.toString(),
+                            );
                           }
                         },
                         heroTag: widget.heroTag,
@@ -1045,107 +1049,166 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
                               SizedBox(
                                 width: double.maxFinite,
                                 height: 36,
-                                child: Obx(() => ElevatedButton.icon(
-                                  onPressed: () {
-                                    _productDetailsVisible.value = !_productDetailsVisible.value;
-                                    debugPrint('View product details tapped! Visible: ${_productDetailsVisible.value}');
-                                  },
-                                  icon: Icon(
-                                    _productDetailsVisible.value
-                                        ? Icons.arrow_drop_up
-                                        : Icons.arrow_drop_down,
-                                    color: AppColors.success,
-                                    size: 16,
-                                  ),
-                                  label: Text(
-                                    _productDetailsVisible.value
-                                        ? 'Hide product details'
-                                        : 'View product details',
-                                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                                child: Obx(
+                                  () => ElevatedButton.icon(
+                                    onPressed: () {
+                                      _productDetailsVisible.value =
+                                          !_productDetailsVisible.value;
+                                      debugPrint(
+                                        'View product details tapped! Visible: ${_productDetailsVisible.value}',
+                                      );
+                                    },
+                                    icon: Icon(
+                                      _productDetailsVisible.value
+                                          ? Icons.arrow_drop_up
+                                          : Icons.arrow_drop_down,
                                       color: AppColors.success,
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 12,
+                                      size: 16,
+                                    ),
+                                    label: Text(
+                                      _productDetailsVisible.value
+                                          ? 'Hide product details'
+                                          : 'View product details',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelLarge
+                                          ?.copyWith(
+                                            color: AppColors.success,
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 12,
+                                          ),
+                                    ),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.success
+                                          .withOpacity(0.1),
+                                      foregroundColor: AppColors.success,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 8,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      elevation: 0,
+                                      shadowColor: Colors.transparent,
+                                      minimumSize: Size.zero,
+                                      tapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
                                     ),
                                   ),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.success.withOpacity(0.1),
-                                    foregroundColor: AppColors.success,
-                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    elevation: 0,
-                                    shadowColor: Colors.transparent,
-                                    minimumSize: Size.zero,
-                                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                  ),
-                                )),
+                                ),
                               ),
                               const SizedBox(height: 8),
                               Obx(
-                                    () => AnimatedCrossFade(
+                                () => AnimatedCrossFade(
                                   firstChild: const SizedBox.shrink(),
                                   secondChild: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      _buildEnhancedProductDescription(product.description, textTheme, _productDetailsVisible.value),
+                                      _buildEnhancedProductDescription(
+                                        product.description,
+                                        textTheme,
+                                        _productDetailsVisible.value,
+                                      ),
 
                                       if (product.descriptionPoints.isNotEmpty)
                                         Padding(
-                                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 8.0,
+                                          ),
                                           child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             children: [
                                               Text(
                                                 'Product Features',
-                                                style: textTheme.titleMedium?.copyWith(
-                                                  color: AppColors.textDark,
-                                                  fontWeight: FontWeight.w600,
-                                                ),
+                                                style: textTheme.titleMedium
+                                                    ?.copyWith(
+                                                      color: AppColors.textDark,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                    ),
                                               ),
                                               const SizedBox(height: 12),
                                               Container(
                                                 width: double.infinity,
                                                 decoration: BoxDecoration(
                                                   color: Colors.white,
-                                                  borderRadius: BorderRadius.circular(12),
-                                                  border: Border.all(color: Colors.grey.shade200),
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                  border: Border.all(
+                                                    color: Colors.grey.shade200,
+                                                  ),
                                                   boxShadow: [
                                                     BoxShadow(
-                                                      color: Colors.grey.shade100,
+                                                      color:
+                                                          Colors.grey.shade100,
                                                       blurRadius: 4,
-                                                      offset: const Offset(0, 2),
+                                                      offset: const Offset(
+                                                        0,
+                                                        2,
+                                                      ),
                                                     ),
                                                   ],
                                                 ),
-                                                padding: const EdgeInsets.all(16),
+                                                padding: const EdgeInsets.all(
+                                                  16,
+                                                ),
                                                 child: Column(
-                                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                                  children: product.descriptionPoints.asMap().entries.map((entry) {
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: product.descriptionPoints.asMap().entries.map((
+                                                    entry,
+                                                  ) {
                                                     int index = entry.key;
                                                     String point = entry.value;
 
                                                     return Container(
-                                                      margin: EdgeInsets.only(bottom: index == product.descriptionPoints.length - 1 ? 0 : 12),
+                                                      margin: EdgeInsets.only(
+                                                        bottom:
+                                                            index ==
+                                                                product
+                                                                        .descriptionPoints
+                                                                        .length -
+                                                                    1
+                                                            ? 0
+                                                            : 12,
+                                                      ),
                                                       child: Row(
-                                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start,
                                                         children: [
                                                           Container(
-                                                            margin: const EdgeInsets.only(top: 6, right: 12),
+                                                            margin:
+                                                                const EdgeInsets.only(
+                                                                  top: 6,
+                                                                  right: 12,
+                                                                ),
                                                             width: 8,
                                                             height: 8,
                                                             decoration: BoxDecoration(
-                                                              color: AppColors.success,
-                                                              borderRadius: BorderRadius.circular(4),
+                                                              color: AppColors
+                                                                  .success,
+                                                              borderRadius:
+                                                                  BorderRadius.circular(
+                                                                    4,
+                                                                  ),
                                                             ),
                                                           ),
                                                           Expanded(
                                                             child: Text(
-                                                              _convertHtmlToPlainText(point),
-                                                              style: textTheme.bodyMedium?.copyWith(
-                                                                color: AppColors.textMedium,
-                                                                height: 1.4,
+                                                              _convertHtmlToPlainText(
+                                                                point,
                                                               ),
+                                                              style: textTheme
+                                                                  .bodyMedium
+                                                                  ?.copyWith(
+                                                                    color: AppColors
+                                                                        .textMedium,
+                                                                    height: 1.4,
+                                                                  ),
                                                             ),
                                                           ),
                                                         ],
@@ -1160,56 +1223,88 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
 
                                       if (product.keyInformation.isNotEmpty)
                                         Padding(
-                                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 8.0,
+                                          ),
                                           child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             children: [
                                               Text(
                                                 'Highlights',
-                                                style: textTheme.titleMedium?.copyWith(
-                                                  color: AppColors.textDark,
-                                                  fontWeight: FontWeight.w600,
-                                                ),
+                                                style: textTheme.titleMedium
+                                                    ?.copyWith(
+                                                      color: AppColors.textDark,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                    ),
                                               ),
                                               const SizedBox(height: 12),
                                               Container(
                                                 width: double.infinity,
                                                 decoration: BoxDecoration(
                                                   color: Colors.white,
-                                                  borderRadius: BorderRadius.circular(12),
-                                                  border: Border.all(color: Colors.grey.shade200),
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                  border: Border.all(
+                                                    color: Colors.grey.shade200,
+                                                  ),
                                                   boxShadow: [
                                                     BoxShadow(
-                                                      color: Colors.grey.shade100,
+                                                      color:
+                                                          Colors.grey.shade100,
                                                       blurRadius: 4,
-                                                      offset: const Offset(0, 2),
+                                                      offset: const Offset(
+                                                        0,
+                                                        2,
+                                                      ),
                                                     ),
                                                   ],
                                                 ),
-                                                padding: const EdgeInsets.all(16),
+                                                padding: const EdgeInsets.all(
+                                                  16,
+                                                ),
                                                 child: Column(
-                                                  children: product.keyInformation.map((info) {
+                                                  children: product.keyInformation.map((
+                                                    info,
+                                                  ) {
                                                     return Padding(
-                                                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                                      padding:
+                                                          const EdgeInsets.symmetric(
+                                                            vertical: 8.0,
+                                                          ),
                                                       child: Row(
-                                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start,
                                                         children: [
                                                           SizedBox(
                                                             width: 110,
                                                             child: Text(
                                                               info.title,
-                                                              style: textTheme.bodyMedium?.copyWith(
-                                                                color: Colors.black,
-                                                                fontWeight: FontWeight.w600,
-                                                              ),
+                                                              style: textTheme
+                                                                  .bodyMedium
+                                                                  ?.copyWith(
+                                                                    color: Colors
+                                                                        .black,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w600,
+                                                                  ),
                                                             ),
                                                           ),
                                                           Expanded(
                                                             child: Text(
-                                                              _convertHtmlToPlainText(info.content),
-                                                              style: textTheme.bodyMedium?.copyWith(
-                                                                color: Colors.grey.shade700,
+                                                              _convertHtmlToPlainText(
+                                                                info.content,
                                                               ),
+                                                              style: textTheme
+                                                                  .bodyMedium
+                                                                  ?.copyWith(
+                                                                    color: Colors
+                                                                        .grey
+                                                                        .shade700,
+                                                                  ),
                                                             ),
                                                           ),
                                                         ],
@@ -1240,41 +1335,56 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
 
                     if (inStockVariantNames.isNotEmpty)
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: _horizontalPagePadding),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: _horizontalPagePadding,
+                        ),
                         child: CollapsibleSection(
                           title: 'Select Variant',
                           initiallyExpanded: true,
                           content: Wrap(
                             spacing: 8.0,
                             runSpacing: 8.0,
-                            children: List.generate(inStockVariantNames.length, (index) {
-                              final variantName = inStockVariantNames[index];
-                              final isSelected = _currentSelectedVariantName.value == variantName;
+                            children: List.generate(
+                              inStockVariantNames.length,
+                              (index) {
+                                final variantName = inStockVariantNames[index];
+                                final isSelected =
+                                    _currentSelectedVariantName.value ==
+                                    variantName;
 
-                              return ChoiceChip(
-                                showCheckmark: false,
-                                label: Text(variantName),
-                                selected: isSelected,
-                                onSelected: (selected) {
-                                  if (selected) {
-                                    onVariantSelected(variantName);
-                                  }
-                                },
-                                selectedColor: AppColors.success.withOpacity(0.1),
-                                backgroundColor: Colors.white,
-                                labelStyle: textTheme.labelMedium?.copyWith(
-                                  color: isSelected ? AppColors.success : AppColors.textDark.withOpacity(0.8),
-                                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                  side: BorderSide(
-                                    color: isSelected ? AppColors.success : Colors.grey.shade300,
-                                    width: 1,
+                                return ChoiceChip(
+                                  showCheckmark: false,
+                                  label: Text(variantName),
+                                  selected: isSelected,
+                                  onSelected: (selected) {
+                                    if (selected) {
+                                      onVariantSelected(variantName);
+                                    }
+                                  },
+                                  selectedColor: AppColors.success.withOpacity(
+                                    0.1,
                                   ),
-                                ),
-                              );
-                            }),
+                                  backgroundColor: Colors.white,
+                                  labelStyle: textTheme.labelMedium?.copyWith(
+                                    color: isSelected
+                                        ? AppColors.success
+                                        : AppColors.textDark.withOpacity(0.8),
+                                    fontWeight: isSelected
+                                        ? FontWeight.w600
+                                        : FontWeight.normal,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    side: BorderSide(
+                                      color: isSelected
+                                          ? AppColors.success
+                                          : Colors.grey.shade300,
+                                      width: 1,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
                           ),
                         ),
                       ),
@@ -1285,7 +1395,9 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
 
                     // Related Products Section
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: _horizontalPagePadding),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: _horizontalPagePadding,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -1300,8 +1412,12 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
                           SizedBox(
                             height: 240, // Adjust this height as needed
                             child: Obx(() {
-                              if (productController.isFetchingRelatedProducts.value) {
-                                return const Center(child: CircularProgressIndicator());
+                              if (productController
+                                  .isFetchingRelatedProducts
+                                  .value) {
+                                return const Center(
+                                  child: CircularProgressIndicator(),
+                                );
                               }
 
                               if (productController.relatedProducts.isEmpty) {
@@ -1310,16 +1426,22 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
 
                               return ListView.builder(
                                 scrollDirection: Axis.horizontal,
-                                itemCount: productController.relatedProducts.length,
+                                itemCount:
+                                    productController.relatedProducts.length,
                                 itemBuilder: (context, index) {
-                                  final relatedProduct = productController.relatedProducts[index];
+                                  final relatedProduct =
+                                      productController.relatedProducts[index];
                                   return SizedBox(
                                     width: 120, // Adjust this width as needed
                                     child: AllProductGridCard(
                                       product: relatedProduct,
-                                      heroTag: 'related_product_${relatedProduct.id}',
+                                      heroTag:
+                                          'related_product_${relatedProduct.id}',
                                       onTap: (product) {
-                                        _navigateToRelatedProduct(product, 'related_product_${product.id}');
+                                        _navigateToRelatedProduct(
+                                          product,
+                                          'related_product_${product.id}',
+                                        );
                                       },
                                     ),
                                   );
@@ -1336,7 +1458,7 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
                 ),
               ),
             ),
-            _buildBottomCartBar(context)
+            _buildBottomCartBar(context),
           ],
         ),
         floatingActionButton: Obx(() {
@@ -1345,7 +1467,9 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
             return const SizedBox.shrink();
           }
 
-          final List<String> imageUrls = cartController.cartItems.take(3).map((item) {
+          final List<String> imageUrls = cartController.cartItems.take(3).map((
+            item,
+          ) {
             final product = item['productId'];
             String? imageUrl;
 
@@ -1362,7 +1486,8 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
                 imageUrl = imagesData;
               }
             }
-            return imageUrl ?? 'https://placehold.co/50x50/cccccc/ffffff?text=No+Img';
+            return imageUrl ??
+                'https://placehold.co/50x50/cccccc/ffffff?text=No+Img';
           }).toList();
 
           return Container(
@@ -1391,26 +1516,27 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
   void _navigateToRelatedProduct(ProductModel product, String heroTag) {
     try {
       HapticFeedback.lightImpact();
-      debugPrint('🚀 Navigating to related product: ${product.name} with heroTag: $heroTag');
+      debugPrint(
+        '🚀 Navigating to related product: ${product.name} with heroTag: $heroTag',
+      );
       if (Get.isDialogOpen == true) {
         Get.back();
       }
 
       Get.to(
-            () => ProductPage(
-          product: product,
-          heroTag: heroTag,
-        ),
-        transition: Transition.rightToLeft,
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.easeInOut,
-        preventDuplicates: false,
-        popGesture: true,
-      )?.then((_) {
-        debugPrint('✅ Successfully navigated back from ${product.name}');
-      }).catchError((error) {
-        debugPrint('❌ Navigation error: $error');
-      });
+            () => ProductPage(product: product, heroTag: heroTag),
+            transition: Transition.rightToLeft,
+            duration: const Duration(milliseconds: 400),
+            curve: Curves.easeInOut,
+            preventDuplicates: false,
+            popGesture: true,
+          )
+          ?.then((_) {
+            debugPrint('✅ Successfully navigated back from ${product.name}');
+          })
+          .catchError((error) {
+            debugPrint('❌ Navigation error: $error');
+          });
     } catch (e) {
       debugPrint('❌ Exception during navigation: $e');
       _fallbackNavigation(product);
@@ -1423,7 +1549,8 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
       MaterialPageRoute(
         builder: (context) => ProductPage(
           product: product,
-          heroTag: 'fallback_${product.id}_${DateTime.now().millisecondsSinceEpoch}',
+          heroTag:
+              'fallback_${product.id}_${DateTime.now().millisecondsSinceEpoch}',
         ),
       ),
     );
@@ -1436,10 +1563,7 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
       decoration: BoxDecoration(
         color: AppColors.neutralBackground.withOpacity(0.5),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppColors.lightGreyBackground,
-          width: 1,
-        ),
+        border: Border.all(color: AppColors.lightGreyBackground, width: 1),
       ),
       child: Center(
         child: Column(
@@ -1481,15 +1605,17 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
         : 0.0;
 
     return Obx(() {
-      final quantityInCartForSelectedVariant = cartController.getVariantQuantity(
-        productId: product.id.toString(),
-        variantName: _currentSelectedVariantName.value,
-      );
+      final quantityInCartForSelectedVariant = cartController
+          .getVariantQuantity(
+            productId: product.id.toString(),
+            variantName: _currentSelectedVariantName.value,
+          );
       final bool isBusy = cartController.isLoading.value;
       final bool isOutOfStock = _currentVariantStock.value <= 0;
       final bool isInCart = quantityInCartForSelectedVariant > 0;
       final bool canIncrement =
-          quantityInCartForSelectedVariant < _currentVariantStock.value && !isBusy;
+          quantityInCartForSelectedVariant < _currentVariantStock.value &&
+          !isBusy;
       final bool canDecrement = quantityInCartForSelectedVariant > 0 && !isBusy;
 
       return SafeArea(
@@ -1519,12 +1645,16 @@ class _ProductPageState extends State<ProductPage> with SingleTickerProviderStat
                   children: [
                     Text(
                       'Price',
-                      style: textTheme.bodySmall?.copyWith(color: AppColors.textMedium),
+                      style: textTheme.bodySmall?.copyWith(
+                        color: AppColors.textMedium,
+                      ),
                     ),
                     Text(
                       '₹${displayPrice.toStringAsFixed(0)}',
                       style: textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold, color: AppColors.textDark),
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textDark,
+                      ),
                     ),
                   ],
                 ),
@@ -1655,7 +1785,7 @@ class ProductDetailsCard extends StatelessWidget {
               label: 'Customer Support',
             ),
           ],
-        )
+        ),
       ],
     );
   }
@@ -1665,10 +1795,7 @@ class _FeatureInfoBox extends StatelessWidget {
   final IconData icon;
   final String label;
 
-  const _FeatureInfoBox({
-    required this.icon,
-    required this.label,
-  });
+  const _FeatureInfoBox({required this.icon, required this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -1683,11 +1810,7 @@ class _FeatureInfoBox extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              icon,
-              color: Colors.grey.shade700,
-              size: 20,
-            ),
+            Icon(icon, color: Colors.grey.shade700, size: 20),
             const SizedBox(height: 6),
             Text(
               label,

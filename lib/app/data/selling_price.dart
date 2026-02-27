@@ -31,8 +31,12 @@ class SellingPrice extends HiveObject {
     return SellingPrice(
       id: json['_id']?.toString(),
       price: (json['price'] as num?)?.toInt() ?? 0,
-      createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt'].toString()) : null,
-      updatedAt: json['updatedAt'] != null ? DateTime.tryParse(json['updatedAt'].toString()) : null,
+      createdAt: json['createdAt'] != null
+          ? DateTime.tryParse(json['createdAt'].toString())
+          : null,
+      updatedAt: json['updatedAt'] != null
+          ? DateTime.tryParse(json['updatedAt'].toString())
+          : null,
       variantName: json['variantName']?.toString(),
     );
   }

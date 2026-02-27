@@ -19,7 +19,6 @@ class pro {
 }
 // --- END UPDATED pro class ---
 
-
 class VariantSelectorBottomSheet extends StatelessWidget {
   final pro product;
 
@@ -36,7 +35,8 @@ class VariantSelectorBottomSheet extends StatelessWidget {
       builder: (context, setState) {
         // The "Add to Cart" button is only enabled if the product is not out of stock
         // and a variant is selected (if variants exist).
-        final bool isAddToCartEnabled = !isProductOutOfStock &&
+        final bool isAddToCartEnabled =
+            !isProductOutOfStock &&
             (!product.hasVariants || selectedVariant != null);
 
         return Container(
@@ -102,13 +102,14 @@ class VariantSelectorBottomSheet extends StatelessWidget {
                       selectedColor: Colors.teal,
                       backgroundColor: Colors.grey[200],
                       selected: isSelected,
-                      onSelected: isProductOutOfStock // Disable selection if overall product is out of stock
+                      onSelected:
+                          isProductOutOfStock // Disable selection if overall product is out of stock
                           ? null
                           : (_) {
-                        setState(() {
-                          selectedVariant = variant;
-                        });
-                      },
+                              setState(() {
+                                selectedVariant = variant;
+                              });
+                            },
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -129,29 +130,36 @@ class VariantSelectorBottomSheet extends StatelessWidget {
                   ),
                   onPressed: isAddToCartEnabled
                       ? () {
-                    Navigator.pop(context); // Close the bottom sheet
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          "${product.name} ${product.hasVariants ? '($selectedVariant)' : ''} added to cart",
-                          style: const TextStyle(fontWeight: FontWeight.w500),
-                        ),
-                        backgroundColor: Colors.green[700],
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                    );
-                  }
-                      : () { // Action when button is disabled (i.e., out of stock or no variant selected)
-                    
-                    // If not out of stock but no variant selected, user can select one
-                    // No need for a snackbar here, the button will simply be disabled until a variant is chosen.
-                  },
+                          Navigator.pop(context); // Close the bottom sheet
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                "${product.name} ${product.hasVariants ? '($selectedVariant)' : ''} added to cart",
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              backgroundColor: Colors.green[700],
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          );
+                        }
+                      : () {
+                          // Action when button is disabled (i.e., out of stock or no variant selected)
+
+                          // If not out of stock but no variant selected, user can select one
+                          // No need for a snackbar here, the button will simply be disabled until a variant is chosen.
+                        },
                   child: Text(
                     isProductOutOfStock ? "Out of Stock" : "Add to Cart",
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),

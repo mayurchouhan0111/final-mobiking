@@ -10,10 +10,7 @@ class KeyInformation extends HiveObject {
   @HiveField(1)
   final String content;
 
-  KeyInformation({
-    required this.title,
-    required this.content,
-  });
+  KeyInformation({required this.title, required this.content});
 
   factory KeyInformation.fromJson(Map<String, dynamic> json) {
     return KeyInformation(
@@ -22,8 +19,5 @@ class KeyInformation extends HiveObject {
     );
   }
 
-  Map<String, dynamic> toJson() => {
-    'title': title,
-    'content': content,
-  };
+  Map<String, dynamic> toJson() => {'title': title, 'content': content};
 }

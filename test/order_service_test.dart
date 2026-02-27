@@ -36,17 +36,13 @@ void main() {
           "method": "COD",
           "userId": "user1",
           "items": [
-            {
-              "productId": "prod1",
-              "quantity": 2,
-              "price": 200.0,
-            }
+            {"productId": "prod1", "quantity": 2, "price": 200.0},
           ],
-        }
+        },
       ];
 
       when(mockDio.get('/orders')).thenAnswer(
-            (_) async => Response(
+        (_) async => Response(
           data: dummyOrders,
           statusCode: 200,
           requestOptions: RequestOptions(path: '/orders'),
@@ -75,17 +71,11 @@ void main() {
         subtotal: 900.0,
         method: "COD",
         userId: "user1",
-        items: [
-          CartModel(
-            productId: "prod1",
-            quantity: 2,
-            price: 200.0,
-          )
-        ],
+        items: [CartModel(productId: "prod1", quantity: 2, price: 200.0)],
       );
 
       when(mockDio.post('/orders', data: anyNamed('data'))).thenAnswer(
-            (_) async => Response(
+        (_) async => Response(
           data: order.toJson(),
           statusCode: 201,
           requestOptions: RequestOptions(path: '/orders'),

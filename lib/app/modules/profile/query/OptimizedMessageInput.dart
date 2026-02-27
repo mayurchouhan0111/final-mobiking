@@ -34,10 +34,7 @@ class OptimizedMessageInput extends StatelessWidget {
         children: [
           Expanded(
             child: Container(
-              constraints: const BoxConstraints(
-                minHeight: 44,
-                maxHeight: 100,
-              ),
+              constraints: const BoxConstraints(minHeight: 44, maxHeight: 100),
               decoration: BoxDecoration(
                 color: AppColors.neutralBackground,
                 borderRadius: BorderRadius.circular(22),
@@ -64,7 +61,13 @@ class OptimizedMessageInput extends StatelessWidget {
                 maxLines: 5,
                 minLines: 1,
                 maxLength: 500,
-                buildCounter: (_, {required currentLength, maxLength, required isFocused}) => null,
+                buildCounter:
+                    (
+                      _, {
+                      required currentLength,
+                      maxLength,
+                      required isFocused,
+                    }) => null,
                 style: const TextStyle(
                   fontSize: 15,
                   height: 1.4,
@@ -87,18 +90,18 @@ class OptimizedMessageInput extends StatelessWidget {
                 child: Center(
                   child: isSending
                       ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: AppColors.white,
-                    ),
-                  )
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.white,
+                          ),
+                        )
                       : const Icon(
-                    Icons.send_rounded,
-                    color: AppColors.white,
-                    size: 20,
-                  ),
+                          Icons.send_rounded,
+                          color: AppColors.white,
+                          size: 20,
+                        ),
                 ),
               ),
             ),

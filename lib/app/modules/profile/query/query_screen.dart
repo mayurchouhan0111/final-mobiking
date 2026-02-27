@@ -125,7 +125,7 @@ class _QueriesScreenState extends State<QueriesScreen> {
         foregroundColor: AppColors.white,
         icon: Icon(Icons.add),
         label: Text('Raise Query'),
-      ),*//*
+      ),*/ /*
 
       body: CustomScrollView(
         slivers: [

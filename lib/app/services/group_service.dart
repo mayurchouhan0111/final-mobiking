@@ -2,14 +2,12 @@ import 'package:dio/dio.dart';
 
 import '../data/group_model.dart';
 
-
 class GroupService {
   Dio _dio = Dio(BaseOptions(baseUrl: 'https://boxbudy.com/api/v1'));
 
   void overrideDio(Dio dio) {
     _dio = dio;
   }
-
 
   Future<List<GroupModel>> getAllGroups() async {
     try {

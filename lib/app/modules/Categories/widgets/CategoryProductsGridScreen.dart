@@ -10,7 +10,6 @@ import '../../../data/product_model.dart';
 import '../../../services/category_service.dart';
 import '../../../themes/app_theme.dart';
 
-
 class CategoryProductsGridScreen extends StatefulWidget {
   final String categoryName;
   final List<SubCategory> subCategories;
@@ -24,10 +23,12 @@ class CategoryProductsGridScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<CategoryProductsGridScreen> createState() => _CategoryProductsGridScreenState();
+  State<CategoryProductsGridScreen> createState() =>
+      _CategoryProductsGridScreenState();
 }
 
-class _CategoryProductsGridScreenState extends State<CategoryProductsGridScreen> {
+class _CategoryProductsGridScreenState
+    extends State<CategoryProductsGridScreen> {
   late RxInt selectedSubCategoryIndex;
   late RxList<ProductModel> displayedProducts;
   final CategoryService _categoryService = CategoryService();
@@ -46,8 +47,10 @@ class _CategoryProductsGridScreenState extends State<CategoryProductsGridScreen>
   Future<void> _fetchProductsForSubCategory(int index) async {
     try {
       _isLoadingProducts.value = true;
-      final products = await _categoryService.getProductsBySubCategorySlug(widget.subCategories[index].slug);
-      
+      final products = await _categoryService.getProductsBySubCategorySlug(
+        widget.subCategories[index].slug,
+      );
+
       // Sort: In stock (totalStock > 0) first, then out of stock
       products.sort((a, b) {
         if (a.totalStock > 0 && b.totalStock <= 0) return -1;
@@ -106,23 +109,25 @@ class _CategoryProductsGridScreenState extends State<CategoryProductsGridScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-
-
                 // Subcategories List
                 Expanded(
                   child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 0), // Removed horizontal padding here
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 0,
+                    ), // Removed horizontal padding here
                     itemCount: widget.subCategories.length,
                     itemBuilder: (context, index) {
                       final subCategory = widget.subCategories[index];
 
-                      return Obx(() => _buildSubCategoryItem(
-                        subCategory: subCategory,
-                        index: index,
-                        isSelected: selectedSubCategoryIndex.value == index,
-                        onTap: () => _onSubCategorySelected(index),
-                        textTheme: textTheme,
-                      ));
+                      return Obx(
+                        () => _buildSubCategoryItem(
+                          subCategory: subCategory,
+                          index: index,
+                          isSelected: selectedSubCategoryIndex.value == index,
+                          onTap: () => _onSubCategorySelected(index),
+                          textTheme: textTheme,
+                        ),
+                      );
                     },
                   ),
                 ),
@@ -139,7 +144,9 @@ class _CategoryProductsGridScreenState extends State<CategoryProductsGridScreen>
                 children: [
                   // Products Header
                   Obx(() {
-                    final selectedSubCategory = selectedSubCategoryIndex.value < widget.subCategories.length
+                    final selectedSubCategory =
+                        selectedSubCategoryIndex.value <
+                            widget.subCategories.length
                         ? widget.subCategories[selectedSubCategoryIndex.value]
                         : null;
 
@@ -165,18 +172,23 @@ class _CategoryProductsGridScreenState extends State<CategoryProductsGridScreen>
                           ),
                           const SizedBox(width: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: AppColors.success.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: Obx(() => Text(
-                              '${displayedProducts.length}',
-                              style: textTheme.labelSmall?.copyWith(
-                                color: AppColors.success,
-                                fontWeight: FontWeight.w600,
+                            child: Obx(
+                              () => Text(
+                                '${displayedProducts.length}',
+                                style: textTheme.labelSmall?.copyWith(
+                                  color: AppColors.success,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
-                            )),
+                            ),
                           ),
                         ],
                       ),
@@ -195,11 +207,12 @@ class _CategoryProductsGridScreenState extends State<CategoryProductsGridScreen>
 
                       return GridView.builder(
                         padding: const EdgeInsets.all(16),
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          childAspectRatio: 0.58,
-                          mainAxisSpacing: 8,
-                        ),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              childAspectRatio: 0.58,
+                              mainAxisSpacing: 8,
+                            ),
                         itemCount: displayedProducts.length,
                         itemBuilder: (context, index) {
                           final product = displayedProducts[index];
@@ -224,7 +237,9 @@ class _CategoryProductsGridScreenState extends State<CategoryProductsGridScreen>
           return const SizedBox.shrink();
         }
 
-        final List<String> imageUrls = cartController.cartItems.take(3).map((item) {
+        final List<String> imageUrls = cartController.cartItems.take(3).map((
+          item,
+        ) {
           final product = item['productId'];
           String? imageUrl;
 
@@ -241,7 +256,8 @@ class _CategoryProductsGridScreenState extends State<CategoryProductsGridScreen>
               imageUrl = imagesData;
             }
           }
-          return imageUrl ?? 'https://placehold.co/50x50/cccccc/ffffff?text=No+Img';
+          return imageUrl ??
+              'https://placehold.co/50x50/cccccc/ffffff?text=No+Img';
         }).toList();
 
         return Container(
@@ -272,7 +288,9 @@ class _CategoryProductsGridScreenState extends State<CategoryProductsGridScreen>
     final imageUrl = hasImage ? subCategory.photos!.first : null;
 
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 4), // Reduced vertical margin
+      margin: const EdgeInsets.symmetric(
+        vertical: 4,
+      ), // Reduced vertical margin
       decoration: BoxDecoration(
         color: isSelected ? AppColors.white : AppColors.neutralBackground,
         border: isSelected
@@ -283,7 +301,8 @@ class _CategoryProductsGridScreenState extends State<CategoryProductsGridScreen>
             : null,
       ),
       child: Material(
-        color: Colors.transparent, // Use transparent so the container's color is visible
+        color: Colors
+            .transparent, // Use transparent so the container's color is visible
         child: InkWell(
           onTap: onTap,
           child: Padding(
@@ -304,22 +323,24 @@ class _CategoryProductsGridScreenState extends State<CategoryProductsGridScreen>
                     ),
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(9), // Slightly smaller than container
+                    borderRadius: BorderRadius.circular(
+                      9,
+                    ), // Slightly smaller than container
                     child: imageUrl != null
                         ? Image.network(
-                      imageUrl,
-                      fit: BoxFit.cover, // Ensure image covers the area
-                      errorBuilder: (context, error, stackTrace) => Icon(
-                        Icons.category_outlined,
-                        color: AppColors.textLight,
-                        size: 36, // Larger icon
-                      ),
-                    )
+                            imageUrl,
+                            fit: BoxFit.cover, // Ensure image covers the area
+                            errorBuilder: (context, error, stackTrace) => Icon(
+                              Icons.category_outlined,
+                              color: AppColors.textLight,
+                              size: 36, // Larger icon
+                            ),
+                          )
                         : Icon(
-                      Icons.category_outlined,
-                      color: AppColors.textLight,
-                      size: 36, // Larger icon
-                    ),
+                            Icons.category_outlined,
+                            color: AppColors.textLight,
+                            size: 36, // Larger icon
+                          ),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -343,7 +364,6 @@ class _CategoryProductsGridScreenState extends State<CategoryProductsGridScreen>
       ),
     );
   }
-
 
   Widget _buildEmptyProductsState(TextTheme textTheme) {
     return Center(
@@ -375,9 +395,7 @@ class _CategoryProductsGridScreenState extends State<CategoryProductsGridScreen>
             const SizedBox(height: 8),
             Text(
               'This category doesn\'t have any products yet.',
-              style: textTheme.bodyMedium?.copyWith(
-                color: AppColors.textLight,
-              ),
+              style: textTheme.bodyMedium?.copyWith(color: AppColors.textLight),
               textAlign: TextAlign.center,
             ),
           ],

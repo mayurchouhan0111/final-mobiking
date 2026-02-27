@@ -23,8 +23,6 @@ class ProductCards extends StatelessWidget {
     required this.heroTag,
   }) : super(key: key);
 
-  
-
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -37,9 +35,21 @@ class ProductCards extends StatelessWidget {
     final isMediumScreen = screenWidth < 480;
 
     // Optimized for 3x2 grid - no width constraints needed as GridView handles it
-    final imageHeight = isSmallScreen ? 85.0 : isMediumScreen ? 95.0 : 105.0;
-    final titleFontSize = isSmallScreen ? 11.0 : isMediumScreen ? 12.0 : 13.0;
-    final priceFontSize = isSmallScreen ? 13.0 : isMediumScreen ? 14.0 : 15.0;
+    final imageHeight = isSmallScreen
+        ? 85.0
+        : isMediumScreen
+        ? 95.0
+        : 105.0;
+    final titleFontSize = isSmallScreen
+        ? 11.0
+        : isMediumScreen
+        ? 12.0
+        : 13.0;
+    final priceFontSize = isSmallScreen
+        ? 13.0
+        : isMediumScreen
+        ? 14.0
+        : 15.0;
     final buttonHeight = isSmallScreen ? 32.0 : 36.0;
 
     // Price calculation logic
@@ -47,8 +57,12 @@ class ProductCards extends StatelessWidget {
     final int sellingPrice;
 
     if (product.sellingPrice.isNotEmpty) {
-      sellingPrice = product.sellingPrice.map((e) => e.price.toInt()).reduce(min);
-      originalPrice = product.regularPrice ?? product.sellingPrice.map((e) => e.price.toInt()).reduce(max);
+      sellingPrice = product.sellingPrice
+          .map((e) => e.price.toInt())
+          .reduce(min);
+      originalPrice =
+          product.regularPrice ??
+          product.sellingPrice.map((e) => e.price.toInt()).reduce(max);
     } else {
       originalPrice = 0;
       sellingPrice = 0;
@@ -57,7 +71,8 @@ class ProductCards extends StatelessWidget {
     // Calculate discount percentage
     int discountPercent = 0;
     if (originalPrice > 0 && sellingPrice < originalPrice) {
-      discountPercent = (((originalPrice - sellingPrice) / originalPrice) * 100).round();
+      discountPercent = (((originalPrice - sellingPrice) / originalPrice) * 100)
+          .round();
     }
 
     return Material(
@@ -69,7 +84,7 @@ class ProductCards extends StatelessWidget {
             onTap!.call(product);
           } else {
             Get.to(
-                  () => ProductPage(product: product, heroTag: heroTag),
+              () => ProductPage(product: product, heroTag: heroTag),
               transition: Transition.fadeIn,
               duration: const Duration(milliseconds: 300),
             );
@@ -116,36 +131,48 @@ class ProductCards extends StatelessWidget {
                                 color: AppColors.neutralBackground,
                                 child: hasImage
                                     ? Image.network(
-                                  product.images[0],
-                                  fit: BoxFit.cover,
-                                  loadingBuilder: (context, child, loadingProgress) {
-                                    if (loadingProgress == null) return child;
-                                    return Center(
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: AppColors.success,
-                                        value: loadingProgress.expectedTotalBytes != null
-                                            ? loadingProgress.cumulativeBytesLoaded /
-                                            loadingProgress.expectedTotalBytes!
-                                            : null,
-                                      ),
-                                    );
-                                  },
-                                  errorBuilder: (context, error, stackTrace) => Center(
-                                    child: Icon(
-                                      Icons.image_not_supported_outlined,
-                                      size: isSmallScreen ? 24 : 28,
-                                      color: AppColors.textLight,
-                                    ),
-                                  ),
-                                )
+                                        product.images[0],
+                                        fit: BoxFit.cover,
+                                        loadingBuilder: (context, child, loadingProgress) {
+                                          if (loadingProgress == null)
+                                            return child;
+                                          return Center(
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: AppColors.success,
+                                              value:
+                                                  loadingProgress
+                                                          .expectedTotalBytes !=
+                                                      null
+                                                  ? loadingProgress
+                                                            .cumulativeBytesLoaded /
+                                                        loadingProgress
+                                                            .expectedTotalBytes!
+                                                  : null,
+                                            ),
+                                          );
+                                        },
+                                        errorBuilder:
+                                            (
+                                              context,
+                                              error,
+                                              stackTrace,
+                                            ) => Center(
+                                              child: Icon(
+                                                Icons
+                                                    .image_not_supported_outlined,
+                                                size: isSmallScreen ? 24 : 28,
+                                                color: AppColors.textLight,
+                                              ),
+                                            ),
+                                      )
                                     : Center(
-                                  child: Icon(
-                                    Icons.image_not_supported_outlined,
-                                    size: isSmallScreen ? 24 : 28,
-                                    color: AppColors.textLight,
-                                  ),
-                                ),
+                                        child: Icon(
+                                          Icons.image_not_supported_outlined,
+                                          size: isSmallScreen ? 24 : 28,
+                                          color: AppColors.textLight,
+                                        ),
+                                      ),
                               ),
                             ),
                           ),
@@ -157,8 +184,8 @@ class ProductCards extends StatelessWidget {
                               left: 4,
                               child: Container(
                                 padding: EdgeInsets.symmetric(
-                                    horizontal: isSmallScreen ? 4 : 6,
-                                    vertical: isSmallScreen ? 2 : 3
+                                  horizontal: isSmallScreen ? 4 : 6,
+                                  vertical: isSmallScreen ? 2 : 3,
                                 ),
                                 decoration: BoxDecoration(
                                   color: AppColors.success,
@@ -209,8 +236,8 @@ class ProductCards extends StatelessWidget {
                 flex: 3, // Takes 3/7 of the available height
                 child: Padding(
                   padding: EdgeInsets.symmetric(
-                      horizontal: isSmallScreen ? 8 : 10,
-                      vertical: isSmallScreen ? 4 : 6
+                    horizontal: isSmallScreen ? 8 : 10,
+                    vertical: isSmallScreen ? 4 : 6,
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -232,7 +259,8 @@ class ProductCards extends StatelessWidget {
                       ),
 
                       // Rating - compact for grid
-                      if (product.averageRating != null && product.reviewCount != null)
+                      if (product.averageRating != null &&
+                          product.reviewCount != null)
                         SizedBox(
                           height: isSmallScreen ? 16 : 18,
                           child: AppStarRating(
@@ -260,7 +288,8 @@ class ProductCards extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            if (originalPrice > 0 && sellingPrice < originalPrice) ...[
+                            if (originalPrice > 0 &&
+                                sellingPrice < originalPrice) ...[
                               const SizedBox(width: 4),
                               Flexible(
                                 child: Text(
@@ -283,7 +312,11 @@ class ProductCards extends StatelessWidget {
                       // Add to cart button - fixed height
                       SizedBox(
                         height: buttonHeight,
-                        child: _buildAddToCartSection(context, cartController, isSmallScreen),
+                        child: _buildAddToCartSection(
+                          context,
+                          cartController,
+                          isSmallScreen,
+                        ),
                       ),
                     ],
                   ),
@@ -296,9 +329,14 @@ class ProductCards extends StatelessWidget {
     );
   }
 
-  Widget _buildAddToCartSection(BuildContext context, CartController cartController, bool isSmallScreen) {
+  Widget _buildAddToCartSection(
+    BuildContext context,
+    CartController cartController,
+    bool isSmallScreen,
+  ) {
     return Obx(() {
-      final Map<String, int> currentQuantities = cartController.productVariantQuantities.value;
+      final Map<String, int> currentQuantities =
+          cartController.productVariantQuantities.value;
 
       int totalProductQuantityInCart = 0;
       for (var variantEntry in product.variants.entries) {
@@ -311,14 +349,24 @@ class ProductCards extends StatelessWidget {
           .length;
 
       if (totalProductQuantityInCart > 0) {
-        return _buildQuantitySelector(context, totalProductQuantityInCart, cartController, isSmallScreen);
+        return _buildQuantitySelector(
+          context,
+          totalProductQuantityInCart,
+          cartController,
+          isSmallScreen,
+        );
       } else {
         return _buildAddButton(context, availableVariantCount, isSmallScreen);
       }
     });
   }
 
-  Widget _buildQuantitySelector(BuildContext context, int quantity, CartController cartController, bool isSmallScreen) {
+  Widget _buildQuantitySelector(
+    BuildContext context,
+    int quantity,
+    CartController cartController,
+    bool isSmallScreen,
+  ) {
     final TextTheme textTheme = Theme.of(context).textTheme;
     final bool hasMultipleVariants = product.variants.length > 1;
 
@@ -344,11 +392,14 @@ class ProductCards extends StatelessWidget {
                 if (hasMultipleVariants || quantity > 1) {
                   _showVariantBottomSheet(context, product.variants, product);
                 } else {
-                  final cartItemsForProduct = cartController.getCartItemsForProduct(productId: product.id);
+                  final cartItemsForProduct = cartController
+                      .getCartItemsForProduct(productId: product.id);
                   if (cartItemsForProduct.isNotEmpty) {
                     final singleVariantName = cartItemsForProduct.keys.first;
-                    cartController.removeFromCart(productId: product.id, variantName: singleVariantName);
-                    
+                    cartController.removeFromCart(
+                      productId: product.id,
+                      variantName: singleVariantName,
+                    );
                   }
                 }
               },
@@ -373,10 +424,7 @@ class ProductCards extends StatelessWidget {
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 200),
               transitionBuilder: (child, animation) {
-                return ScaleTransition(
-                  scale: animation,
-                  child: child,
-                );
+                return ScaleTransition(scale: animation, child: child);
               },
               child: Text(
                 '$quantity',
@@ -398,9 +446,14 @@ class ProductCards extends StatelessWidget {
                 if (hasMultipleVariants) {
                   _showVariantBottomSheet(context, product.variants, product);
                 } else {
-                  final singleVariant = product.variants.entries.firstWhere((element) => element.value > 0);
-                  cartController.addToCart(productId: product.id, variantName: singleVariant.key, product: product);
-
+                  final singleVariant = product.variants.entries.firstWhere(
+                    (element) => element.value > 0,
+                  );
+                  cartController.addToCart(
+                    productId: product.id,
+                    variantName: singleVariant.key,
+                    product: product,
+                  );
                 }
               },
               borderRadius: const BorderRadius.only(
@@ -422,7 +475,11 @@ class ProductCards extends StatelessWidget {
     );
   }
 
-  Widget _buildAddButton(BuildContext context, int availableVariantCount, bool isSmallScreen) {
+  Widget _buildAddButton(
+    BuildContext context,
+    int availableVariantCount,
+    bool isSmallScreen,
+  ) {
     final TextTheme textTheme = Theme.of(context).textTheme;
     final cartController = Get.find<CartController>();
 
@@ -455,9 +512,14 @@ class ProductCards extends StatelessWidget {
           if (availableVariantCount > 1) {
             _showVariantBottomSheet(context, product.variants, product);
           } else {
-            final singleVariant = product.variants.entries.firstWhere((element) => element.value > 0);
-            cartController.addToCart(productId: product.id, variantName: singleVariant.key, product: product);
-            
+            final singleVariant = product.variants.entries.firstWhere(
+              (element) => element.value > 0,
+            );
+            cartController.addToCart(
+              productId: product.id,
+              variantName: singleVariant.key,
+              product: product,
+            );
           }
         },
         style: ElevatedButton.styleFrom(
@@ -465,54 +527,54 @@ class ProductCards extends StatelessWidget {
           foregroundColor: AppColors.success,
           elevation: 0,
           side: BorderSide(color: AppColors.success, width: 1.5),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           padding: EdgeInsets.zero,
         ),
         child: availableVariantCount > 1
             ? Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'ADD',
-              style: textTheme.labelMedium?.copyWith(
-                color: AppColors.success,
-                fontWeight: FontWeight.w800,
-                fontSize: isSmallScreen ? 11 : 12,
-              ),
-            ),
-            Text(
-              '$availableVariantCount options',
-              style: textTheme.labelSmall?.copyWith(
-                color: AppColors.success.withOpacity(0.8),
-                fontSize: isSmallScreen ? 8 : 9,
-              ),
-            ),
-          ],
-        )
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'ADD',
+                    style: textTheme.labelMedium?.copyWith(
+                      color: AppColors.success,
+                      fontWeight: FontWeight.w800,
+                      fontSize: isSmallScreen ? 11 : 12,
+                    ),
+                  ),
+                  Text(
+                    '$availableVariantCount options',
+                    style: textTheme.labelSmall?.copyWith(
+                      color: AppColors.success.withOpacity(0.8),
+                      fontSize: isSmallScreen ? 8 : 9,
+                    ),
+                  ),
+                ],
+              )
             : Text(
-          'ADD',
-          style: textTheme.labelMedium?.copyWith(
-            color: AppColors.success,
-            fontWeight: FontWeight.w800,
-            fontSize: isSmallScreen ? 12 : 14,
-          ),
-        ),
+                'ADD',
+                style: textTheme.labelMedium?.copyWith(
+                  color: AppColors.success,
+                  fontWeight: FontWeight.w800,
+                  fontSize: isSmallScreen ? 12 : 14,
+                ),
+              ),
       ),
     );
   }
 
-  void _showSnackBar(BuildContext context, String message, Color backgroundColor) {
+  void _showSnackBar(
+    BuildContext context,
+    String message,
+    Color backgroundColor,
+  ) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
         backgroundColor: backgroundColor,
         behavior: SnackBarBehavior.floating,
         duration: const Duration(milliseconds: 800),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         margin: const EdgeInsets.all(16),
       ),
     );
@@ -520,7 +582,11 @@ class ProductCards extends StatelessWidget {
 }
 
 // Enhanced variant bottom sheet (unchanged)
-void _showVariantBottomSheet(BuildContext context, Map<String, int> variantsMap, ProductModel product) {
+void _showVariantBottomSheet(
+  BuildContext context,
+  Map<String, int> variantsMap,
+  ProductModel product,
+) {
   final TextTheme textTheme = Theme.of(context).textTheme;
   final CartController cartController = Get.find<CartController>();
 
@@ -532,7 +598,8 @@ void _showVariantBottomSheet(BuildContext context, Map<String, int> variantsMap,
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),
     builder: (BuildContext context) {
-      final List<MapEntry<String, int>> variantEntries = variantsMap.entries.toList();
+      final List<MapEntry<String, int>> variantEntries = variantsMap.entries
+          .toList();
       final Map<String, RxBool> isAddingToCart = {};
       final Map<String, RxBool> isRemovingFromCart = {};
 
@@ -550,7 +617,9 @@ void _showVariantBottomSheet(BuildContext context, Map<String, int> variantsMap,
           return Container(
             decoration: BoxDecoration(
               color: AppColors.white,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(20),
+              ),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.1),
@@ -587,10 +656,7 @@ void _showVariantBottomSheet(BuildContext context, Map<String, int> variantsMap,
                       const Spacer(),
                       IconButton(
                         onPressed: () => Navigator.pop(context),
-                        icon: Icon(
-                          Icons.close,
-                          color: AppColors.textLight,
-                        ),
+                        icon: Icon(Icons.close, color: AppColors.textLight),
                       ),
                     ],
                   ),
@@ -645,12 +711,19 @@ void _showVariantBottomSheet(BuildContext context, Map<String, int> variantsMap,
                                   color: AppColors.neutralBackground,
                                   child: variantImageUrl.isNotEmpty
                                       ? Image.network(
-                                    variantImageUrl,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) =>
-                                        Icon(Icons.image, color: AppColors.textLight),
-                                  )
-                                      : Icon(Icons.image, color: AppColors.textLight),
+                                          variantImageUrl,
+                                          fit: BoxFit.cover,
+                                          errorBuilder:
+                                              (context, error, stackTrace) =>
+                                                  Icon(
+                                                    Icons.image,
+                                                    color: AppColors.textLight,
+                                                  ),
+                                        )
+                                      : Icon(
+                                          Icons.image,
+                                          color: AppColors.textLight,
+                                        ),
                                 ),
                               ),
 
@@ -664,7 +737,9 @@ void _showVariantBottomSheet(BuildContext context, Map<String, int> variantsMap,
                                     Text(
                                       variantName,
                                       style: textTheme.titleSmall?.copyWith(
-                                        color: isOutOfStock ? AppColors.textLight : AppColors.textDark,
+                                        color: isOutOfStock
+                                            ? AppColors.textLight
+                                            : AppColors.textDark,
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
@@ -685,12 +760,17 @@ void _showVariantBottomSheet(BuildContext context, Map<String, int> variantsMap,
                               // Add/quantity controls
                               if (!isOutOfStock)
                                 Obx(() {
-                                  final currentVariantQuantity = cartController.getVariantQuantity(
-                                    productId: product.id,
-                                    variantName: variantName,
-                                  );
-                                  final bool adding = isAddingToCart[variantName]?.value ?? false;
-                                  final bool removing = isRemovingFromCart[variantName]?.value ?? false;
+                                  final currentVariantQuantity = cartController
+                                      .getVariantQuantity(
+                                        productId: product.id,
+                                        variantName: variantName,
+                                      );
+                                  final bool adding =
+                                      isAddingToCart[variantName]?.value ??
+                                      false;
+                                  final bool removing =
+                                      isRemovingFromCart[variantName]?.value ??
+                                      false;
 
                                   if (currentVariantQuantity > 0) {
                                     return Container(
@@ -702,80 +782,116 @@ void _showVariantBottomSheet(BuildContext context, Map<String, int> variantsMap,
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           InkWell(
-                                            onTap: removing ? null : () async {
-                                              isRemovingFromCart[variantName]?.value = true;
-                                              HapticFeedback.lightImpact();
-                                              await Future.delayed(const Duration(milliseconds: 200));
-                                              cartController.removeFromCart(
-                                                productId: product.id,
-                                                variantName: variantName,
-                                              );
-                                              isRemovingFromCart[variantName]?.value = false;
-                                            },
-                                            borderRadius: const BorderRadius.only(
-                                              topLeft: Radius.circular(8),
-                                              bottomLeft: Radius.circular(8),
-                                            ),
+                                            onTap: removing
+                                                ? null
+                                                : () async {
+                                                    isRemovingFromCart[variantName]
+                                                            ?.value =
+                                                        true;
+                                                    HapticFeedback.lightImpact();
+                                                    await Future.delayed(
+                                                      const Duration(
+                                                        milliseconds: 200,
+                                                      ),
+                                                    );
+                                                    cartController
+                                                        .removeFromCart(
+                                                          productId: product.id,
+                                                          variantName:
+                                                              variantName,
+                                                        );
+                                                    isRemovingFromCart[variantName]
+                                                            ?.value =
+                                                        false;
+                                                  },
+                                            borderRadius:
+                                                const BorderRadius.only(
+                                                  topLeft: Radius.circular(8),
+                                                  bottomLeft: Radius.circular(
+                                                    8,
+                                                  ),
+                                                ),
                                             child: Container(
                                               padding: const EdgeInsets.all(8),
                                               child: removing
                                                   ? SizedBox(
-                                                width: 16,
-                                                height: 16,
-                                                child: CircularProgressIndicator(
-                                                  strokeWidth: 2,
-                                                  color: AppColors.white,
-                                                ),
-                                              )
+                                                      width: 16,
+                                                      height: 16,
+                                                      child:
+                                                          CircularProgressIndicator(
+                                                            strokeWidth: 2,
+                                                            color:
+                                                                AppColors.white,
+                                                          ),
+                                                    )
                                                   : Icon(
-                                                Icons.remove,
-                                                color: AppColors.white,
-                                                size: 16,
-                                              ),
+                                                      Icons.remove,
+                                                      color: AppColors.white,
+                                                      size: 16,
+                                                    ),
                                             ),
                                           ),
                                           Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 8,
+                                            ),
                                             child: Text(
                                               '$currentVariantQuantity',
-                                              style: textTheme.labelMedium?.copyWith(
-                                                color: AppColors.white,
-                                                fontWeight: FontWeight.w800,
-                                              ),
+                                              style: textTheme.labelMedium
+                                                  ?.copyWith(
+                                                    color: AppColors.white,
+                                                    fontWeight: FontWeight.w800,
+                                                  ),
                                             ),
                                           ),
                                           InkWell(
-                                            onTap: adding ? null : () async {
-                                              isAddingToCart[variantName]?.value = true;
-                                              HapticFeedback.lightImpact();
-                                              await Future.delayed(const Duration(milliseconds: 200));
-                                              cartController.addToCart(
-                                                productId: product.id,
-                                                variantName: variantName,
-                                                product: product,
-                                              );
-                                              isAddingToCart[variantName]?.value = false;
-                                            },
-                                            borderRadius: const BorderRadius.only(
-                                              topRight: Radius.circular(8),
-                                              bottomRight: Radius.circular(8),
-                                            ),
+                                            onTap: adding
+                                                ? null
+                                                : () async {
+                                                    isAddingToCart[variantName]
+                                                            ?.value =
+                                                        true;
+                                                    HapticFeedback.lightImpact();
+                                                    await Future.delayed(
+                                                      const Duration(
+                                                        milliseconds: 200,
+                                                      ),
+                                                    );
+                                                    cartController.addToCart(
+                                                      productId: product.id,
+                                                      variantName: variantName,
+                                                      product: product,
+                                                    );
+                                                    isAddingToCart[variantName]
+                                                            ?.value =
+                                                        false;
+                                                  },
+                                            borderRadius:
+                                                const BorderRadius.only(
+                                                  topRight: Radius.circular(8),
+                                                  bottomRight: Radius.circular(
+                                                    8,
+                                                  ),
+                                                ),
                                             child: Container(
                                               padding: const EdgeInsets.all(8),
                                               child: adding
                                                   ? SizedBox(
-                                                width: 16,
-                                                height: 16,
-                                                child: CircularProgressIndicator(
-                                                  strokeWidth: 2,
-                                                  color: AppColors.white,
-                                                ),
-                                              )
+                                                      width: 16,
+                                                      height: 16,
+                                                      child:
+                                                          CircularProgressIndicator(
+                                                            strokeWidth: 2,
+                                                            color:
+                                                                AppColors.white,
+                                                          ),
+                                                    )
                                                   : Icon(
-                                                Icons.add,
-                                                color: AppColors.white,
-                                                size: 16,
-                                              ),
+                                                      Icons.add,
+                                                      color: AppColors.white,
+                                                      size: 16,
+                                                    ),
                                             ),
                                           ),
                                         ],
@@ -783,41 +899,54 @@ void _showVariantBottomSheet(BuildContext context, Map<String, int> variantsMap,
                                     );
                                   } else {
                                     return ElevatedButton(
-                                      onPressed: adding ? null : () async {
-                                        isAddingToCart[variantName]?.value = true;
-                                        HapticFeedback.lightImpact();
-                                        await Future.delayed(const Duration(milliseconds: 200));
-                                        cartController.addToCart(
-                                          productId: product.id,
-                                          variantName: variantName,
-                                          product: product,
-                                        );
-                                        isAddingToCart[variantName]?.value = false;
-                                      },
+                                      onPressed: adding
+                                          ? null
+                                          : () async {
+                                              isAddingToCart[variantName]
+                                                      ?.value =
+                                                  true;
+                                              HapticFeedback.lightImpact();
+                                              await Future.delayed(
+                                                const Duration(
+                                                  milliseconds: 200,
+                                                ),
+                                              );
+                                              cartController.addToCart(
+                                                productId: product.id,
+                                                variantName: variantName,
+                                                product: product,
+                                              );
+                                              isAddingToCart[variantName]
+                                                      ?.value =
+                                                  false;
+                                            },
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: AppColors.success,
                                         foregroundColor: AppColors.white,
                                         shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
                                         ),
                                         elevation: 0,
                                       ),
                                       child: adding
                                           ? SizedBox(
-                                        width: 16,
-                                        height: 16,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: AppColors.white,
-                                        ),
-                                      )
+                                              width: 16,
+                                              height: 16,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                color: AppColors.white,
+                                              ),
+                                            )
                                           : Text(
-                                        'ADD',
-                                        style: textTheme.labelMedium?.copyWith(
-                                          color: AppColors.white,
-                                          fontWeight: FontWeight.w800,
-                                        ),
-                                      ),
+                                              'ADD',
+                                              style: textTheme.labelMedium
+                                                  ?.copyWith(
+                                                    color: AppColors.white,
+                                                    fontWeight: FontWeight.w800,
+                                                  ),
+                                            ),
                                     );
                                   }
                                 }),

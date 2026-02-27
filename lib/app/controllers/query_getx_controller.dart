@@ -13,7 +13,8 @@ import 'package:mobiking/app/controllers/order_controller.dart';
 class QueryGetXController extends GetxController {
   /// Main list of user queries (order-linked and general)
   final RxList<QueryModel> _myQueries = <QueryModel>[].obs;
-  RxList<QueryModel> get myQueries => _myQueries; // <--- CRUCIAL: RxList for GetX reactivity
+  RxList<QueryModel> get myQueries =>
+      _myQueries; // <--- CRUCIAL: RxList for GetX reactivity
 
   RxInt get queryCount => _myQueries.length.obs;
 
@@ -25,7 +26,8 @@ class QueryGetXController extends GetxController {
   bool get isLoadingReplies => _isLoadingReplies.value;
 
   final RxString _errorMessage = RxString('');
-  String? get errorMessage => _errorMessage.value.isEmpty ? null : _errorMessage.value;
+  String? get errorMessage =>
+      _errorMessage.value.isEmpty ? null : _errorMessage.value;
 
   // Selection & detail
   final Rx<QueryModel?> _selectedQuery = Rx<QueryModel?>(null);
@@ -41,11 +43,13 @@ class QueryGetXController extends GetxController {
   final GetStorage _box = GetStorage();
   final RxList<ReplyModel> replies = <ReplyModel>[].obs;
 
-  final ConnectivityController _connectivityController = Get.find<ConnectivityController>();
+  final ConnectivityController _connectivityController =
+      Get.find<ConnectivityController>();
   final StreamController<List<dynamic>> _conversationStreamController =
-  StreamController<List<dynamic>>.broadcast();
+      StreamController<List<dynamic>>.broadcast();
 
-  Stream<List<dynamic>> get conversationStream => _conversationStreamController.stream;
+  Stream<List<dynamic>> get conversationStream =>
+      _conversationStreamController.stream;
 
   Timer? _pollingTimer;
   final Duration _pollingInterval = const Duration(seconds: 3);
@@ -114,7 +118,9 @@ class QueryGetXController extends GetxController {
   Future<void> _pollConversationUpdates() async {
     if (_currentQuery.value?.id == null) return;
     try {
-      final updatedQuery = await _queryService.getQueryById(_currentQuery.value!.id!);
+      final updatedQuery = await _queryService.getQueryById(
+        _currentQuery.value!.id!,
+      );
       final currentRepliesCount = _currentQuery.value?.replies?.length ?? 0;
       final newRepliesCount = updatedQuery.replies?.length ?? 0;
       if (newRepliesCount > currentRepliesCount) {
@@ -178,7 +184,9 @@ class QueryGetXController extends GetxController {
     String message = defaultMessage;
     if (e is Exception) {
       final String errorString = e.toString();
-      final regex = RegExp(r'Exception: Failed to (?:raise|load|rate|reply to|get|mark) query: (.*)');
+      final regex = RegExp(
+        r'Exception: Failed to (?:raise|load|rate|reply to|get|mark) query: (.*)',
+      );
       final match = regex.firstMatch(errorString);
       if (match != null && match.groupCount >= 1) {
         message = match.group(1)!;
@@ -218,7 +226,10 @@ class QueryGetXController extends GetxController {
       _myQueries.value = queries;
       _myQueries.refresh();
     } catch (e) {
-      final userFriendlyMessage = _getFriendlyErrorMessage(e, 'Error fetching queries.');
+      final userFriendlyMessage = _getFriendlyErrorMessage(
+        e,
+        'Error fetching queries.',
+      );
       _errorMessage.value = userFriendlyMessage;
     } finally {
       _isLoading.value = false;
@@ -235,16 +246,25 @@ class QueryGetXController extends GetxController {
       _errorMessage.value = '';
       await _fetchAndLoadMyQueries();
       // Use .toString() to avoid type mismatch bugs!
-      final queryForOrder = _myQueries.where((query) => query.orderId?.toString() == orderId?.toString()).toList();
+      final queryForOrder = _myQueries
+          .where((query) => query.orderId?.toString() == orderId?.toString())
+          .toList();
       if (queryForOrder.isNotEmpty) {
-        queryForOrder.sort((a, b) => (b.raisedAt ?? DateTime.now()).compareTo(a.raisedAt ?? DateTime.now()));
+        queryForOrder.sort(
+          (a, b) => (b.raisedAt ?? DateTime.now()).compareTo(
+            a.raisedAt ?? DateTime.now(),
+          ),
+        );
         _currentQuery.value = queryForOrder.first;
         await refreshCurrentQuery();
       } else {
         _currentQuery.value = null;
       }
     } catch (e) {
-      _errorMessage.value = _getFriendlyErrorMessage(e, 'Error fetching query for order.');
+      _errorMessage.value = _getFriendlyErrorMessage(
+        e,
+        'Error fetching query for order.',
+      );
     } finally {
       _isLoading.value = false;
     }
@@ -259,7 +279,10 @@ class QueryGetXController extends GetxController {
       _updateQueryInList(query);
       _updateConversationStream(query.replies ?? []);
     } catch (e) {
-      _errorMessage.value = _getFriendlyErrorMessage(e, 'Error fetching query details.');
+      _errorMessage.value = _getFriendlyErrorMessage(
+        e,
+        'Error fetching query details.',
+      );
     } finally {
       _isLoading.value = false;
     }
@@ -269,12 +292,17 @@ class QueryGetXController extends GetxController {
     if (_currentQuery.value?.id == null) return;
     try {
       _isLoadingReplies.value = true;
-      final refreshedQuery = await _queryService.getQueryById(_currentQuery.value!.id!);
+      final refreshedQuery = await _queryService.getQueryById(
+        _currentQuery.value!.id!,
+      );
       _currentQuery.value = refreshedQuery;
       _updateQueryInList(refreshedQuery);
       _updateConversationStream(refreshedQuery.replies ?? []);
     } catch (e) {
-      _errorMessage.value = _getFriendlyErrorMessage(e, 'Error refreshing query.');
+      _errorMessage.value = _getFriendlyErrorMessage(
+        e,
+        'Error refreshing query.',
+      );
     } finally {
       _isLoadingReplies.value = false;
     }
@@ -306,7 +334,10 @@ class QueryGetXController extends GetxController {
         orderId: orderId,
       );
     } catch (e) {
-      final userFriendlyMessage = _getFriendlyErrorMessage(e, 'Error raising query.');
+      final userFriendlyMessage = _getFriendlyErrorMessage(
+        e,
+        'Error raising query.',
+      );
       _errorMessage.value = userFriendlyMessage;
       rethrow;
     } finally {
@@ -331,10 +362,7 @@ class QueryGetXController extends GetxController {
     _isLoading.value = true;
     _errorMessage.value = '';
     try {
-      await _queryService.replyToQuery(
-        queryId: queryId,
-        replyText: replyText,
-      );
+      await _queryService.replyToQuery(queryId: queryId, replyText: replyText);
 
       // Refresh all orders to get the new message
       final orderController = Get.find<OrderController>();
@@ -350,7 +378,10 @@ class QueryGetXController extends GetxController {
         isSuccess: true,
       );
     } catch (e) {
-      final userFriendlyMessage = _getFriendlyErrorMessage(e, 'Error replying to query.');
+      final userFriendlyMessage = _getFriendlyErrorMessage(
+        e,
+        'Error replying to query.',
+      );
       _errorMessage.value = userFriendlyMessage;
       _showModernSnackbar(
         title: 'Error',
@@ -364,7 +395,9 @@ class QueryGetXController extends GetxController {
 
   QueryModel? getQueryByOrderId(String orderId) {
     // Defensive, use .toString() in comparison for all cases!
-    return _myQueries.firstWhereOrNull((query) => query.orderId?.toString() == orderId?.toString());
+    return _myQueries.firstWhereOrNull(
+      (query) => query.orderId?.toString() == orderId?.toString(),
+    );
   }
 
   void selectQuery(QueryModel query) {
@@ -402,7 +435,9 @@ class QueryGetXController extends GetxController {
       return;
     }
     Color backgroundColor = isSuccess ? AppColors.success : AppColors.danger;
-    IconData icon = isSuccess ? Icons.check_circle_outline : Icons.error_outline;
+    IconData icon = isSuccess
+        ? Icons.check_circle_outline
+        : Icons.error_outline;
     Get.rawSnackbar(
       messageText: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -423,9 +458,7 @@ class QueryGetXController extends GetxController {
           const SizedBox(height: 4),
           Text(
             message,
-            style: Get.textTheme.bodyMedium?.copyWith(
-              color: AppColors.white,
-            ),
+            style: Get.textTheme.bodyMedium?.copyWith(color: AppColors.white),
           ),
         ],
       ),

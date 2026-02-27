@@ -33,8 +33,11 @@ class InfoBox extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 title,
-                style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w300),
-              )
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w300,
+                ),
+              ),
             ],
           ),
         ),

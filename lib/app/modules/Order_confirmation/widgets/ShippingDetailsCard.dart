@@ -76,7 +76,8 @@ class _ShippingDetailsCardState extends State<ShippingDetailsCard> {
                     order.shippingStatus.capitalizeFirst ?? 'Pending',
                     AppColors.textDark,
                   ),
-                  if (order.courierName != null && order.courierName!.isNotEmpty)
+                  if (order.courierName != null &&
+                      order.courierName!.isNotEmpty)
                     _detailRowWithIcon(
                       textTheme,
                       Icons.send_outlined,
@@ -92,22 +93,27 @@ class _ShippingDetailsCardState extends State<ShippingDetailsCard> {
                       order.awbCode!,
                       AppColors.textDark,
                     ),
-                  if (order.expectedDeliveryDate != null && order.expectedDeliveryDate!.isNotEmpty)
+                  if (order.expectedDeliveryDate != null &&
+                      order.expectedDeliveryDate!.isNotEmpty)
                     _detailRowWithIcon(
                       textTheme,
                       Icons.calendar_today_outlined,
                       'Expected Delivery',
                       DateFormat('dd MMM, yyyy - hh:mm a').format(
-                          DateTime.tryParse(order.expectedDeliveryDate!) ?? DateTime.now()),
+                        DateTime.tryParse(order.expectedDeliveryDate!) ??
+                            DateTime.now(),
+                      ),
                       AppColors.textDark,
                     ),
-                  if (order.deliveredAt != null && order.deliveredAt!.isNotEmpty)
+                  if (order.deliveredAt != null &&
+                      order.deliveredAt!.isNotEmpty)
                     _detailRowWithIcon(
                       textTheme,
                       Icons.check_circle_outline,
                       'Delivered On',
                       DateFormat('dd MMM, yyyy - hh:mm a').format(
-                          DateTime.tryParse(order.deliveredAt!) ?? DateTime.now()),
+                        DateTime.tryParse(order.deliveredAt!) ?? DateTime.now(),
+                      ),
                       AppColors.textDark,
                     ),
                   _detailRowWithIcon(
@@ -117,7 +123,8 @@ class _ShippingDetailsCardState extends State<ShippingDetailsCard> {
                     order.method.capitalizeFirst ?? 'N/A',
                     AppColors.textDark,
                   ),
-                  if (order.razorpayPaymentId != null && order.razorpayPaymentId!.isNotEmpty)
+                  if (order.razorpayPaymentId != null &&
+                      order.razorpayPaymentId!.isNotEmpty)
                     _detailRowWithIcon(
                       textTheme,
                       Icons.credit_card_outlined,
@@ -127,7 +134,9 @@ class _ShippingDetailsCardState extends State<ShippingDetailsCard> {
                     ),
                 ],
               ),
-              crossFadeState: isExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+              crossFadeState: isExpanded
+                  ? CrossFadeState.showSecond
+                  : CrossFadeState.showFirst,
               duration: const Duration(milliseconds: 300),
             ),
           ],
@@ -137,12 +146,12 @@ class _ShippingDetailsCardState extends State<ShippingDetailsCard> {
   }
 
   Widget _detailRowWithIcon(
-      TextTheme textTheme,
-      IconData icon,
-      String title,
-      String value,
-      Color valueColor,
-      ) {
+    TextTheme textTheme,
+    IconData icon,
+    String title,
+    String value,
+    Color valueColor,
+  ) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12.0),
       child: Row(
@@ -154,9 +163,17 @@ class _ShippingDetailsCardState extends State<ShippingDetailsCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: textTheme.bodySmall?.copyWith(color: AppColors.textMedium)),
+                Text(
+                  title,
+                  style: textTheme.bodySmall?.copyWith(
+                    color: AppColors.textMedium,
+                  ),
+                ),
                 const SizedBox(height: 4),
-                Text(value, style: textTheme.bodyMedium?.copyWith(color: valueColor)),
+                Text(
+                  value,
+                  style: textTheme.bodyMedium?.copyWith(color: valueColor),
+                ),
               ],
             ),
           ),

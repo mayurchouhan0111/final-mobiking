@@ -4,10 +4,12 @@ import 'package:get/get.dart';
 class AnimatedAddDocumentButton extends StatefulWidget {
   final VoidCallback? onDocumentAdded; // Callback for when a document is added
 
-  const AnimatedAddDocumentButton({Key? key, this.onDocumentAdded}) : super(key: key);
+  const AnimatedAddDocumentButton({Key? key, this.onDocumentAdded})
+    : super(key: key);
 
   @override
-  _AnimatedAddDocumentButtonState createState() => _AnimatedAddDocumentButtonState();
+  _AnimatedAddDocumentButtonState createState() =>
+      _AnimatedAddDocumentButtonState();
 }
 
 class _AnimatedAddDocumentButtonState extends State<AnimatedAddDocumentButton>

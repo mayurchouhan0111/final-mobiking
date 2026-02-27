@@ -7,14 +7,13 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../themes/app_theme.dart';
 
 void showSupportDialog(BuildContext context) {
-  final String supportEmail = 'support@mobiking.com'; // Your actual support email
+  final String supportEmail =
+      'support@mobiking.com'; // Your actual support email
 
   Get.dialog(
     AlertDialog(
       backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       title: Text(
         'Contact Support',
         textAlign: TextAlign.center,
@@ -27,7 +26,11 @@ void showSupportDialog(BuildContext context) {
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.email_outlined, size: 60, color: AppColors.primaryPurple), // App-themed icon
+          Icon(
+            Icons.email_outlined,
+            size: 60,
+            color: AppColors.primaryPurple,
+          ), // App-themed icon
           const SizedBox(height: 16),
           Text(
             'For any assistance or queries, please feel free to email us at:',
@@ -68,12 +71,13 @@ void showSupportDialog(BuildContext context) {
               scheme: 'mailto',
               path: supportEmail,
               queryParameters: {
-                'subject': 'Support Request from Mobiking App', // Pre-fill subject
+                'subject':
+                    'Support Request from Mobiking App', // Pre-fill subject
                 'body': 'Dear Mobiking Support Team,\n\n', // Pre-fill body
               },
             );
 
-         /*   if (await canLaunchUrl(emailLaunchUri)) {
+            /*   if (await canLaunchUrl(emailLaunchUri)) {
               await launchUrl(emailLaunchUri);
               Get.back(); // Close the dialog after attempting to launch email
             } else {
@@ -90,7 +94,8 @@ void showSupportDialog(BuildContext context) {
             }*/
           },
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primaryPurple, // Use your primary color for action button
+            backgroundColor: AppColors
+                .primaryPurple, // Use your primary color for action button
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
             ),
@@ -105,7 +110,8 @@ void showSupportDialog(BuildContext context) {
           ),
         ),
       ],
-      actionsAlignment: MainAxisAlignment.spaceEvenly, // Distribute buttons horizontally
+      actionsAlignment:
+          MainAxisAlignment.spaceEvenly, // Distribute buttons horizontally
     ),
   );
 }

@@ -39,21 +39,13 @@ class AppPages {
       page: () => CheckoutScreen(),
       binding: CategoryBinding(),
     ),
-    GetPage(
-      name: '/group',
-      page: () => HomeScreen(),
-      binding: GroupBinding(),
-    ),
-   /* GetPage(
+    GetPage(name: '/group', page: () => HomeScreen(), binding: GroupBinding()),
+    /* GetPage(
       name: '/order',
       page: () => CheckoutScreen(),
       binding: OrderBinding(),
     ),*/
-    GetPage(
-      name: '/stock',
-      page: () => HomeScreen(),
-      binding: StockBinding(),
-    ),
+    GetPage(name: '/stock', page: () => HomeScreen(), binding: StockBinding()),
     GetPage(
       name: '/sub-category',
       page: () => HomeScreen(),

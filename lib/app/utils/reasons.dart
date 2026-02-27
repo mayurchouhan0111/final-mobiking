@@ -1,4 +1,3 @@
-
 class Reasons {
   static const List<String> cancelReasons = [
     "Got same quality in Better price somewhare",

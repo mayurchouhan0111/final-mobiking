@@ -9,11 +9,8 @@ class OrderItemCard extends StatelessWidget {
   final OrderItemModel item;
   final TextTheme textTheme;
 
-  const OrderItemCard({
-    Key? key,
-    required this.item,
-    required this.textTheme,
-  }) : super(key: key);
+  const OrderItemCard({Key? key, required this.item, required this.textTheme})
+    : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +45,11 @@ class OrderItemCard extends StatelessWidget {
                     color: AppColors.lightGreyBackground,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(Icons.broken_image, color: AppColors.textLight, size: 30),
+                  child: Icon(
+                    Icons.broken_image,
+                    color: AppColors.textLight,
+                    size: 30,
+                  ),
                 ),
               ),
             ),
@@ -60,7 +61,9 @@ class OrderItemCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    item.productDetails?.fullName ?? item.productDetails?.name ?? 'Product Name',
+                    item.productDetails?.fullName ??
+                        item.productDetails?.name ??
+                        'Product Name',
                     style: textTheme.bodySmall?.copyWith(
                       fontWeight: FontWeight.w600,
                       fontSize: 12,
@@ -71,7 +74,8 @@ class OrderItemCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
 
-                  if (item.variantName.isNotEmpty && item.variantName != 'Default')
+                  if (item.variantName.isNotEmpty &&
+                      item.variantName != 'Default')
                     Text(
                       item.variantName,
                       style: textTheme.bodySmall?.copyWith(

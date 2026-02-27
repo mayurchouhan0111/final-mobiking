@@ -11,11 +11,12 @@ class SubCategoryService {
   static const String lastFetchKey = 'last_fetch_timestamp';
   static const Duration cacheValidDuration = Duration(minutes: 10);
 
-  late Box<SubCategory> _subCategoriesBox;  // ✅ Added generic type
-  late Box<String> _metadataBox;            // ✅ Added generic type
+  late Box<SubCategory> _subCategoriesBox; // ✅ Added generic type
+  late Box<String> _metadataBox; // ✅ Added generic type
 
   // Initialize Hive boxes
-  Future<void> init() async {  // ✅ Added return type
+  Future<void> init() async {
+    // ✅ Added return type
     try {
       _subCategoriesBox = await Hive.openBox<SubCategory>(boxName);
       _metadataBox = await Hive.openBox<String>('metadata');
@@ -45,14 +46,16 @@ class SubCategoryService {
   }
 
   // Get cached subcategories
-  List<SubCategory> _getCachedSubCategories() {  // ✅ Added generic type
+  List<SubCategory> _getCachedSubCategories() {
+    // ✅ Added generic type
     final cached = _subCategoriesBox.values.toList();
     _log('Retrieved ${cached.length} subcategories from cache');
     return cached;
   }
 
   // Save subcategories to cache
-  Future<void> _cacheSubCategories(List<SubCategory> subCategories) async {  // ✅ Added generic types
+  Future<void> _cacheSubCategories(List<SubCategory> subCategories) async {
+    // ✅ Added generic types
     try {
       // Clear existing cache
       await _subCategoriesBox.clear();
@@ -71,7 +74,9 @@ class SubCategoryService {
     }
   }
 
-  Future<List<SubCategory>> fetchSubCategories({bool forceRefresh = false}) async {
+  Future<List<SubCategory>> fetchSubCategories({
+    bool forceRefresh = false,
+  }) async {
     // Ensure boxes are initialized (handled by onInit now)
 
     // Return cached data if valid and not forcing refresh
@@ -115,7 +120,9 @@ class SubCategoryService {
       _log('Successfully decoded JSON response');
 
       // Extract list from either raw list or from 'data' field
-      final List<dynamic> list = (decoded is List) ? decoded : (decoded['data'] ?? []);
+      final List<dynamic> list = (decoded is List)
+          ? decoded
+          : (decoded['data'] ?? []);
 
       if (list.isEmpty) {
         _log('No subcategories found');
@@ -136,8 +143,7 @@ class SubCategoryService {
       await _cacheSubCategories(subCategories);
 
       // Show success message only for forced refresh
-      if (forceRefresh && subCategories.isNotEmpty) {
-      }
+      if (forceRefresh && subCategories.isNotEmpty) {}
 
       return subCategories;
     } catch (e) {
@@ -242,7 +248,9 @@ class SubCategoryService {
 
       final count = _subCategoriesBox.length;
       final lastFetchString = _metadataBox.get(lastFetchKey);
-      final lastFetch = lastFetchString != null ? DateTime.parse(lastFetchString) : null;
+      final lastFetch = lastFetchString != null
+          ? DateTime.parse(lastFetchString)
+          : null;
       final isValid = _isCacheValid();
 
       return {
@@ -252,11 +260,7 @@ class SubCategoryService {
       };
     } catch (e) {
       _log('Error getting cache info: $e');
-      return {
-        'cachedItemsCount': 0,
-        'lastFetch': null,
-        'isCacheValid': false,
-      };
+      return {'cachedItemsCount': 0, 'lastFetch': null, 'isCacheValid': false};
     }
   }
 

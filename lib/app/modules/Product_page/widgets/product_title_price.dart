@@ -16,7 +16,8 @@ class ProductTitleAndPrice extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     debugPrint(
-        'ProductTitleAndPrice: originalPrice: $originalPrice, discountedPrice: $discountedPrice');
+      'ProductTitleAndPrice: originalPrice: $originalPrice, discountedPrice: $discountedPrice',
+    );
     final textTheme = Theme.of(context).textTheme;
     final bool hasDiscount =
         originalPrice > discountedPrice && discountedPrice > 0;
@@ -80,8 +81,7 @@ class ProductTitleAndPrice extends StatelessWidget {
             // Discount Badge
             if (hasDiscount)
               Container(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: Colors.lightBlue.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(6),

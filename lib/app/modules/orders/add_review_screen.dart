@@ -42,16 +42,16 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
           children: [
             Text(
               'Order ID: ${widget.order.orderId}',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
             Text(
               'You are reviewing this order.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.textMedium,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColors.textMedium),
             ),
             const SizedBox(height: 32),
             _buildSectionTitle('Rate your experience'),
@@ -66,10 +66,8 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
                 glow: false,
                 itemSize: 40.0,
                 itemPadding: const EdgeInsets.symmetric(horizontal: 4.0),
-                itemBuilder: (context, _) => const Icon(
-                  Icons.star_rounded,
-                  color: Colors.amber,
-                ),
+                itemBuilder: (context, _) =>
+                    const Icon(Icons.star_rounded, color: Colors.amber),
                 onRatingUpdate: (rating) {
                   setState(() {
                     _rating = rating;
@@ -90,11 +88,16 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.neutralBackground),
+                  borderSide: const BorderSide(
+                    color: AppColors.neutralBackground,
+                  ),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.primaryPurple, width: 2),
+                  borderSide: const BorderSide(
+                    color: AppColors.primaryPurple,
+                    width: 2,
+                  ),
                 ),
                 contentPadding: const EdgeInsets.all(16),
               ),
@@ -109,12 +112,12 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
                   onPressed: (_orderController.isLoading.value || _rating == 0)
                       ? null
                       : () {
-                    _orderController.submitReview(
-                      widget.order.id,
-                      _rating,
-                      _reviewController.text,
-                    );
-                  },
+                          _orderController.submitReview(
+                            widget.order.id,
+                            _rating,
+                            _reviewController.text,
+                          );
+                        },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryPurple,
                     padding: const EdgeInsets.symmetric(vertical: 16),
@@ -125,16 +128,17 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
                   ),
                   child: _orderController.isLoading.value
                       ? const CircularProgressIndicator(
-                    color: Colors.white,
-                    strokeWidth: 2,
-                  )
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        )
                       : Text(
-                    'Submit Review',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                          'Submit Review',
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
+                        ),
                 ),
               );
             }),

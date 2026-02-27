@@ -97,7 +97,9 @@ class CouponController extends GetxController {
       clearMessages();
 
       // Step 1: Validate coupon with API
-      final response = await _couponService.validateCouponCode(code.trim().toUpperCase());
+      final response = await _couponService.validateCouponCode(
+        code.trim().toUpperCase(),
+      );
 
       if (response.success && response.data != null) {
         final coupon = response.data!;
@@ -126,8 +128,9 @@ class CouponController extends GetxController {
         discountAmount.value = calculatedDiscount;
         isCouponApplied.value = true;
 
-        _showSuccess('Coupon applied! You saved ₹${calculatedDiscount.toStringAsFixed(0)}');
-
+        _showSuccess(
+          'Coupon applied! You saved ₹${calculatedDiscount.toStringAsFixed(0)}',
+        );
       } else {
         _showError('Invalid coupon');
         _resetCouponState(); // Reset state if coupon is invalid
@@ -141,7 +144,7 @@ class CouponController extends GetxController {
   }
 
   // ✅ LOCAL CALCULATION: Calculate discount based on your business rules
-// ✅ UPDATED: Calculate discount based on MINIMUM of percentage vs value
+  // ✅ UPDATED: Calculate discount based on MINIMUM of percentage vs value
   double _calculateDiscountAmount(CouponModel coupon) {
     if (subtotal.value <= 0) return 0.0;
 
@@ -163,7 +166,9 @@ class CouponController extends GetxController {
 
     if (percentageDiscount > 0 && valueDiscount > 0) {
       // ✅ YE HAI AAPKA MAIN LOGIC: Minimum of both
-      finalDiscount = percentageDiscount < valueDiscount ? percentageDiscount : valueDiscount;
+      finalDiscount = percentageDiscount < valueDiscount
+          ? percentageDiscount
+          : valueDiscount;
     } else if (percentageDiscount > 0) {
       // Only percentage available
       finalDiscount = percentageDiscount;
@@ -225,7 +230,9 @@ class CouponController extends GetxController {
 
       if (response.success) {
         // Filter only valid coupons
-        final validCoupons = response.data.where((coupon) => (coupon as CouponModel).isValid).toList();
+        final validCoupons = response.data
+            .where((coupon) => (coupon as CouponModel).isValid)
+            .toList();
         availableCoupons.value = validCoupons;
       }
     } catch (e) {
@@ -251,7 +258,9 @@ class CouponController extends GetxController {
       'couponId': selectedCoupon.value!.id,
       'couponCode': selectedCoupon.value!.code,
       'discountAmount': discountAmount.value,
-      'discountType': selectedCoupon.value!.discountPercent > 0 ? 'percentage' : 'fixed',
+      'discountType': selectedCoupon.value!.discountPercent > 0
+          ? 'percentage'
+          : 'fixed',
     };
   }
 }

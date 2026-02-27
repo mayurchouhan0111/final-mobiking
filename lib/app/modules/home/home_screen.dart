@@ -19,7 +19,6 @@ import '../../widgets/SearchTabSliverAppBar.dart' show SearchTabSliverAppBar;
 
 import 'package:mobiking/app/modules/home/widgets/HomeShimmer.dart';
 
-
 class HomeScreen extends StatefulWidget {
   HomeScreen({super.key});
 
@@ -29,7 +28,8 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final CategoryController categoryController = Get.find<CategoryController>();
-  final SubCategoryController subCategoryController = Get.find<SubCategoryController>();
+  final SubCategoryController subCategoryController =
+      Get.find<SubCategoryController>();
   final TabControllerGetX tabController = Get.find<TabControllerGetX>();
   final ProductController productController = Get.find<ProductController>();
   final HomeController homeController = Get.find<HomeController>();
@@ -74,7 +74,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _triggerLoadMore() {
     if (productController.isFetchingMore.value ||
-        !productController.hasMoreProducts.value) return;
+        !productController.hasMoreProducts.value)
+      return;
 
     print("🚀 Infinite scroll triggered from HomeScreen");
     productController.fetchMoreProducts();
@@ -122,9 +123,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       print('Search query: $value');
                     },
                   ),
-                  SliverToBoxAdapter(
-                    child: CustomTabBarViewSection(),
-                  ),
+                  SliverToBoxAdapter(child: CustomTabBarViewSection()),
                   Obx(() {
                     if (productController.isFetchingMore.value) {
                       return const SliverToBoxAdapter(
@@ -147,18 +146,23 @@ class _HomeScreenState extends State<HomeScreen> {
           Positioned(
             bottom: 20.0,
             right: 20.0,
-            child: Obx(() => AnimatedOpacity(
-              opacity: _showScrollToTopButton.value ? 1.0 : 0.0,
-              duration: const Duration(milliseconds: 300),
-              child: _showScrollToTopButton.value
-                  ? FloatingActionButton(
-                mini: true,
-                backgroundColor: AppColors.darkPurple,
-                onPressed: _scrollToTop,
-                child: const Icon(Icons.arrow_upward, color: Colors.white),
-              )
-                  : const SizedBox.shrink(),
-            )),
+            child: Obx(
+              () => AnimatedOpacity(
+                opacity: _showScrollToTopButton.value ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 300),
+                child: _showScrollToTopButton.value
+                    ? FloatingActionButton(
+                        mini: true,
+                        backgroundColor: AppColors.darkPurple,
+                        onPressed: _scrollToTop,
+                        child: const Icon(
+                          Icons.arrow_upward,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const SizedBox.shrink(),
+              ),
+            ),
           ),
         ],
       ),

@@ -17,7 +17,9 @@ void callbackDispatcher() {
       final dioInstance = dio.Dio();
       final getStorageBox = GetStorage();
       Get.put(UserService(dioInstance));
-      Get.put(LoginService(dioInstance, getStorageBox, Get.find<UserService>()));
+      Get.put(
+        LoginService(dioInstance, getStorageBox, Get.find<UserService>()),
+      );
       Get.put(ConnectivityController());
       Get.put(CartController());
       Get.put(WishlistController());

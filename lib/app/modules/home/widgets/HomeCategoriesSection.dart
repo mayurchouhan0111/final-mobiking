@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobiking/app/controllers/category_controller.dart';
@@ -24,7 +23,9 @@ class HomeCategoriesSection extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Obx(() {
-      final isAnyLoading = categoryController.isLoading.value || subCategoryController.isLoading.value;
+      final isAnyLoading =
+          categoryController.isLoading.value ||
+          subCategoryController.isLoading.value;
 
       if (isAnyLoading && categoryController.categories.isEmpty) {
         return _buildLoadingState(context);
@@ -33,13 +34,18 @@ class HomeCategoriesSection extends StatelessWidget {
       final allCategories = categoryController.categories;
       final availableSubCategories = subCategoryController.subCategories;
 
-      final bool hasFailedToLoad = allCategories.isEmpty && availableSubCategories.isEmpty && !isAnyLoading;
+      final bool hasFailedToLoad =
+          allCategories.isEmpty &&
+          availableSubCategories.isEmpty &&
+          !isAnyLoading;
 
       if (hasFailedToLoad) {
         return const SizedBox.shrink(); // Or a failed state widget
       }
 
-      final availableSubCatIds = availableSubCategories.map((e) => e.id).toSet();
+      final availableSubCatIds = availableSubCategories
+          .map((e) => e.id)
+          .toSet();
 
       final filteredCategories = allCategories.where((cat) {
         return (cat.subCategoryIds ?? []).any(availableSubCatIds.contains);
@@ -73,7 +79,8 @@ class HomeCategoriesSection extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Expanded(
-                      child: Text(title,
+                      child: Text(
+                        title,
                         style: textTheme.bodyMedium?.copyWith(
                           color: AppColors.textDark,
                           fontWeight: FontWeight.w700,
@@ -84,18 +91,24 @@ class HomeCategoriesSection extends StatelessWidget {
                       ),
                     ),
                     TextButton(
-                      onPressed: () => Get.to(() => CategoryProductsGridScreen(
-                        categoryName: title,
-                        subCategories: matchingSubs,
-                      )),
+                      onPressed: () => Get.to(
+                        () => CategoryProductsGridScreen(
+                          categoryName: title,
+                          subCategories: matchingSubs,
+                        ),
+                      ),
                       style: TextButton.styleFrom(
                         foregroundColor: AppColors.primaryPurple,
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 6),
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                           side: const BorderSide(
-                              color: AppColors.success, width: 1),
+                            color: AppColors.success,
+                            width: 1,
+                          ),
                         ),
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         minimumSize: Size.zero,
@@ -112,8 +125,11 @@ class HomeCategoriesSection extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 4),
-                          const Icon(Icons.arrow_forward_ios,
-                              size: 12, color: AppColors.primaryPurple),
+                          const Icon(
+                            Icons.arrow_forward_ios,
+                            size: 12,
+                            color: AppColors.primaryPurple,
+                          ),
                         ],
                       ),
                     ),
@@ -145,10 +161,12 @@ class HomeCategoriesSection extends StatelessWidget {
                       imageUrl: image,
                       icon: sub.icon, // new
                       onTap: () {
-                        Get.to(() => CategoryProductsGridScreen(
-                          categoryName: title,
-                          subCategories: matchingSubs,
-                        ));
+                        Get.to(
+                          () => CategoryProductsGridScreen(
+                            categoryName: title,
+                            subCategories: matchingSubs,
+                          ),
+                        );
                       },
                     );
                   },

@@ -85,7 +85,8 @@ class SubCategory extends HiveObject {
   static int? _safeParseInt(dynamic value) {
     if (value == null) return null;
     if (value is int) return value;
-    if (value is double) return value.toInt(); // Convert double to int (truncates)
+    if (value is double)
+      return value.toInt(); // Convert double to int (truncates)
     if (value is String) {
       return int.tryParse(value);
     }
@@ -111,7 +112,7 @@ class SubCategory extends HiveObject {
         products = productsData
             .map((e) => ProductModel.fromJson(e as Map<String, dynamic>))
             .toList();
-            
+
         // Sort products: In stock first
         products.sort((a, b) {
           if (a.totalStock > 0 && b.totalStock <= 0) return -1;
@@ -130,9 +131,13 @@ class SubCategory extends HiveObject {
       lowerBanner: json['lowerBanner'] as String?,
       active: json['active'] ?? false,
       featured: json['featured'] ?? false,
-      photos: (json['photos'] as List?)?.map((e) => e.toString()).toList() ?? <String>[],
+      photos:
+          (json['photos'] as List?)?.map((e) => e.toString()).toList() ??
+          <String>[],
       parentCategory: json['parentCategory'] != null
-          ? ParentCategory.fromJson(json['parentCategory'] as Map<String, dynamic>)
+          ? ParentCategory.fromJson(
+              json['parentCategory'] as Map<String, dynamic>,
+            )
           : null,
       products: products,
       createdAt: json['createdAt'] != null && json['createdAt'] is String
@@ -143,7 +148,9 @@ class SubCategory extends HiveObject {
           : DateTime(2000),
       v: _safeParseInt(json['__v']) ?? 0,
       deliveryCharge: _safeParseDouble(json['deliveryCharge']),
-      minFreeDeliveryOrderAmount: _safeParseInt(json['minFreeDeliveryOrderAmount']),
+      minFreeDeliveryOrderAmount: _safeParseInt(
+        json['minFreeDeliveryOrderAmount'],
+      ),
       minOrderAmount: _safeParseInt(json['minOrderAmount']),
       icon: json['icon'] as String?,
     );

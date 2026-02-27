@@ -12,10 +12,7 @@ import 'OptimizedMessageInput.dart';
 class QueryDetailScreen extends StatefulWidget {
   final OrderModel? order;
 
-  const QueryDetailScreen({
-    Key? key,
-    required this.order,
-  }) : super(key: key);
+  const QueryDetailScreen({Key? key, required this.order}) : super(key: key);
 
   @override
   State<QueryDetailScreen> createState() => _QueryDetailScreenState();
@@ -134,7 +131,10 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> {
           isAdmin: false,
         );
 
-        final List<dynamic> fullConversation = [initialMessage, ...liveQuery.replies];
+        final List<dynamic> fullConversation = [
+          initialMessage,
+          ...liveQuery.replies,
+        ];
         fullConversation.sort((a, b) {
           final dateA = a.timestamp ?? a.createdAt ?? DateTime.now();
           final dateB = b.timestamp ?? b.createdAt ?? DateTime.now();
@@ -143,7 +143,8 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> {
 
         // Detect new messages and scroll accordingly
         if (fullConversation.length > (_previousMessageCount ?? 0)) {
-          final isInitialLoad = _previousMessageCount == null || _previousMessageCount == 0;
+          final isInitialLoad =
+              _previousMessageCount == null || _previousMessageCount == 0;
           WidgetsBinding.instance.addPostFrameCallback((_) {
             _scrollToBottom(animated: !isInitialLoad);
           });
@@ -158,10 +159,14 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> {
                 child: CustomScrollView(
                   controller: _scrollController,
                   physics: const AlwaysScrollableScrollPhysics(),
-                  cacheExtent: 1000, // Pre-render some bubbles for smoother scrolling
+                  cacheExtent:
+                      1000, // Pre-render some bubbles for smoother scrolling
                   slivers: [
                     SliverToBoxAdapter(
-                      child: _OrderInfoSection(order: widget.order, query: liveQuery),
+                      child: _OrderInfoSection(
+                        order: widget.order,
+                        query: liveQuery,
+                      ),
                     ),
                     SliverPersistentHeader(
                       pinned: true,
@@ -175,22 +180,26 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> {
                       ),
                     ),
                     if (_isOffHours())
-                      SliverToBoxAdapter(child: _buildOffHoursBanner(textTheme)),
+                      SliverToBoxAdapter(
+                        child: _buildOffHoursBanner(textTheme),
+                      ),
                     SliverPadding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                       sliver: SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) {
-                            final reply = fullConversation[index];
-                            final isUser = !reply.isAdmin;
-                            return Padding(
-                              key: ValueKey(reply.timestamp?.millisecondsSinceEpoch ?? index),
-                              padding: const EdgeInsets.only(bottom: 16),
-                              child: _MessageBubble(reply: reply, isUser: isUser),
-                            );
-                          },
-                          childCount: fullConversation.length,
-                        ),
+                        delegate: SliverChildBuilderDelegate((context, index) {
+                          final reply = fullConversation[index];
+                          final isUser = !reply.isAdmin;
+                          return Padding(
+                            key: ValueKey(
+                              reply.timestamp?.millisecondsSinceEpoch ?? index,
+                            ),
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: _MessageBubble(reply: reply, isUser: isUser),
+                          );
+                        }, childCount: fullConversation.length),
                       ),
                     ),
                     // Padding at the bottom so the last message isn't hidden by the input
@@ -232,9 +241,7 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> {
           const SizedBox(height: 8),
           Text(
             'No query has been raised for this order yet.',
-            style: textTheme.bodyMedium?.copyWith(
-              color: AppColors.textLight,
-            ),
+            style: textTheme.bodyMedium?.copyWith(color: AppColors.textLight),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
@@ -264,7 +271,11 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.schedule_rounded, color: AppColors.accentOrange, size: 20),
+          const Icon(
+            Icons.schedule_rounded,
+            color: AppColors.accentOrange,
+            size: 20,
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -297,7 +308,11 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
-          const Icon(Icons.chat_bubble_outline, color: AppColors.primaryPurple, size: 20),
+          const Icon(
+            Icons.chat_bubble_outline,
+            color: AppColors.primaryPurple,
+            size: 20,
+          ),
           const SizedBox(width: 8),
           Text(
             'Conversation',
@@ -351,7 +366,6 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> {
       );
 
       _scrollToBottom(animated: true);
-
     } catch (e) {
       if (mounted) {
         Get.snackbar(
@@ -404,10 +418,7 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> {
           ],
         ),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Cancel'),
-          ),
+          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
           ElevatedButton(
             onPressed: () async {
               if (titleController.text.trim().isNotEmpty &&
@@ -441,7 +452,11 @@ class _SimpleSliverHeaderDelegate extends SliverPersistentHeaderDelegate {
   });
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
     return SizedBox.expand(child: child);
   }
 
@@ -499,7 +514,11 @@ class _OrderInfoSection extends StatelessWidget {
                     color: AppColors.white.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.shopping_bag, color: AppColors.white, size: 20),
+                  child: const Icon(
+                    Icons.shopping_bag,
+                    color: AppColors.white,
+                    size: 20,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -528,7 +547,11 @@ class _OrderInfoSection extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: _buildOrderInfoItem('Order ID', order?.orderId ?? 'N/A', textTheme),
+                  child: _buildOrderInfoItem(
+                    'Order ID',
+                    order?.orderId ?? 'N/A',
+                    textTheme,
+                  ),
                 ),
                 Expanded(
                   child: _buildOrderInfoItem(
@@ -559,7 +582,7 @@ class _OrderInfoSection extends StatelessWidget {
                   ),
                 ),
               ],
-            )
+            ),
           ],
         ),
       ),
@@ -617,9 +640,14 @@ class _OrderInfoSection extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
-                    color: _getStatusColor(query?.status ?? '').withOpacity(0.1),
+                    color: _getStatusColor(
+                      query?.status ?? '',
+                    ).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -643,7 +671,11 @@ class _OrderInfoSection extends StatelessWidget {
             const SizedBox(height: 12),
             Row(
               children: [
-                const Icon(Icons.access_time, size: 16, color: AppColors.textLight),
+                const Icon(
+                  Icons.access_time,
+                  size: 16,
+                  color: AppColors.textLight,
+                ),
                 const SizedBox(width: 4),
                 Text(
                   'Raised ${DateFormat('MMM d, yyyy').format(query?.raisedAt ?? DateTime.now())}',
@@ -652,9 +684,14 @@ class _OrderInfoSection extends StatelessWidget {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                if (query?.status == 'resolved' && query?.resolvedAt != null) ...[
+                if (query?.status == 'resolved' &&
+                    query?.resolvedAt != null) ...[
                   const SizedBox(width: 16),
-                  const Icon(Icons.check_circle, size: 16, color: AppColors.success),
+                  const Icon(
+                    Icons.check_circle,
+                    size: 16,
+                    color: AppColors.success,
+                  ),
                   const SizedBox(width: 4),
                   Text(
                     'Resolved ${DateFormat('MMM d').format(query!.resolvedAt!)}',
@@ -704,9 +741,13 @@ class _MessageBubble extends StatelessWidget {
       child: Align(
         alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
         child: Container(
-          constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.75,
+          ),
           decoration: BoxDecoration(
-            color: isUser ? AppColors.primaryPurple : AppColors.neutralBackground,
+            color: isUser
+                ? AppColors.primaryPurple
+                : AppColors.neutralBackground,
             borderRadius: BorderRadius.only(
               topLeft: const Radius.circular(16),
               topRight: const Radius.circular(16),
@@ -760,7 +801,9 @@ class _MessageBubble extends StatelessWidget {
                         reply.timestamp ?? reply.createdAt ?? DateTime.now(),
                       ),
                       style: textTheme.labelSmall?.copyWith(
-                        color: isUser ? AppColors.white.withOpacity(0.7) : AppColors.textLight,
+                        color: isUser
+                            ? AppColors.white.withOpacity(0.7)
+                            : AppColors.textLight,
                       ),
                     ),
                     if (isUser) ...[

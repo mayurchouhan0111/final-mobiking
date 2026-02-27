@@ -36,13 +36,19 @@ class GroupProductsScreen extends StatelessWidget {
       body: SafeArea(
         child: Builder(
           builder: (context) {
-            final activeProducts = group.products.where((p) => p.active == true).toList();
+            final activeProducts = group.products
+                .where((p) => p.active == true)
+                .toList();
             if (activeProducts.isEmpty) {
               return Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.shopping_bag_outlined, size: 80, color: AppColors.textLight.withOpacity(0.6)),
+                    Icon(
+                      Icons.shopping_bag_outlined,
+                      size: 80,
+                      color: AppColors.textLight.withOpacity(0.6),
+                    ),
                     const SizedBox(height: 16),
                     Text(
                       'No products available for "${group.name}".',
@@ -77,12 +83,17 @@ class GroupProductsScreen extends StatelessWidget {
               itemCount: activeProducts.length,
               itemBuilder: (context, index) {
                 final product = activeProducts[index];
-                final String productHeroTag = 'product_image_group_${group.id}_${product.id}_$index';
+                final String productHeroTag =
+                    'product_image_group_${group.id}_${product.id}_$index';
                 return AllProductGridCard(
                   product: product,
                   heroTag: productHeroTag,
                   onTap: (tappedProduct) {
-                    Get.to(() => ProductPage(product: tappedProduct, heroTag: productHeroTag),
+                    Get.to(
+                      () => ProductPage(
+                        product: tappedProduct,
+                        heroTag: productHeroTag,
+                      ),
                       transition: Transition.fadeIn,
                       duration: const Duration(milliseconds: 300),
                     );

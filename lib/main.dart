@@ -70,28 +70,35 @@ import 'dart:io';
 // This handles messages when the app is in the background or terminated.
 @pragma('vm:entry-point')
 Future<void> _firebaseBackgroundMessagehandler(RemoteMessage message) async {
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
   print("🔥 BACKGROUND MESSAGE RECEIVED! ID: ${message.messageId}");
-  
-  final String title = message.notification?.title ?? message.data['title'] ?? "MobiKing";
-  final String body = message.notification?.body ?? message.data['body'] ?? "New deals available!";
-  final String? imageUrl = message.notification?.android?.imageUrl ?? 
-                          message.data['image'] ?? 
-                          message.data['imageUrl'] ??
-                          message.data['bigPicture'];
+
+  final String title =
+      message.notification?.title ?? message.data['title'] ?? "MobiKing";
+  final String body =
+      message.notification?.body ??
+      message.data['body'] ??
+      "New deals available!";
+  final String? imageUrl =
+      message.notification?.android?.imageUrl ??
+      message.data['image'] ??
+      message.data['imageUrl'] ??
+      message.data['bigPicture'];
 
   if (imageUrl != null) {
     print("🔥 ATTEMPTING TO SHOW BACKGROUND IMAGE: $imageUrl");
-    
+
     // Manual local notification to force the image
-    final FlutterLocalNotificationsPlugin localNotifications = FlutterLocalNotificationsPlugin();
-    
+    final FlutterLocalNotificationsPlugin localNotifications =
+        FlutterLocalNotificationsPlugin();
+
     // Initialize for background isolate
-    const AndroidInitializationSettings androidSettings = AndroidInitializationSettings('@drawable/ic_notification');
-    await localNotifications.initialize(const InitializationSettings(android: androidSettings));
+    const AndroidInitializationSettings androidSettings =
+        AndroidInitializationSettings('@drawable/ic_notification');
+    await localNotifications.initialize(
+      const InitializationSettings(android: androidSettings),
+    );
 
     // Download image
     try {
@@ -101,14 +108,17 @@ Future<void> _firebaseBackgroundMessagehandler(RemoteMessage message) async {
       final File file = File(filePath);
       await file.writeAsBytes(response.bodyBytes);
 
-      final AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-        'mobiking_high_importance_channel',
-        'MobiKing Notifications',
-        channelDescription: 'Shop updates and deals',
-        importance: Importance.max,
-        priority: Priority.high,
-        styleInformation: BigPictureStyleInformation(FilePathAndroidBitmap(filePath)),
-      );
+      final AndroidNotificationDetails androidDetails =
+          AndroidNotificationDetails(
+            'mobiking_high_importance_channel',
+            'MobiKing Notifications',
+            channelDescription: 'Shop updates and deals',
+            importance: Importance.max,
+            priority: Priority.high,
+            styleInformation: BigPictureStyleInformation(
+              FilePathAndroidBitmap(filePath),
+            ),
+          );
 
       await localNotifications.show(
         DateTime.now().millisecond,
@@ -128,12 +138,16 @@ Future<void> main() async {
   // ========== ANDROID 15 EDGE-TO-EDGE COMPATIBILITY ==========
   // Step 1: Enable Edge-to-Edge Display
   // This makes the system bars transparent, allowing the app to draw behind them.
-  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-    statusBarColor: Colors.transparent,
-    systemNavigationBarColor: Colors.transparent,
-    statusBarIconBrightness: Brightness.dark, // For dark icons on a light background
-    systemNavigationBarIconBrightness: Brightness.dark, // For dark icons on a light background
-  ));
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      systemNavigationBarColor: Colors.transparent,
+      statusBarIconBrightness:
+          Brightness.dark, // For dark icons on a light background
+      systemNavigationBarIconBrightness:
+          Brightness.dark, // For dark icons on a light background
+    ),
+  );
 
   // Step 2: Ensure the UI mode is set to edge-to-edge
   // This is the modern way to handle system UI visibility.
@@ -156,9 +170,7 @@ Future<void> main() async {
   // This must happen before you use any Firebase services like FCM.
   // If you generated firebase_options.dart using FlutterFire CLI,
   // uncomment the options line below and ensure you import 'firebase_options.dart'.
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   // --- Core Services and Dependencies ---
   final dioInstance = dio.Dio(); // Single Dio instance
@@ -166,7 +178,7 @@ Future<void> main() async {
 
   // Put your FirebaseMessagingService into GetX dependency injection
   // Initialize it immediately as it sets up listeners for FCM messages.
-  Get.put(FirebaseMessagingService()); 
+  Get.put(FirebaseMessagingService());
 
   // Register the background message handler
   FirebaseMessaging.onBackgroundMessage(_firebaseBackgroundMessagehandler);
@@ -255,7 +267,6 @@ Future<void> _initializeHive() async {
 
     // Pre-open frequently used boxes for better performance (optional)
     await _preOpenBoxes();
-
   } catch (e) {
     print('[Hive] Error initializing Hive: $e');
     // You might want to handle this error appropriately
@@ -277,7 +288,6 @@ Future<void> _preOpenBoxes() async {
     print('[Hive] Opened categories box');
     await Hive.openBox<Map>('category_details');
     print('[Hive] Opened category_details box');
-
   } catch (e) {
     print('[Hive] Error pre-opening boxes: $e');
   }
@@ -289,11 +299,14 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Get the ConnectivityController instance
-    final ConnectivityController connectivityController = Get.find<ConnectivityController>();
+    final ConnectivityController connectivityController =
+        Get.find<ConnectivityController>();
     final LoginController loginController = Get.find<LoginController>();
 
     // Define your desired global padding/margin
-    const EdgeInsets globalPadding = EdgeInsets.symmetric(vertical: 0); // Changed to 0 as padding usually applies inside the widget structure, not to GetMaterialApp content directly. Adjust if needed.
+    const EdgeInsets globalPadding = EdgeInsets.symmetric(
+      vertical: 0,
+    ); // Changed to 0 as padding usually applies inside the widget structure, not to GetMaterialApp content directly. Adjust if needed.
 
     return GetMaterialApp(
       title: 'Mobiking',

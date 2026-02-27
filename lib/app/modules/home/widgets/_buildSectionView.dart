@@ -74,7 +74,9 @@ class _ProductGridViewSectionState extends State<ProductGridViewSection> {
     _isScrollingUp = currentScroll > _lastScrollPosition;
     _lastScrollPosition = currentScroll;
 
-    print("📍 Scroll: ${currentScroll.toStringAsFixed(1)} / ${maxScroll.toStringAsFixed(1)} (${(currentScroll/maxScroll*100).toStringAsFixed(1)}%)");
+    print(
+      "📍 Scroll: ${currentScroll.toStringAsFixed(1)} / ${maxScroll.toStringAsFixed(1)} (${(currentScroll / maxScroll * 100).toStringAsFixed(1)}%)",
+    );
     print("🔄 Scrolling ${_isScrollingUp ? 'UP' : 'DOWN'}");
 
     // ✅ Reset loading trigger when user scrolls back significantly
@@ -93,12 +95,15 @@ class _ProductGridViewSectionState extends State<ProductGridViewSection> {
     if (_isLoadingTriggered ||
         widget.productController.isFetchingMore.value ||
         !widget.productController.hasMoreProducts.value ||
-        !_isScrollingUp) { // Only trigger when scrolling up
+        !_isScrollingUp) {
+      // Only trigger when scrolling up
       return;
     }
 
     _isLoadingTriggered = true;
-    print("🚀 Infinite scroll triggered at 75% - User swiped up for category: ${widget.categoryId}");
+    print(
+      "🚀 Infinite scroll triggered at 75% - User swiped up for category: ${widget.categoryId}",
+    );
 
     // ✅ Add a small delay to ensure smooth UX
     Future.delayed(const Duration(milliseconds: 100), () {
@@ -240,16 +245,19 @@ class _ProductGridViewSectionState extends State<ProductGridViewSection> {
         // ✅ Additional scroll detection for better responsiveness
         if (notification is ScrollUpdateNotification) {
           final ScrollMetrics metrics = notification.metrics;
-          final double scrollPercentage = metrics.pixels / metrics.maxScrollExtent;
+          final double scrollPercentage =
+              metrics.pixels / metrics.maxScrollExtent;
 
           // ✅ Trigger at 75% with smooth detection
           if (scrollPercentage >= 0.5 &&
-              notification.scrollDelta! > 0 && // Positive delta = scrolling down/up
+              notification.scrollDelta! >
+                  0 && // Positive delta = scrolling down/up
               !_isLoadingTriggered &&
               widget.productController.hasMoreProducts.value &&
               !widget.productController.isFetchingMore.value) {
-
-            print("🎯 ScrollNotification triggered at ${(scrollPercentage * 100).toStringAsFixed(1)}%");
+            print(
+              "🎯 ScrollNotification triggered at ${(scrollPercentage * 100).toStringAsFixed(1)}%",
+            );
             _triggerLoadMore();
           }
         }
@@ -302,8 +310,10 @@ class _ProductGridViewSectionState extends State<ProductGridViewSection> {
             Obx(() {
               final products = widget.productController.allProducts;
               final isLoading = widget.productController.isLoading.value;
-              final isLoadingMore = widget.productController.isFetchingMore.value;
-              final hasMoreProducts = widget.productController.hasMoreProducts.value;
+              final isLoadingMore =
+                  widget.productController.isFetchingMore.value;
+              final hasMoreProducts =
+                  widget.productController.hasMoreProducts.value;
 
               if (isLoading && products.isEmpty) {
                 return _buildInitialLoadingState();
@@ -344,7 +354,10 @@ class _ProductGridViewSectionState extends State<ProductGridViewSection> {
                           ),
                           const SizedBox(width: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: AppColors.primaryPurple.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(12),
@@ -363,16 +376,23 @@ class _ProductGridViewSectionState extends State<ProductGridViewSection> {
                             AnimatedBuilder(
                               animation: _scrollController,
                               builder: (context, child) {
-                                if (!_scrollController.hasClients) return const SizedBox.shrink();
+                                if (!_scrollController.hasClients)
+                                  return const SizedBox.shrink();
 
-                                final progress = _scrollController.position.pixels /
+                                final progress =
+                                    _scrollController.position.pixels /
                                     _scrollController.position.maxScrollExtent;
 
                                 if (progress >= 0.6 && progress < 0.75) {
                                   return Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
                                     decoration: BoxDecoration(
-                                      color: AppColors.accentNeon.withOpacity(0.1),
+                                      color: AppColors.accentNeon.withOpacity(
+                                        0.1,
+                                      ),
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Row(
@@ -408,13 +428,15 @@ class _ProductGridViewSectionState extends State<ProductGridViewSection> {
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         padding: const EdgeInsets.all(8.0),
-                        itemCount: inStockProducts.length + (isLoadingMore ? 3 : 0),
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          mainAxisSpacing: 0,
-                          crossAxisSpacing: 0,
-                          childAspectRatio: 0.5,
-                        ),
+                        itemCount:
+                            inStockProducts.length + (isLoadingMore ? 3 : 0),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 3,
+                              mainAxisSpacing: 0,
+                              crossAxisSpacing: 0,
+                              childAspectRatio: 0.5,
+                            ),
                         itemBuilder: (context, index) {
                           // Show loading shimmer
                           if (index >= inStockProducts.length) {
@@ -423,10 +445,12 @@ class _ProductGridViewSectionState extends State<ProductGridViewSection> {
 
                           final product = inStockProducts[index];
                           return GestureDetector(
-                            onTap: () => Get.to(ProductPage(
-                              product: product,
-                              heroTag: 'product_${product.id}_$index',
-                            )),
+                            onTap: () => Get.to(
+                              ProductPage(
+                                product: product,
+                                heroTag: 'product_${product.id}_$index',
+                              ),
+                            ),
                             child: AllProductGridCard(
                               product: product,
                               heroTag: 'product_${product.id}_$index',
@@ -449,7 +473,7 @@ class _ProductGridViewSectionState extends State<ProductGridViewSection> {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              'Loading more products...', 
+                              'Loading more products...',
                               style: textTheme.bodySmall?.copyWith(
                                 color: AppColors.textLight,
                               ),
@@ -492,8 +516,6 @@ class _ProductGridViewSectionState extends State<ProductGridViewSection> {
     );
   }
 }
-
-
 
 Widget buildSectionView({
   required String bannerImageUrl,

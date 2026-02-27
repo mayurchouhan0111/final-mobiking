@@ -59,7 +59,9 @@ class _CategorySectionScreenState extends State<CategorySectionScreen> {
         return;
       }
 
-      print('📱 CategorySectionScreen: Auto-retry attempt ${_retryCount.value + 1}/$_maxRetries');
+      print(
+        '📱 CategorySectionScreen: Auto-retry attempt ${_retryCount.value + 1}/$_maxRetries',
+      );
       _retryCount.value++;
 
       try {
@@ -102,7 +104,8 @@ class _CategorySectionScreenState extends State<CategorySectionScreen> {
     return Scaffold(
       backgroundColor: AppColors.neutralBackground,
       appBar: AppBar(
-        title: Text("Categories",
+        title: Text(
+          "Categories",
           style: textTheme.bodyMedium?.copyWith(
             color: AppColors.textDark,
             fontWeight: FontWeight.w700,
@@ -117,7 +120,8 @@ class _CategorySectionScreenState extends State<CategorySectionScreen> {
       ),
       body: Obx(() {
         // ✅ Check if EITHER controller is loading
-        final bool isAnyLoading = categoryController.isLoading.value ||
+        final bool isAnyLoading =
+            categoryController.isLoading.value ||
             subCategoryController.isLoading.value;
 
         if (isAnyLoading) {
@@ -128,7 +132,8 @@ class _CategorySectionScreenState extends State<CategorySectionScreen> {
         final availableSubCategories = subCategoryController.subCategories;
 
         // ✅ Check for failed state
-        final bool hasFailedToLoad = allCategories.isEmpty &&
+        final bool hasFailedToLoad =
+            allCategories.isEmpty &&
             availableSubCategories.isEmpty &&
             !isAnyLoading;
 
@@ -152,7 +157,9 @@ class _CategorySectionScreenState extends State<CategorySectionScreen> {
           return _buildLoadingState(context);
         }
 
-        final availableSubCatIds = availableSubCategories.map((e) => e.id).toSet();
+        final availableSubCatIds = availableSubCategories
+            .map((e) => e.id)
+            .toSet();
 
         final filteredCategories = allCategories.where((cat) {
           return (cat.subCategoryIds ?? []).any(availableSubCatIds.contains);
@@ -168,125 +175,146 @@ class _CategorySectionScreenState extends State<CategorySectionScreen> {
           child: SingleChildScrollView(
             child: Column(
               children: [
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: filteredCategories.length,
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                itemBuilder: (context, index) {
-                  final category = filteredCategories[index];
-                  final title = category.name ?? "Unnamed Category";
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: filteredCategories.length,
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  itemBuilder: (context, index) {
+                    final category = filteredCategories[index];
+                    final title = category.name ?? "Unnamed Category";
 
-                  final matchingSubs = availableSubCategories
-                      .where((sub) => (category.subCategoryIds ?? []).contains(sub.id))
-                      .toList();
+                    final matchingSubs = availableSubCategories
+                        .where(
+                          (sub) =>
+                              (category.subCategoryIds ?? []).contains(sub.id),
+                        )
+                        .toList();
 
-                  if (matchingSubs.isEmpty) return const SizedBox.shrink();
+                    if (matchingSubs.isEmpty) return const SizedBox.shrink();
 
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Header
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Text(title,
-                                style: textTheme.bodyMedium?.copyWith(
-                                  color: AppColors.textDark,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 18,
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Header
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  title,
+                                  style: textTheme.bodyMedium?.copyWith(
+                                    color: AppColors.textDark,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 18,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
                               ),
-                            ),
-                            TextButton(
-onPressed: () => Get.to(() => CategoryProductsGridScreen(
-                                categoryName: title,
-                                subCategories: matchingSubs,
-                              )),
-                              style: TextButton.styleFrom(
-                                foregroundColor: AppColors.primaryPurple,
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 6),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                  side: const BorderSide(
-                                      color: AppColors.success, width: 1),
+                              TextButton(
+                                onPressed: () => Get.to(
+                                  () => CategoryProductsGridScreen(
+                                    categoryName: title,
+                                    subCategories: matchingSubs,
+                                  ),
                                 ),
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                minimumSize: Size.zero,
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    'See More',
-                                    style: textTheme.labelSmall?.copyWith(
+                                style: TextButton.styleFrom(
+                                  foregroundColor: AppColors.primaryPurple,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    side: const BorderSide(
                                       color: AppColors.success,
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 11,
+                                      width: 1,
                                     ),
                                   ),
-                                  const SizedBox(width: 4),
-                                  Icon(Icons.arrow_forward_ios,
-                                      size: 12, color: AppColors.primaryPurple),
-                                ],
+                                  tapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                  minimumSize: Size.zero,
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      'See More',
+                                      style: textTheme.labelSmall?.copyWith(
+                                        color: AppColors.success,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Icon(
+                                      Icons.arrow_forward_ios,
+                                      size: 12,
+                                      color: AppColors.primaryPurple,
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      // Grid of subcategories
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: GridView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: matchingSubs.length > 6 ? 6 : matchingSubs.length,
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3,
-                            mainAxisSpacing: 12,
-                            crossAxisSpacing: 12,
-                            childAspectRatio: 0.85, // Adjusted aspect ratio
+                            ],
                           ),
-                          itemBuilder: (context, i) {
-                            final sub = matchingSubs[i];
-                            final image = (sub.photos?.isNotEmpty ?? false)
-                                ? sub.photos!.first
-                                : "https://via.placeholder.com/150x150/E0E0E0/A0A0A0?text=No+Image";
-
-                            return CategoryTile(
-                              title: sub.name ?? 'Unknown',
-                              imageUrl: image,
-                              icon: sub.icon, // new
-onTap: () {
-                                Get.to(() => CategoryProductsGridScreen(
-                                  categoryName: title,
-                                  subCategories: matchingSubs,
-                                  initialSubCategoryIndex: i,
-                                ));
-                              },
-                            );
-                          },
                         ),
-                      ),
 
-                      const SizedBox(height: 16),
-                    ],
-                  );
-                },
-              ),
+                        // Grid of subcategories
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: GridView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: matchingSubs.length > 6
+                                ? 6
+                                : matchingSubs.length,
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 3,
+                                  mainAxisSpacing: 12,
+                                  crossAxisSpacing: 12,
+                                  childAspectRatio:
+                                      0.85, // Adjusted aspect ratio
+                                ),
+                            itemBuilder: (context, i) {
+                              final sub = matchingSubs[i];
+                              final image = (sub.photos?.isNotEmpty ?? false)
+                                  ? sub.photos!.first
+                                  : "https://via.placeholder.com/150x150/E0E0E0/A0A0A0?text=No+Image";
 
-              const SizedBox(height: 40),
-              _buildBrandingSection(textTheme),
-            ],
+                              return CategoryTile(
+                                title: sub.name ?? 'Unknown',
+                                imageUrl: image,
+                                icon: sub.icon, // new
+                                onTap: () {
+                                  Get.to(
+                                    () => CategoryProductsGridScreen(
+                                      categoryName: title,
+                                      subCategories: matchingSubs,
+                                      initialSubCategoryIndex: i,
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                        ),
+
+                        const SizedBox(height: 16),
+                      ],
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 40),
+                _buildBrandingSection(textTheme),
+              ],
+            ),
           ),
-        ));
+        );
       }),
     );
   }
@@ -359,12 +387,13 @@ onTap: () {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-                Icons.cloud_off_outlined,
-                size: 80,
-                color: AppColors.textLight.withOpacity(0.6)
+              Icons.cloud_off_outlined,
+              size: 80,
+              color: AppColors.textLight.withOpacity(0.6),
             ),
             const SizedBox(height: 16),
-            Text('Failed to load categories',
+            Text(
+              'Failed to load categories',
               style: textTheme.headlineSmall?.copyWith(
                 color: AppColors.textMedium,
                 fontWeight: FontWeight.w600,
@@ -372,35 +401,44 @@ onTap: () {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
-            Obx(() => Text(
-              _retryCount.value > 0
-                  ? 'Auto-retrying... (${_retryCount.value}/$_maxRetries)'
-                  : 'Checking connection...',
-              style: textTheme.bodyMedium?.copyWith(color: AppColors.textLight),
-              textAlign: TextAlign.center,
-            )),
+            Obx(
+              () => Text(
+                _retryCount.value > 0
+                    ? 'Auto-retrying... (${_retryCount.value}/$_maxRetries)'
+                    : 'Checking connection...',
+                style: textTheme.bodyMedium?.copyWith(
+                  color: AppColors.textLight,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
             const SizedBox(height: 24),
             // ✅ Loading indicator during auto-retry
-            Obx(() => _retryCount.value > 0 && _retryCount.value < _maxRetries
-                ? Column(
-              children: [
-                SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.success),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Next retry in 3 seconds...',
-                  style: textTheme.bodySmall?.copyWith(color: AppColors.textLight),
-                ),
-                const SizedBox(height: 24),
-              ],
-            )
-                : const SizedBox.shrink()
+            Obx(
+              () => _retryCount.value > 0 && _retryCount.value < _maxRetries
+                  ? Column(
+                      children: [
+                        SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              AppColors.success,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Next retry in 3 seconds...',
+                          style: textTheme.bodySmall?.copyWith(
+                            color: AppColors.textLight,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+                    )
+                  : const SizedBox.shrink(),
             ),
             ElevatedButton.icon(
               onPressed: () async {
@@ -409,29 +447,40 @@ onTap: () {
                 await _refreshData();
               },
               icon: const Icon(Icons.refresh, color: AppColors.white),
-              label: Text('Retry Now', style: textTheme.labelLarge?.copyWith(color: AppColors.white)),
+              label: Text(
+                'Retry Now',
+                style: textTheme.labelLarge?.copyWith(color: AppColors.white),
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.success,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
                 elevation: 2,
               ),
             ),
             const SizedBox(height: 16),
             // ✅ Stop auto-retry button
-            Obx(() => _retryCount.value > 0
-                ? TextButton(
-              onPressed: () {
-                _stopAutoRetry();
-                _hasLoadingFailed.value = false;
-                _retryCount.value = 0;
-              },
-              child: Text(
-                'Stop Auto-Retry',
-                style: textTheme.bodySmall?.copyWith(color: AppColors.textLight),
-              ),
-            )
-                : const SizedBox.shrink()
+            Obx(
+              () => _retryCount.value > 0
+                  ? TextButton(
+                      onPressed: () {
+                        _stopAutoRetry();
+                        _hasLoadingFailed.value = false;
+                        _retryCount.value = 0;
+                      },
+                      child: Text(
+                        'Stop Auto-Retry',
+                        style: textTheme.bodySmall?.copyWith(
+                          color: AppColors.textLight,
+                        ),
+                      ),
+                    )
+                  : const SizedBox.shrink(),
             ),
           ],
         ),
@@ -448,9 +497,14 @@ onTap: () {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.category_outlined, size: 80, color: AppColors.textLight.withOpacity(0.6)),
+            Icon(
+              Icons.category_outlined,
+              size: 80,
+              color: AppColors.textLight.withOpacity(0.6),
+            ),
             const SizedBox(height: 16),
-            Text('No categories available at the moment.',
+            Text(
+              'No categories available at the moment.',
               style: textTheme.headlineSmall?.copyWith(
                 color: AppColors.textMedium,
                 fontWeight: FontWeight.w600,
@@ -458,7 +512,8 @@ onTap: () {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
-            Text('Please check back later!',
+            Text(
+              'Please check back later!',
               style: textTheme.bodyMedium?.copyWith(color: AppColors.textLight),
               textAlign: TextAlign.center,
             ),
@@ -469,11 +524,19 @@ onTap: () {
                 await _refreshData();
               },
               icon: const Icon(Icons.refresh, color: AppColors.white),
-              label: Text('Retry', style: textTheme.labelLarge?.copyWith(color: AppColors.white)),
+              label: Text(
+                'Retry',
+                style: textTheme.labelLarge?.copyWith(color: AppColors.white),
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.success,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
                 elevation: 2,
               ),
             ),
@@ -489,7 +552,8 @@ onTap: () {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("Mobiking",
+          Text(
+            "Mobiking",
             style: textTheme.displayLarge?.copyWith(
               color: AppColors.textLight.withOpacity(0.5),
               letterSpacing: -1.0,
@@ -497,7 +561,8 @@ onTap: () {
             ),
           ),
           const SizedBox(height: 8),
-          Text("Your Wholesale Partner",
+          Text(
+            "Your Wholesale Partner",
             style: textTheme.headlineSmall?.copyWith(
               color: AppColors.textLight.withOpacity(0.6),
               height: 1.2,

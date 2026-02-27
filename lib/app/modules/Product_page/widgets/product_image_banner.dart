@@ -57,47 +57,60 @@ class _ProductImageBannerState extends State<ProductImageBanner> {
                 });
               },
               itemBuilder: (_, index) {
-                final imageUrl = widget.imageUrls.isNotEmpty ? widget.imageUrls[index] : '';
+                final imageUrl = widget.imageUrls.isNotEmpty
+                    ? widget.imageUrls[index]
+                    : '';
                 return Container(
                   padding: EdgeInsets.all(40),
                   color: AppColors.white,
                   child: imageUrl.isNotEmpty
                       ? Image.network(
-                    imageUrl,
-                    fit: BoxFit.contain, // CHANGED FROM BoxFit.fill to BoxFit.contain
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return Center(
-                        child: CircularProgressIndicator(
-                          color: AppColors.primaryPurple,
-                          strokeWidth: 2,
-                        ),
-                      );
-                    },
-                    errorBuilder: (context, url, error) => Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.broken_image, size: 40, color: AppColors.textLight.withOpacity(0.7)),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Image Load Error',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: AppColors.textLight.withOpacity(0.7),
+                          imageUrl,
+                          fit: BoxFit
+                              .contain, // CHANGED FROM BoxFit.fill to BoxFit.contain
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Center(
+                              child: CircularProgressIndicator(
+                                color: AppColors.primaryPurple,
+                                strokeWidth: 2,
+                              ),
+                            );
+                          },
+                          errorBuilder: (context, url, error) => Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.broken_image,
+                                  size: 40,
+                                  color: AppColors.textLight.withOpacity(0.7),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Image Load Error',
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: AppColors.textLight.withOpacity(
+                                          0.7,
+                                        ),
+                                      ),
+                                ),
+                              ],
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                  )
+                        )
                       : Center(
-                    child: Icon(Icons.image_not_supported, size: 60, color: AppColors.textLight.withOpacity(0.7)),
-                  ),
+                          child: Icon(
+                            Icons.image_not_supported,
+                            size: 60,
+                            color: AppColors.textLight.withOpacity(0.7),
+                          ),
+                        ),
                 );
               },
             ),
           ),
-
 
           // Favorite Button
           if (widget.badgeText != null && widget.badgeText!.isNotEmpty)
@@ -106,7 +119,10 @@ class _ProductImageBannerState extends State<ProductImageBanner> {
               left: 56, // Adjusted left position
               child: SafeArea(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.success,
                     borderRadius: BorderRadius.circular(4),
@@ -136,18 +152,22 @@ class _ProductImageBannerState extends State<ProductImageBanner> {
             ),
           ),
 
-
-
           // ⭐ Rating + Review Count (bottom left)
           if (widget.productRating != null && widget.reviewCount != null)
             Positioned(
               bottom: 0,
               left: 20,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.neutralBackground, // Dark background
-                  borderRadius: BorderRadius.only(topRight: Radius.circular(12),topLeft: Radius.circular(12)),
+                  borderRadius: BorderRadius.only(
+                    topRight: Radius.circular(12),
+                    topLeft: Radius.circular(12),
+                  ),
                 ),
                 child: Row(
                   children: [
@@ -189,8 +209,6 @@ class _ProductImageBannerState extends State<ProductImageBanner> {
               ),
             ),
 
-
-
           // 🔘 Dots Indicator (bottom right)
           Positioned(
             bottom: 10,
@@ -198,13 +216,15 @@ class _ProductImageBannerState extends State<ProductImageBanner> {
             child: Row(
               children: List.generate(
                 widget.imageUrls.length,
-                    (index) => Container(
+                (index) => Container(
                   width: _currentIndex == index ? 10 : 6,
                   height: 6,
                   margin: const EdgeInsets.symmetric(horizontal: 3),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(3),
-                    color: _currentIndex == index ? AppColors.textDark : Colors.grey.withOpacity(0.5),
+                    color: _currentIndex == index
+                        ? AppColors.textDark
+                        : Colors.grey.withOpacity(0.5),
                   ),
                 ),
               ),
@@ -224,7 +244,11 @@ class _ProductImageBannerState extends State<ProductImageBanner> {
                     color: Colors.black.withOpacity(0.4),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.arrow_back_ios_new, size: 18, color: Colors.white),
+                  child: const Icon(
+                    Icons.arrow_back_ios_new,
+                    size: 18,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ),
@@ -232,4 +256,5 @@ class _ProductImageBannerState extends State<ProductImageBanner> {
         ],
       ),
     );
-  }}
+  }
+}

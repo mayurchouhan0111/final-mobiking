@@ -74,17 +74,17 @@ class OrderTotals {
 
 // FIXED: Helper function for themed snackbars with safe closing
 void _showModernSnackbar(
-    String title,
-    String message, {
-      IconData? icon,
-      Color? backgroundColor,
-      Color? textColor,
-      SnackPosition snackPosition = SnackPosition.TOP,
-      Duration? duration,
-      EdgeInsets? margin,
-      double? borderRadius,
-      bool isError = false,
-    }) {
+  String title,
+  String message, {
+  IconData? icon,
+  Color? backgroundColor,
+  Color? textColor,
+  SnackPosition snackPosition = SnackPosition.TOP,
+  Duration? duration,
+  EdgeInsets? margin,
+  double? borderRadius,
+  bool isError = false,
+}) {
   if (isError) {
     return;
   }
@@ -121,19 +121,21 @@ void _showModernSnackbar(
       ),
       icon: icon != null
           ? Container(
-        padding: const EdgeInsets.all(6),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.2),
-          shape: BoxShape.circle,
-        ),
-        child: Icon(icon, color: textColor ?? Colors.white, size: 20),
-      )
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: textColor ?? Colors.white, size: 20),
+            )
           : null,
       snackPosition: snackPosition,
       backgroundColor:
-      backgroundColor ?? (isError ? const Color(0xFFB00020) : const Color(0xFF1E88E5)),
+          backgroundColor ??
+          (isError ? const Color(0xFFB00020) : const Color(0xFF1E88E5)),
       colorText: textColor ?? Colors.white,
-      margin: margin ?? const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      margin:
+          margin ?? const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       borderRadius: borderRadius ?? 16,
       animationDuration: const Duration(milliseconds: 400),
       duration: duration ?? const Duration(seconds: 3),
@@ -190,8 +192,6 @@ class OrderController extends GetxController {
     "Cancelled",
   ];
 
-
-
   @override
   void onInit() {
     super.onInit();
@@ -208,7 +208,9 @@ class OrderController extends GetxController {
   }
 
   Future _handleConnectionRestored() async {
-    print('OrderController: Internet connection restored. Re-fetching order history...');
+    print(
+      'OrderController: Internet connection restored. Re-fetching order history...',
+    );
     await fetchOrderHistory();
   }
 
@@ -217,26 +219,34 @@ class OrderController extends GetxController {
     for (var item in _cartController.cartItems) {
       final productData = item['productId'];
       final quantity = (item['quantity'] as int?) ?? 1;
-      final itemVariantName = item['variantName'] as String? ?? 'Default'; // Get variant name from cart item
-      print('Calculating subtotal for item: ${productData['name']}, variant: $itemVariantName, quantity: $quantity');
+      final itemVariantName =
+          item['variantName'] as String? ??
+          'Default'; // Get variant name from cart item
+      print(
+        'Calculating subtotal for item: ${productData['name']}, variant: $itemVariantName, quantity: $quantity',
+      );
 
       if (productData is Map<String, dynamic>) {
         final product = ProductModel.fromJson(productData);
-        print('Product selling prices: ${product.sellingPrice.map((e) => '${e.variantName}: ${e.price}').toList()}');
+        print(
+          'Product selling prices: ${product.sellingPrice.map((e) => '${e.variantName}: ${e.price}').toList()}',
+        );
 
         // Find the selling price for the specific variant
         final sellingPriceForVariant = product.sellingPrice.firstWhereOrNull(
           (sp) => sp.variantName == itemVariantName,
         );
 
-        if (sellingPriceForVariant != null && sellingPriceForVariant.price != null) {
+        if (sellingPriceForVariant != null &&
+            sellingPriceForVariant.price != null) {
           final itemPrice = sellingPriceForVariant.price!.toDouble();
           print('Found matching variant. Price: $itemPrice');
           total += itemPrice * quantity;
         } else {
           print('Variant not found. Using fallback.');
           // Fallback if variant price not found, use last selling price if available
-          if (product.sellingPrice.isNotEmpty && product.sellingPrice.last.price != null) {
+          if (product.sellingPrice.isNotEmpty &&
+              product.sellingPrice.last.price != null) {
             final itemPrice = product.sellingPrice.last.price!.toDouble();
             print('Fallback price: $itemPrice');
             total += itemPrice * quantity;
@@ -272,18 +282,29 @@ class OrderController extends GetxController {
           _currentRazorpayOrderId == null ||
           _currentOrderRequest == null) {
         debugPrint('❌ CRITICAL: Missing required order data');
-        throw OrderServiceException('Missing order data for payment verification', statusCode: 400);
+        throw OrderServiceException(
+          'Missing order data for payment verification',
+          statusCode: 400,
+        );
       }
 
       // Validate Razorpay response
-      if (response.paymentId == null || response.orderId == null || response.signature == null) {
-        throw OrderServiceException('Incomplete payment response from Razorpay', statusCode: 400);
+      if (response.paymentId == null ||
+          response.orderId == null ||
+          response.signature == null) {
+        throw OrderServiceException(
+          'Incomplete payment response from Razorpay',
+          statusCode: 400,
+        );
       }
 
       // Verify that the Razorpay order ID matches what we expect
       if (response.orderId != _currentRazorpayOrderId) {
         debugPrint('❌ Razorpay Order ID mismatch!');
-        throw OrderServiceException('Order ID mismatch in payment response', statusCode: 400);
+        throw OrderServiceException(
+          'Order ID mismatch in payment response',
+          statusCode: 400,
+        );
       }
 
       // Create verification request
@@ -297,7 +318,9 @@ class OrderController extends GetxController {
       debugPrint('🔄 Verifying payment with backend...');
 
       // Verify payment with backend
-      final verifiedOrder = await _orderService.verifyRazorpayPayment(verifyRequest);
+      final verifiedOrder = await _orderService.verifyRazorpayPayment(
+        verifyRequest,
+      );
       debugPrint('✅ Payment verification API response received');
 
       // SIMPLIFIED: Just use the backend order ID that we already have
@@ -323,7 +346,9 @@ class OrderController extends GetxController {
         'shippingAddress': _currentOrderRequest!.address,
         'address': _addressController.selectedAddress.value?.toJson(),
         'createdAt': DateTime.now().toIso8601String(),
-        'items': _currentOrderRequest!.items.map((item) => item.toUIFallbackJson()).toList(),
+        'items': _currentOrderRequest!.items
+            .map((item) => item.toUIFallbackJson())
+            .toList(),
 
         // Payment details
         'paymentDetails': {
@@ -342,12 +367,17 @@ class OrderController extends GetxController {
 
       // ✅ LOG ANALYTICS: Purchase
       try {
-        final analyticsItems = _currentOrderRequest!.items.map((item) => AnalyticsEventItem(
-          itemId: item.productId,
-          itemName: item.quantity.toString(), // The model seems to have basic details, often item.name is better but checking model
-          quantity: item.quantity,
-          price: item.price.toDouble(),
-        )).toList();
+        final analyticsItems = _currentOrderRequest!.items
+            .map(
+              (item) => AnalyticsEventItem(
+                itemId: item.productId,
+                itemName: item.quantity
+                    .toString(), // The model seems to have basic details, often item.name is better but checking model
+                quantity: item.quantity,
+                price: item.price.toDouble(),
+              ),
+            )
+            .toList();
 
         Get.find<AnalyticsService>().logPurchase(
           amount: _currentOrderRequest!.orderAmount.toDouble(),
@@ -360,17 +390,20 @@ class OrderController extends GetxController {
 
       // Show success message
 
-
       // SIMPLIFIED: Navigate directly to confirmation screen
-      debugPrint('🎉 Navigating to OrderConfirmationScreen with orderId: $extractedOrderId');
+      debugPrint(
+        '🎉 Navigating to OrderConfirmationScreen with orderId: $extractedOrderId',
+      );
 
       try {
         if (Get.context != null) {
-          Get.offAll(() => OrderConfirmationScreen(
-            orderId: extractedOrderId,
-            orderData: completeOrderData,
-            address: _addressController.selectedAddress.value,
-          ));
+          Get.offAll(
+            () => OrderConfirmationScreen(
+              orderId: extractedOrderId,
+              orderData: completeOrderData,
+              address: _addressController.selectedAddress.value,
+            ),
+          );
         } else {
           throw Exception('Navigation context unavailable');
         }
@@ -385,9 +418,10 @@ class OrderController extends GetxController {
           duration: const Duration(seconds: 8),
         );
       }
-
     } on OrderServiceException catch (e) {
-      debugPrint('❌ OrderServiceException during payment verification: Status ${e.statusCode} - ${e.message}');
+      debugPrint(
+        '❌ OrderServiceException during payment verification: Status ${e.statusCode} - ${e.message}',
+      );
       _showModernSnackbar(
         'Payment Verification Failed',
         'Payment was successful but verification failed. Please contact support with Payment ID: ${response.paymentId}',
@@ -458,9 +492,8 @@ class OrderController extends GetxController {
       debugPrint('🔍 Order data: $orderData');
 
       // Extract order ID from various possible fields
-      final orderId = orderData['_id'] ??
-          orderData['orderId'] ??
-          orderData['id'];
+      final orderId =
+          orderData['_id'] ?? orderData['orderId'] ?? orderData['id'];
 
       if (orderId != null && orderId.toString().trim().isNotEmpty) {
         final orderIdString = orderId.toString().trim();
@@ -472,7 +505,6 @@ class OrderController extends GetxController {
         debugPrint('❌ orderId: ${orderData['orderId']}');
         debugPrint('❌ id: ${orderData['id']}');
       }
-
     } catch (e, stackTrace) {
       debugPrint('❌ Error extracting order ID from API response: $e');
       debugPrint('❌ Stack trace: $stackTrace');
@@ -517,13 +549,14 @@ class OrderController extends GetxController {
       }
 
       if (orderData != null) {
-        debugPrint('✅ Successfully extracted order data with keys: ${orderData.keys.toList()}');
+        debugPrint(
+          '✅ Successfully extracted order data with keys: ${orderData.keys.toList()}',
+        );
         return Map<String, dynamic>.from(orderData);
       } else {
         debugPrint('❌ No order data found in API response');
         return {};
       }
-
     } catch (e, stackTrace) {
       debugPrint('❌ Error extracting order data from API response: $e');
       debugPrint('❌ Stack trace: $stackTrace');
@@ -542,7 +575,9 @@ class OrderController extends GetxController {
       debugPrint('🔧 === BUILDING COMPLETE ORDER DATA FROM API RESPONSE ===');
 
       // Get the verified order data
-      Map<String, dynamic> orderData = _extractOrderDataFromApiResponse(apiResponse);
+      Map<String, dynamic> orderData = _extractOrderDataFromApiResponse(
+        apiResponse,
+      );
 
       // Ensure we have the verified order ID
       orderData['_id'] = verifiedOrderId;
@@ -564,7 +599,9 @@ class OrderController extends GetxController {
         'customerPhone': orderRequest.phoneNo,
         'shippingAddress': orderRequest.address,
         'createdAt': orderData['createdAt'] ?? DateTime.now().toIso8601String(),
-        'items': orderRequest.items.map((item) => item.toUIFallbackJson()).toList(),
+        'items': orderRequest.items
+            .map((item) => item.toUIFallbackJson())
+            .toList(),
 
         // Payment details
         'paymentDetails': {
@@ -580,7 +617,10 @@ class OrderController extends GetxController {
         // Order summary
         'orderSummary': {
           'itemCount': orderRequest.items.length,
-          'totalItems': orderRequest.items.fold(0, (sum, item) => sum + item.quantity),
+          'totalItems': orderRequest.items.fold(
+            0,
+            (sum, item) => sum + item.quantity,
+          ),
           'subtotal': orderRequest.subtotal,
           'deliveryCharge': orderRequest.deliveryCharge,
           'gst': orderRequest.gst,
@@ -619,14 +659,20 @@ class OrderController extends GetxController {
     }
 
     try {
-      debugPrint('📞 Fetching order details for verified order ID: ${_verifiedOrderId.value}');
-      final orderDetails = await _orderService.getOrderDetails(orderId: _verifiedOrderId.value);
+      debugPrint(
+        '📞 Fetching order details for verified order ID: ${_verifiedOrderId.value}',
+      );
+      final orderDetails = await _orderService.getOrderDetails(
+        orderId: _verifiedOrderId.value,
+      );
 
       if (orderDetails != null) {
         debugPrint('✅ Successfully fetched order details');
         return orderDetails;
       } else {
-        debugPrint('❌ No order details found for ID: ${_verifiedOrderId.value}');
+        debugPrint(
+          '❌ No order details found for ID: ${_verifiedOrderId.value}',
+        );
         return null;
       }
     } catch (e) {
@@ -760,7 +806,9 @@ class OrderController extends GetxController {
       return false;
     }
 
-    debugPrint('✅ Prerequisites validated - Cart: ${_cartController.cartItems.length} items, Address: ${address.street}');
+    debugPrint(
+      '✅ Prerequisites validated - Cart: ${_cartController.cartItems.length} items, Address: ${address.street}',
+    );
     return true;
   }
 
@@ -779,19 +827,25 @@ class OrderController extends GetxController {
       return null;
     }
 
-    debugPrint('✅ User info verified: ID=$userId, Name=$name, Email=$email, Phone=$phone');
-    return UserInfo(
-      userId: userId!,
-      name: name!,
-      email: email!,
-      phone: phone!,
+    debugPrint(
+      '✅ User info verified: ID=$userId, Name=$name, Email=$email, Phone=$phone',
     );
+    return UserInfo(userId: userId!, name: name!, email: email!, phone: phone!);
   }
 
   // Check if user info is incomplete
-  bool _isUserInfoIncomplete(String? userId, String? name, String? email, String? phone) {
-    return [userId, name, email, phone]
-        .any((field) => field == null || field.trim().isEmpty);
+  bool _isUserInfoIncomplete(
+    String? userId,
+    String? name,
+    String? email,
+    String? phone,
+  ) {
+    return [
+      userId,
+      name,
+      email,
+      phone,
+    ].any((field) => field == null || field.trim().isEmpty);
   }
 
   // Build order request
@@ -829,12 +883,14 @@ class OrderController extends GetxController {
       address.street,
       address.city,
       address.state,
-      address.pinCode
+      address.pinCode,
     ];
     debugPrint('Address parts: $parts');
-    final String fullAddress = parts.where((part) => part != null && part.trim().isNotEmpty).join(', ');
+    final String fullAddress = parts
+        .where((part) => part != null && part.trim().isNotEmpty)
+        .join(', ');
     debugPrint('Full address: $fullAddress');
-            final String? addressId = _addressController.selectedAddress.value?.id;
+    final String? addressId = _addressController.selectedAddress.value?.id;
     if (addressId == null) {
       debugPrint('🛑 Address ID is null. Aborting order placement.');
       _showModernSnackbar(
@@ -846,9 +902,13 @@ class OrderController extends GetxController {
       return null;
     }
     final bool isCouponApplied = _couponController.isCouponApplied.value;
-    final String? couponId = isCouponApplied ? _couponController.selectedCoupon.value?.id : null;
+    final String? couponId = isCouponApplied
+        ? _couponController.selectedCoupon.value?.id
+        : null;
 
-    debugPrint('✅ Order request built - Items: ${orderItems.length}, Total: ${totals.total}');
+    debugPrint(
+      '✅ Order request built - Items: ${orderItems.length}, Total: ${totals.total}',
+    );
 
     final orderRequest = CreateOrderRequestModel(
       userId: CreateUserReferenceRequestModel(
@@ -911,19 +971,24 @@ class OrderController extends GetxController {
         continue;
       }
 
-      final String variantName = cartItem['variantName'] as String? ?? 'Default';
+      final String variantName =
+          cartItem['variantName'] as String? ?? 'Default';
       final int quantity = (cartItem['quantity'] as num?)?.toInt() ?? 1;
       final double itemPrice = _extractItemPrice(productData, productId);
 
       // Robust product name extraction
       String productName = 'Product';
-      if (productData['fullName'] != null && productData['fullName'].toString().trim().isNotEmpty) {
+      if (productData['fullName'] != null &&
+          productData['fullName'].toString().trim().isNotEmpty) {
         productName = productData['fullName'].toString().trim();
-      } else if (productData['name'] != null && productData['name'].toString().trim().isNotEmpty) {
+      } else if (productData['name'] != null &&
+          productData['name'].toString().trim().isNotEmpty) {
         productName = productData['name'].toString().trim();
-      } else if (productData['productName'] != null && productData['productName'].toString().trim().isNotEmpty) {
+      } else if (productData['productName'] != null &&
+          productData['productName'].toString().trim().isNotEmpty) {
         productName = productData['productName'].toString().trim();
-      } else if (productData['title'] != null && productData['title'].toString().trim().isNotEmpty) {
+      } else if (productData['title'] != null &&
+          productData['title'].toString().trim().isNotEmpty) {
         productName = productData['title'].toString().trim();
       }
 
@@ -932,31 +997,40 @@ class OrderController extends GetxController {
       String? productImage;
       if (images.isNotEmpty) {
         productImage = images.first?.toString();
-      } else if (productData['image'] != null && productData['image'].toString().isNotEmpty) {
+      } else if (productData['image'] != null &&
+          productData['image'].toString().isNotEmpty) {
         productImage = productData['image'].toString();
-      } else if (productData['thumbnail'] != null && productData['thumbnail'].toString().isNotEmpty) {
+      } else if (productData['thumbnail'] != null &&
+          productData['thumbnail'].toString().isNotEmpty) {
         productImage = productData['thumbnail'].toString();
       }
 
-      debugPrint('🛒 Item extraction: "$productName" ($variantName) - ID: $productId');
+      debugPrint(
+        '🛒 Item extraction: "$productName" ($variantName) - ID: $productId',
+      );
 
-      orderItems.add(CreateOrderItemRequestModel(
-        productId: productId,
-        variantName: variantName,
-        quantity: quantity,
-        price: itemPrice,
-        productName: productName,
-        productImage: productImage,
-      ));
+      orderItems.add(
+        CreateOrderItemRequestModel(
+          productId: productId,
+          variantName: variantName,
+          quantity: quantity,
+          price: itemPrice,
+          productName: productName,
+          productImage: productImage,
+        ),
+      );
     }
 
-    debugPrint('✅ Built ${orderItems.length} order items from ${_cartController.cartItems.length} cart items');
+    debugPrint(
+      '✅ Built ${orderItems.length} order items from ${_cartController.cartItems.length} cart items',
+    );
     return orderItems;
   }
 
   // Extract item price from product data
   double _extractItemPrice(Map productData, String productId) {
-    if (productData.containsKey('sellingPrice') && productData['sellingPrice'] is List) {
+    if (productData.containsKey('sellingPrice') &&
+        productData['sellingPrice'] is List) {
       final List sellingPricesList = productData['sellingPrice'];
       if (sellingPricesList.isNotEmpty && sellingPricesList[0] is Map) {
         return (sellingPricesList[0]['price'] as num?)?.toDouble() ?? 0.0;
@@ -983,11 +1057,15 @@ class OrderController extends GetxController {
           await _processOnlineOrder(orderRequest);
           break;
         default:
-          throw OrderServiceException('Invalid payment method: $method', statusCode: 400);
+          throw OrderServiceException(
+            'Invalid payment method: $method',
+            statusCode: 400,
+          );
       }
-
     } on OrderServiceException catch (e) {
-      debugPrint('❌ OrderServiceException: Status ${e.statusCode} - ${e.message}');
+      debugPrint(
+        '❌ OrderServiceException: Status ${e.statusCode} - ${e.message}',
+      );
       if (e.message == 'Cart is empty or not found.') {
         await _cartController.fetchAndLoadCartData();
       } else {
@@ -1017,15 +1095,17 @@ class OrderController extends GetxController {
   Future _processCODOrder(CreateOrderRequestModel orderRequest) async {
     try {
       if (orderRequest.orderAmount > 5000) {
-        debugPrint('🛑 COD not allowed for orders above ₹5000. Total: ${orderRequest.orderAmount}');
+        debugPrint(
+          '🛑 COD not allowed for orders above ₹5000. Total: ${orderRequest.orderAmount}',
+        );
         Fluttertoast.showToast(
-            msg: "Orders above ₹5000 cannot use Cash on Delivery.",
-            toastLength: Toast.LENGTH_SHORT,
-            gravity: ToastGravity.BOTTOM,
-            timeInSecForIosWeb: 1,
-            backgroundColor: Colors.red,
-            textColor: Colors.white,
-            fontSize: 16.0
+          msg: "Orders above ₹5000 cannot use Cash on Delivery.",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+          fontSize: 16.0,
         );
         return;
       }
@@ -1034,7 +1114,9 @@ class OrderController extends GetxController {
       final bool? confirmed = await Get.dialog<bool>(
         AlertDialog(
           title: const Text('Confirm COD Order'),
-          content: Text('You are about to place a Cash on Delivery order for ₹${orderRequest.orderAmount.toStringAsFixed(0)}. Do you want to proceed?'),
+          content: Text(
+            'You are about to place a Cash on Delivery order for ₹${orderRequest.orderAmount.toStringAsFixed(0)}. Do you want to proceed?',
+          ),
           actions: [
             TextButton(
               onPressed: () => Get.back(result: false),
@@ -1062,7 +1144,10 @@ class OrderController extends GetxController {
       final extractedOrderId = _extractOrderId(createdOrder);
       if (extractedOrderId == null || extractedOrderId.isEmpty) {
         debugPrint('❌ CRITICAL: No order ID found in response');
-        throw OrderServiceException('COD Order placement failed: No Order ID returned from backend.', statusCode: 500);
+        throw OrderServiceException(
+          'COD Order placement failed: No Order ID returned from backend.',
+          statusCode: 500,
+        );
       }
 
       debugPrint('✅ COD order created successfully with ID: $extractedOrderId');
@@ -1087,17 +1172,20 @@ class OrderController extends GetxController {
       );
 
       // FIXED: Navigate to confirmation screen with validated data
-      debugPrint('🎉 Navigating to OrderConfirmationScreen with orderId: $extractedOrderId');
+      debugPrint(
+        '🎉 Navigating to OrderConfirmationScreen with orderId: $extractedOrderId',
+      );
 
       // Wait a moment to ensure data is written
       await Future.delayed(const Duration(milliseconds: 500));
 
-      Get.offAll(() => OrderConfirmationScreen(
-        orderId: extractedOrderId,
-        orderData: completeOrderData,
-        address: _addressController.selectedAddress.value,
-      ));
-
+      Get.offAll(
+        () => OrderConfirmationScreen(
+          orderId: extractedOrderId,
+          orderData: completeOrderData,
+          address: _addressController.selectedAddress.value,
+        ),
+      );
     } catch (e, stackTrace) {
       debugPrint('❌ Error in _processCODOrder: $e');
       debugPrint('❌ Stack trace: $stackTrace');
@@ -1148,7 +1236,9 @@ class OrderController extends GetxController {
         'shippingAddress': orderRequest.address,
         'address': _addressController.selectedAddress.value?.toJson(),
         'createdAt': orderData['createdAt'] ?? DateTime.now().toIso8601String(),
-        'items': orderRequest.items.map((item) => item.toUIFallbackJson()).toList(),
+        'items': orderRequest.items
+            .map((item) => item.toUIFallbackJson())
+            .toList(),
 
         // COD specific details
         'paymentDetails': {
@@ -1162,7 +1252,10 @@ class OrderController extends GetxController {
         // Order summary
         'orderSummary': {
           'itemCount': orderRequest.items.length,
-          'totalItems': orderRequest.items.fold(0, (sum, item) => sum + item.quantity),
+          'totalItems': orderRequest.items.fold(
+            0,
+            (sum, item) => sum + item.quantity,
+          ),
           'subtotal': orderRequest.subtotal,
           'deliveryCharge': orderRequest.deliveryCharge,
           'gst': orderRequest.gst,
@@ -1196,7 +1289,9 @@ class OrderController extends GetxController {
       debugPrint('🚀 Order request: ${jsonEncode(orderRequest.toJson())}');
 
       // Call the order service to create the order and get Razorpay details
-      final dynamic rawResponse = await _orderService.initiateOnlineOrder(orderRequest);
+      final dynamic rawResponse = await _orderService.initiateOnlineOrder(
+        orderRequest,
+      );
       debugPrint('✅ Raw online payment response received');
       debugPrint('✅ Response type: ${rawResponse.runtimeType}');
       debugPrint('✅ Raw response: $rawResponse');
@@ -1209,7 +1304,10 @@ class OrderController extends GetxController {
         response = rawResponse.cast<String, dynamic>();
       } else {
         debugPrint('❌ Invalid response type: ${rawResponse.runtimeType}');
-        throw OrderServiceException('Invalid response type from server', statusCode: 400);
+        throw OrderServiceException(
+          'Invalid response type from server',
+          statusCode: 400,
+        );
       }
 
       // Store the complete response for debugging
@@ -1218,11 +1316,15 @@ class OrderController extends GetxController {
       // Validate the response from backend
       final paymentData = _validateOnlinePaymentResponse(response);
       if (paymentData == null) {
-        throw OrderServiceException('Invalid payment response from server', statusCode: 400);
+        throw OrderServiceException(
+          'Invalid payment response from server',
+          statusCode: 400,
+        );
       }
 
       // Extract and store order IDs
-      _currentBackendOrderId = paymentData['orderId'] ??
+      _currentBackendOrderId =
+          paymentData['orderId'] ??
           paymentData['newOrderId'] ??
           response['orderId'] ??
           response['newOrderId'];
@@ -1238,14 +1340,21 @@ class OrderController extends GetxController {
         debugPrint('❌ Backend: $_currentBackendOrderId');
         debugPrint('❌ Razorpay: $_currentRazorpayOrderId');
         debugPrint('❌ Available keys in response: ${response.keys.toList()}');
-        debugPrint('❌ Available keys in paymentData: ${paymentData.keys.toList()}');
-        throw OrderServiceException('Missing order IDs in payment response', statusCode: 400);
+        debugPrint(
+          '❌ Available keys in paymentData: ${paymentData.keys.toList()}',
+        );
+        throw OrderServiceException(
+          'Missing order IDs in payment response',
+          statusCode: 400,
+        );
       }
 
       // Build Razorpay options and open payment gateway
       final options = _buildRazorpayOptions(paymentData, orderRequest);
       debugPrint('💳 Razorpay options built successfully');
-      debugPrint('💳 Key fields: key=${options['key']}, amount=${options['amount']}, order_id=${options['order_id']}');
+      debugPrint(
+        '💳 Key fields: key=${options['key']}, amount=${options['amount']}, order_id=${options['order_id']}',
+      );
 
       // Stop loading before opening Razorpay
       isLoading.value = false;
@@ -1253,7 +1362,6 @@ class OrderController extends GetxController {
 
       // Open Razorpay payment gateway
       _razorpay.open(options);
-
     } catch (e, stackTrace) {
       debugPrint('❌ === ERROR IN ONLINE ORDER PROCESSING ===');
       debugPrint('❌ Error: $e');
@@ -1262,11 +1370,14 @@ class OrderController extends GetxController {
       isLoading.value = false;
       _resetOrderState();
 
-      String errorMessage = 'Failed to initiate online payment. Please try again.';
+      String errorMessage =
+          'Failed to initiate online payment. Please try again.';
       if (e is OrderServiceException) {
         errorMessage = e.message;
-      } else if (e.toString().contains('network') || e.toString().contains('connection')) {
-        errorMessage = 'Network error. Please check your connection and try again.';
+      } else if (e.toString().contains('network') ||
+          e.toString().contains('connection')) {
+        errorMessage =
+            'Network error. Please check your connection and try again.';
       }
 
       _showModernSnackbar(
@@ -1283,13 +1394,20 @@ class OrderController extends GetxController {
   }
 
   // **FIXED METHOD**
-  Map<String, dynamic>? _validateOnlinePaymentResponse(Map<String, dynamic> response) {
+  Map<String, dynamic>? _validateOnlinePaymentResponse(
+    Map<String, dynamic> response,
+  ) {
     debugPrint('🔍 === VALIDATING PAYMENT RESPONSE ===');
     debugPrint('🔍 Response keys: ${response.keys.toList()}');
     debugPrint('🔍 Full response: $response');
 
     // Check if we have the essential Razorpay fields directly
-    final List<String> requiredFields = ['razorpayOrderId', 'amount', 'currency', 'key'];
+    final List<String> requiredFields = [
+      'razorpayOrderId',
+      'amount',
+      'currency',
+      'key',
+    ];
     Map<String, dynamic> validatedData = {};
 
     // Extract required fields directly from response
@@ -1311,7 +1429,8 @@ class OrderController extends GetxController {
     }
 
     // Extract order ID - your logs show 'newOrderId' exists
-    String? orderId = response['newOrderId'] ??
+    String? orderId =
+        response['newOrderId'] ??
         response['orderId'] ??
         response['_id'] ??
         response['id'];
@@ -1354,9 +1473,9 @@ class OrderController extends GetxController {
 
   // FIXED: Build Razorpay options with enhanced validation
   Map<String, dynamic> _buildRazorpayOptions(
-      Map<String, dynamic> paymentData,
-      CreateOrderRequestModel orderRequest,
-      ) {
+    Map<String, dynamic> paymentData,
+    CreateOrderRequestModel orderRequest,
+  ) {
     debugPrint('🔧 === BUILDING RAZORPAY OPTIONS ===');
     debugPrint('🔧 Payment data keys: ${paymentData.keys.toList()}');
     debugPrint('🔧 Payment data: $paymentData');
@@ -1372,11 +1491,15 @@ class OrderController extends GetxController {
     } else if (amountValue is String) {
       amount = int.tryParse(amountValue) ?? 0;
     } else {
-      debugPrint('❌ Invalid amount type: ${amountValue.runtimeType}, value: $amountValue');
-      throw OrderServiceException('Invalid amount in payment response: $amountValue');
+      debugPrint(
+        '❌ Invalid amount type: ${amountValue.runtimeType}, value: $amountValue',
+      );
+      throw OrderServiceException(
+        'Invalid amount in payment response: $amountValue',
+      );
     }
 
-    debugPrint('💰 Razorpay amount: $amount paise (${amount/100} rupees)');
+    debugPrint('💰 Razorpay amount: $amount paise (${amount / 100} rupees)');
 
     final options = {
       'key': paymentData['key']?.toString() ?? '2tjsbbZMJeHVys4lyiTSurM0',
@@ -1391,20 +1514,11 @@ class OrderController extends GetxController {
         'name': orderRequest.name,
       },
       'external': {
-        'wallets': ['paytm', 'googlepay', 'phonepe']
+        'wallets': ['paytm', 'googlepay', 'phonepe'],
       },
-      'theme': {
-        'color': '#6C63FF'
-      },
-      'modal': {
-        'backdropclose': false,
-        'escape': false,
-        'handleback': false,
-      },
-      'retry': {
-        'enabled': true,
-        'max_count': 3
-      },
+      'theme': {'color': '#6C63FF'},
+      'modal': {'backdropclose': false, 'escape': false, 'handleback': false},
+      'retry': {'enabled': true, 'max_count': 3},
       'timeout': 300,
     };
 
@@ -1418,9 +1532,13 @@ class OrderController extends GetxController {
 
     for (String field in criticalFields.keys) {
       final value = criticalFields[field];
-      if (value == null || value.toString().isEmpty || (field == 'amount' && value == 0)) {
+      if (value == null ||
+          value.toString().isEmpty ||
+          (field == 'amount' && value == 0)) {
         debugPrint('❌ Critical field "$field" is invalid: $value');
-        throw OrderServiceException('Invalid payment configuration: $field missing, empty, or zero');
+        throw OrderServiceException(
+          'Invalid payment configuration: $field missing, empty, or zero',
+        );
       }
     }
 
@@ -1439,7 +1557,9 @@ class OrderController extends GetxController {
       return null;
     }
 
-    debugPrint('🔍 Extracting order ID from object type: ${orderObject.runtimeType}');
+    debugPrint(
+      '🔍 Extracting order ID from object type: ${orderObject.runtimeType}',
+    );
 
     try {
       // Method 1: Handle OrderModel object first (most likely case)
@@ -1452,14 +1572,18 @@ class OrderController extends GetxController {
           }
 
           // Try orderId property
-          if (orderObject.orderId != null && orderObject.orderId.toString().isNotEmpty) {
-            debugPrint('✅ Found orderId via OrderModel.orderId: ${orderObject.orderId}');
+          if (orderObject.orderId != null &&
+              orderObject.orderId.toString().isNotEmpty) {
+            debugPrint(
+              '✅ Found orderId via OrderModel.orderId: ${orderObject.orderId}',
+            );
             return orderObject.orderId.toString();
           }
 
           // Try converting to JSON
           final jsonData = orderObject.toJson();
-          final orderId = jsonData['_id'] ?? jsonData['id'] ?? jsonData['orderId'];
+          final orderId =
+              jsonData['_id'] ?? jsonData['id'] ?? jsonData['orderId'];
           if (orderId != null && orderId.toString().isNotEmpty) {
             debugPrint('✅ Found orderId via OrderModel JSON: $orderId');
             return orderId.toString();
@@ -1471,7 +1595,8 @@ class OrderController extends GetxController {
 
       // Method 2: Handle Map directly
       if (orderObject is Map) {
-        final orderId = orderObject['_id'] ?? orderObject['orderId'] ?? orderObject['id'];
+        final orderId =
+            orderObject['_id'] ?? orderObject['orderId'] ?? orderObject['id'];
         if (orderId != null && orderId.toString().isNotEmpty) {
           debugPrint('✅ Found orderId via map access: $orderId');
           return orderId.toString();
@@ -1480,7 +1605,8 @@ class OrderController extends GetxController {
 
       // Method 3: Try dynamic property access (fallback)
       try {
-        final dynamic orderIdValue = orderObject.id ?? orderObject.orderId ?? orderObject._id;
+        final dynamic orderIdValue =
+            orderObject.id ?? orderObject.orderId ?? orderObject._id;
         if (orderIdValue != null && orderIdValue.toString().isNotEmpty) {
           debugPrint('✅ Found orderId via dynamic access: $orderIdValue');
           return orderIdValue.toString();
@@ -1488,7 +1614,6 @@ class OrderController extends GetxController {
       } catch (e) {
         debugPrint('⚠️ Dynamic access failed: $e');
       }
-
     } catch (e) {
       debugPrint('❌ Error extracting order ID: $e');
     }
@@ -1500,7 +1625,9 @@ class OrderController extends GetxController {
       if (orderObject.runtimeType.toString().contains('OrderModel')) {
         debugPrint('🔍 OrderModel debug info:');
         final jsonData = orderObject.toJson();
-        debugPrint('🔍 Available keys in OrderModel JSON: ${jsonData.keys.toList()}');
+        debugPrint(
+          '🔍 Available keys in OrderModel JSON: ${jsonData.keys.toList()}',
+        );
         debugPrint('🔍 Full OrderModel JSON: $jsonData');
       }
     } catch (e) {
@@ -1511,17 +1638,22 @@ class OrderController extends GetxController {
   }
 
   // FIXED: Complete order success operations with enhanced null safety
-  Future _completeOrderSuccess(Map<String, dynamic> orderData, String paymentMethod) async {
+  Future _completeOrderSuccess(
+    Map<String, dynamic> orderData,
+    String paymentMethod,
+  ) async {
     try {
       debugPrint('🔧 === STARTING ORDER DATA STORAGE ===');
       debugPrint('🔧 Payment Method: $paymentMethod');
       debugPrint('🔧 Order Data Keys: ${orderData.keys.toList()}');
 
       // Extract order ID from the complete order data
-      String? orderId = (orderData['orderId'] ??
-          orderData['_id'] ??
-          orderData['id'] ??
-          orderData['newOrderId'])?.toString();
+      String? orderId =
+          (orderData['orderId'] ??
+                  orderData['_id'] ??
+                  orderData['id'] ??
+                  orderData['newOrderId'])
+              ?.toString();
 
       if (orderId == null || orderId.isEmpty) {
         debugPrint('❌ CRITICAL ERROR: Cannot extract order ID from order data');
@@ -1537,7 +1669,10 @@ class OrderController extends GetxController {
       await _box.write('recent_order_id', orderId);
       await _box.write('last_order_id', orderId);
       await _box.write('latest_order_id', orderId);
-      await _box.write('lastOrderId', orderId); // Original key for backward compatibility
+      await _box.write(
+        'lastOrderId',
+        orderId,
+      ); // Original key for backward compatibility
 
       // Store comprehensive order confirmation data with timestamp
       await _box.write('order_confirmation_data', {
@@ -1573,7 +1708,9 @@ class OrderController extends GetxController {
       // Refresh order history
       fetchOrderHistory();
 
-      debugPrint('✅ Order saved locally, cart cleared, and order history refreshed');
+      debugPrint(
+        '✅ Order saved locally, cart cleared, and order history refreshed',
+      );
     } catch (e, stackTrace) {
       debugPrint('❌ CRITICAL ERROR in _completeOrderSuccess: $e');
       debugPrint('❌ Stack trace: $stackTrace');
@@ -1582,7 +1719,13 @@ class OrderController extends GetxController {
   }
 
   // Improved snackbar methods
-  void _showSuccessSnackbar(String title, String message, IconData icon, {Color? backgroundColor, Duration? duration}) {
+  void _showSuccessSnackbar(
+    String title,
+    String message,
+    IconData icon, {
+    Color? backgroundColor,
+    Duration? duration,
+  }) {
     _showModernSnackbar(
       title,
       message,
@@ -1594,7 +1737,12 @@ class OrderController extends GetxController {
     );
   }
 
-  void _showInfoSnackbar(String title, String message, IconData icon, {Duration? duration}) {
+  void _showInfoSnackbar(
+    String title,
+    String message,
+    IconData icon, {
+    Duration? duration,
+  }) {
     _showModernSnackbar(
       title,
       message,
@@ -1618,31 +1766,37 @@ class OrderController extends GetxController {
       final List fetchedOrders = await _orderService.getUserOrders();
 
       if (fetchedOrders.isNotEmpty) {
-        fetchedOrders.sort((a, b) => b.createdAt?.compareTo(a.createdAt ?? DateTime(0)) ?? 0);
+        fetchedOrders.sort(
+          (a, b) => b.createdAt?.compareTo(a.createdAt ?? DateTime(0)) ?? 0,
+        );
         orderHistory.assignAll(fetchedOrders.cast<OrderModel>());
         if (!isPoll) {
-          debugPrint('OrderController: Fetched ${orderHistory.length} orders successfully.');
+          debugPrint(
+            'OrderController: Fetched ${orderHistory.length} orders successfully.',
+          );
         }
       } else {
         orderHistory.clear();
       }
-
     } on OrderServiceException catch (e, stackTrace) {
       orderHistory.clear();
       orderHistoryErrorMessage.value = e.message;
       if (!isPoll) {
-        debugPrint('OrderController: Order History Service Error: Status ${e.statusCode} - Message: ${e.message}');
+        debugPrint(
+          'OrderController: Order History Service Error: Status ${e.statusCode} - Message: ${e.message}',
+        );
         debugPrint('Stack Trace: $stackTrace');
       }
-
     } catch (e, stackTrace) {
       orderHistory.clear();
-      orderHistoryErrorMessage.value = 'An unexpected error occurred. Please try again later.';
+      orderHistoryErrorMessage.value =
+          'An unexpected error occurred. Please try again later.';
       if (!isPoll) {
-        debugPrint('OrderController: Unexpected Exception in fetchOrderHistory: $e');
+        debugPrint(
+          'OrderController: Unexpected Exception in fetchOrderHistory: $e',
+        );
         debugPrint('Stack Trace: $stackTrace');
       }
-
     } finally {
       if (!isPoll) {
         isLoadingOrderHistory.value = false;
@@ -1675,15 +1829,21 @@ class OrderController extends GetxController {
           orderHistory.add(order);
         }
 
-        orderHistory.sort((a, b) => b.createdAt?.compareTo(a.createdAt ?? DateTime(0)) ?? 0);
-        print('OrderController: Order $orderId fetched from backend and updated/added to local cache.');
+        orderHistory.sort(
+          (a, b) => b.createdAt?.compareTo(a.createdAt ?? DateTime(0)) ?? 0,
+        );
+        print(
+          'OrderController: Order $orderId fetched from backend and updated/added to local cache.',
+        );
       } else {
         print('OrderController: Order $orderId not found on backend.');
       }
 
       return order;
     } on OrderServiceException catch (e) {
-      print('OrderController: Error fetching order $orderId from backend: ${e.message}');
+      print(
+        'OrderController: Error fetching order $orderId from backend: ${e.message}',
+      );
       return null;
     } catch (e) {
       print('OrderController: Unexpected error getting order $orderId: $e');
@@ -1699,13 +1859,17 @@ class OrderController extends GetxController {
     selectedReasonForRequest.value = '';
     final TextEditingController reasonController = TextEditingController();
 
-    final List<String> reasons = requestType == 'Cancel' ? Reasons.cancelReasons : Reasons.returnReasons;
+    final List<String> reasons = requestType == 'Cancel'
+        ? Reasons.cancelReasons
+        : Reasons.returnReasons;
 
     final bool? dialogResult = await Get.dialog(
       GestureDetector(
         onTap: () => FocusScope.of(Get.context!).unfocus(),
         child: AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           backgroundColor: AppColors.white,
           titlePadding: const EdgeInsets.fromLTRB(24, 20, 10, 0),
           contentPadding: const EdgeInsets.fromLTRB(0, 10, 0, 0),
@@ -1715,7 +1879,10 @@ class OrderController extends GetxController {
               Expanded(
                 child: Text(
                   '${requestType.capitalizeFirst} Request',
-                  style: Get.textTheme.titleMedium?.copyWith(color: AppColors.textDark, fontWeight: FontWeight.w700),
+                  style: Get.textTheme.titleMedium?.copyWith(
+                    color: AppColors.textDark,
+                    fontWeight: FontWeight.w700,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -1726,68 +1893,94 @@ class OrderController extends GetxController {
               ),
             ],
           ),
-          content: Obx(() => SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                  child: Text(
-                    'Select a reason for your ${requestType.toLowerCase()}:',
-                    style: Get.textTheme.bodyMedium?.copyWith(color: AppColors.textMedium, fontSize: 14),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                ...reasons.map((reasonOption) {
-                  return RadioListTile<String>(
-                    title: Text(
-                      reasonOption,
-                      style: Get.textTheme.bodyMedium?.copyWith(color: AppColors.textDark, fontWeight: FontWeight.w500),
-                    ),
-                    value: reasonOption,
-                    groupValue: selectedReasonForRequest.value,
-                    onChanged: (String? value) {
-                      selectedReasonForRequest.value = value!;
-                    },
-                    activeColor: AppColors.primaryPurple,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 10.0),
-                    visualDensity: VisualDensity.compact,
-                  );
-                }).toList(),
-                if (selectedReasonForRequest.value == 'Other (please specify)')
+          content: Obx(
+            () => SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
-                    child: TextField(
-                      controller: reasonController,
-                      maxLines: 3,
-                      minLines: 2,
-                      keyboardType: TextInputType.multiline,
-                      textCapitalization: TextCapitalization.sentences,
-                      style: Get.textTheme.bodyLarge?.copyWith(color: AppColors.textDark),
-                      decoration: InputDecoration(
-                        hintText: 'Please specify your reason here...',
-                        hintStyle: Get.textTheme.bodyMedium?.copyWith(color: AppColors.textLight, fontStyle: FontStyle.italic),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppColors.neutralBackground),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppColors.primaryPurple, width: 2),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppColors.white),
-                        ),
-                        filled: true,
-                        fillColor: AppColors.neutralBackground,
+                    padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                    child: Text(
+                      'Select a reason for your ${requestType.toLowerCase()}:',
+                      style: Get.textTheme.bodyMedium?.copyWith(
+                        color: AppColors.textMedium,
+                        fontSize: 14,
                       ),
                     ),
                   ),
-              ],
+                  const SizedBox(height: 10),
+                  ...reasons.map((reasonOption) {
+                    return RadioListTile<String>(
+                      title: Text(
+                        reasonOption,
+                        style: Get.textTheme.bodyMedium?.copyWith(
+                          color: AppColors.textDark,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      value: reasonOption,
+                      groupValue: selectedReasonForRequest.value,
+                      onChanged: (String? value) {
+                        selectedReasonForRequest.value = value!;
+                      },
+                      activeColor: AppColors.primaryPurple,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 10.0,
+                      ),
+                      visualDensity: VisualDensity.compact,
+                    );
+                  }).toList(),
+                  if (selectedReasonForRequest.value ==
+                      'Other (please specify)')
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+                      child: TextField(
+                        controller: reasonController,
+                        maxLines: 3,
+                        minLines: 2,
+                        keyboardType: TextInputType.multiline,
+                        textCapitalization: TextCapitalization.sentences,
+                        style: Get.textTheme.bodyLarge?.copyWith(
+                          color: AppColors.textDark,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: 'Please specify your reason here...',
+                          hintStyle: Get.textTheme.bodyMedium?.copyWith(
+                            color: AppColors.textLight,
+                            fontStyle: FontStyle.italic,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(
+                              color: AppColors.neutralBackground,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(
+                              color: AppColors.primaryPurple,
+                              width: 2,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(
+                              color: AppColors.white,
+                            ),
+                          ),
+                          filled: true,
+                          fillColor: AppColors.neutralBackground,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
-          )),
+          ),
           actions: [
             Center(
               child: SizedBox(
@@ -1797,7 +1990,9 @@ class OrderController extends GetxController {
                     String currentReason = selectedReasonForRequest.value;
                     if (currentReason.isEmpty) {
                       // Removed error snackbar
-                    } else if (currentReason == 'Other (please specify)' && (reasonController.text.trim().isEmpty || reasonController.text.trim().length < 10)) {
+                    } else if (currentReason == 'Other (please specify)' &&
+                        (reasonController.text.trim().isEmpty ||
+                            reasonController.text.trim().length < 10)) {
                       // Removed error snackbar
                     } else {
                       Get.back(result: true);
@@ -1806,13 +2001,21 @@ class OrderController extends GetxController {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryPurple,
                     foregroundColor: AppColors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 14,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                     elevation: 3,
                   ),
                   child: Text(
                     'Place Request',
-                    style: Get.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600, color: AppColors.white),
+                    style: Get.textTheme.labelLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.white,
+                    ),
                   ),
                 ),
               ),
@@ -1844,18 +2047,30 @@ class OrderController extends GetxController {
 
       switch (requestType) {
         case 'Cancel':
-          response = await _orderService.requestCancel(orderId, finalReasonToSend);
+          response = await _orderService.requestCancel(
+            orderId,
+            finalReasonToSend,
+          );
           successMessage = 'Cancel request sent successfully!';
           break;
         case 'Return':
-          response = await _orderService.requestReturn(orderId, finalReasonToSend);
+          response = await _orderService.requestReturn(
+            orderId,
+            finalReasonToSend,
+          );
           successMessage = 'Return request sent successfully!';
           break;
         default:
           throw Exception('Invalid request type: $requestType');
       }
 
-      _showModernSnackbar('Success', successMessage, isError: false, icon: Icons.check_circle_outline, backgroundColor: Colors.green);
+      _showModernSnackbar(
+        'Success',
+        successMessage,
+        isError: false,
+        icon: Icons.check_circle_outline,
+        backgroundColor: Colors.green,
+      );
       await fetchOrderHistory();
     } on OrderServiceException catch (e) {
       print('OrderServiceException: ${e.message}');
@@ -1879,16 +2094,32 @@ class OrderController extends GetxController {
   }
 
   bool showCancelButton(OrderModel order) {
-    final bool isOrderCancellable = ['new', 'accepted'].contains(order.status.toLowerCase());
-    final bool hasActiveCancelRequest = _isSpecificRequestActive(order, 'Cancel');
+    final bool isOrderCancellable = [
+      'new',
+      'accepted',
+    ].contains(order.status.toLowerCase());
+    final bool hasActiveCancelRequest = _isSpecificRequestActive(
+      order,
+      'Cancel',
+    );
     return isOrderCancellable && !hasActiveCancelRequest;
   }
 
   bool showReturnButton(OrderModel order) {
     final bool isOrderDelivered = order.status.toLowerCase() == 'delivered';
-    final bool withinReturnPeriod = isOrderDelivered && order.deliveredAt != null &&
-        DateTime.now().difference(DateTime.tryParse(order.deliveredAt!) ?? DateTime(0)).inDays <= 3;
-    final bool hasActiveReturnRequest = _isSpecificRequestActive(order, 'Return');
+    final bool withinReturnPeriod =
+        isOrderDelivered &&
+        order.deliveredAt != null &&
+        DateTime.now()
+                .difference(
+                  DateTime.tryParse(order.deliveredAt!) ?? DateTime(0),
+                )
+                .inDays <=
+            3;
+    final bool hasActiveReturnRequest = _isSpecificRequestActive(
+      order,
+      'Return',
+    );
     return withinReturnPeriod && !hasActiveReturnRequest;
   }
 
@@ -1897,7 +2128,11 @@ class OrderController extends GetxController {
     return isOrderDelivered && !order.isReviewed;
   }
 
-  Future<void> submitReview(String orderId, double rating, String review) async {
+  Future<void> submitReview(
+    String orderId,
+    double rating,
+    String review,
+  ) async {
     isLoading.value = true;
     try {
       await _orderService.submitReview(orderId, rating, review);

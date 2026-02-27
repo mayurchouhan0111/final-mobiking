@@ -76,18 +76,28 @@ class GroupModel {
       bannerLink: safeString(json['bannerLink']),
       isBannerLinkActive: json['isBannerLinkActive'] ?? false,
       active: json['active'] ?? true,
-      isBannerVisible: json['isBannerVisble'] ?? false, // Note: backend typo 'isBannerVisble'
+      isBannerVisible:
+          json['isBannerVisble'] ??
+          false, // Note: backend typo 'isBannerVisble'
       isSpecial: json['isSpecial'] ?? false,
-      products: (json['products'] as List<dynamic>? ?? [])
-          .map((e) => e is Map<String, dynamic> ? ProductModel.fromJson(e) : ProductModel.fromJson({}))
-          .where((p) => p.id.isNotEmpty && p.active == true)
-          .toList()..sort((a, b) {
-            bool aInStock = a.totalStock > 0 || a.variants.values.any((v) => v > 0);
-            bool bInStock = b.totalStock > 0 || b.variants.values.any((v) => v > 0);
-            if (aInStock && !bInStock) return -1;
-            if (!aInStock && bInStock) return 1;
-            return 0;
-          }),
+      products:
+          (json['products'] as List<dynamic>? ?? [])
+              .map(
+                (e) => e is Map<String, dynamic>
+                    ? ProductModel.fromJson(e)
+                    : ProductModel.fromJson({}),
+              )
+              .where((p) => p.id.isNotEmpty && p.active == true)
+              .toList()
+            ..sort((a, b) {
+              bool aInStock =
+                  a.totalStock > 0 || a.variants.values.any((v) => v > 0);
+              bool bInStock =
+                  b.totalStock > 0 || b.variants.values.any((v) => v > 0);
+              if (aInStock && !bInStock) return -1;
+              if (!aInStock && bInStock) return 1;
+              return 0;
+            }),
       createdAt: DateTime.tryParse(json['createdAt'] ?? '') ?? DateTime.now(),
       updatedAt: DateTime.tryParse(json['updatedAt'] ?? '') ?? DateTime.now(),
       backgroundColor: safeString(json['backgroundColor']),
@@ -114,4 +124,5 @@ class GroupModel {
     'isBackgroundColorVisible': isBackgroundColorVisible,
     'categories': categories,
     'parentCategories': parentCategories.map((e) => e.toJson()).toList(),
-  };}
+  };
+}

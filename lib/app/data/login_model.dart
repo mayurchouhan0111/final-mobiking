@@ -1,5 +1,5 @@
 import 'cart_model.dart';
-import 'product_model.dart'; 
+import 'product_model.dart';
 
 class UserModel {
   final String? id;
@@ -11,7 +11,7 @@ class UserModel {
   final List<String>? departments;
   final List<String>? documents;
   final List<CartModel> cart;
-  final List<ProductModel> wishlist; 
+  final List<ProductModel> wishlist;
   final Map<String, dynamic>? permissions;
 
   UserModel({
@@ -25,7 +25,7 @@ class UserModel {
     this.documents,
     this.permissions,
     this.cart = const [],
-    this.wishlist = const [], 
+    this.wishlist = const [],
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -39,8 +39,14 @@ class UserModel {
       departments: List<String>.from(json['departments'] ?? []),
       documents: List<String>.from(json['documents'] ?? []),
       permissions: Map<String, dynamic>.from(json['permissions'] ?? {}),
-      cart: (json['cart'] as List?)?.map((e) => CartModel.fromJson(e)).toList() ?? [],
-      wishlist: (json['wishlist'] as List?)?.map((e) => ProductModel.fromJson(e)).toList() ?? [], 
+      cart:
+          (json['cart'] as List?)?.map((e) => CartModel.fromJson(e)).toList() ??
+          [],
+      wishlist:
+          (json['wishlist'] as List?)
+              ?.map((e) => ProductModel.fromJson(e))
+              .toList() ??
+          [],
     );
   }
 
@@ -54,6 +60,6 @@ class UserModel {
     'documents': documents,
     'permissions': permissions,
     'cart': cart.map((c) => c.toJson()).toList(),
-    'wishlist': wishlist.map((w) => w.toJson()).toList(), 
+    'wishlist': wishlist.map((w) => w.toJson()).toList(),
   };
 }

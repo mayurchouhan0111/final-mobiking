@@ -51,19 +51,28 @@ class _VariantSelectorState extends State<VariantSelector> {
                 },
                 child: Container(
                   margin: const EdgeInsets.only(right: 12),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: isSelected ? Colors.deepPurple : Colors.grey.shade400,
+                      color: isSelected
+                          ? Colors.deepPurple
+                          : Colors.grey.shade400,
                       width: 1.5,
                     ),
-                    color: isSelected ? Colors.deepPurple.withOpacity(0.15) : Colors.white,
+                    color: isSelected
+                        ? Colors.deepPurple.withOpacity(0.15)
+                        : Colors.white,
                   ),
                   child: Text(
                     variantName,
                     style: TextStyle(
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
                       color: isSelected ? Colors.deepPurple : Colors.black87,
                     ),
                   ),

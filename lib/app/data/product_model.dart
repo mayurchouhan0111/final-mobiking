@@ -105,7 +105,9 @@ class ProductModel extends HiveObject {
   factory ProductModel.fromJson(Map<String, dynamic> json) {
     CategoryModel? categoryModel;
     if (json['category'] != null && json['category'] is Map) {
-      categoryModel = CategoryModel.fromJson(json['category'] as Map<String, dynamic>);
+      categoryModel = CategoryModel.fromJson(
+        json['category'] as Map<String, dynamic>,
+      );
     }
 
     return ProductModel(

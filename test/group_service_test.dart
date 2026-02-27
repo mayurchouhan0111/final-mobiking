@@ -26,12 +26,12 @@ void main() {
           "sequenceNo": 1,
           "banner": "http://example.com/banner.jpg",
           "active": true,
-          "products": ["prod1", "prod2"]
-        }
+          "products": ["prod1", "prod2"],
+        },
       ];
 
       when(mockDio.get('/groups')).thenAnswer(
-            (_) async => Response(
+        (_) async => Response(
           data: dummyGroups,
           statusCode: 200,
           requestOptions: RequestOptions(path: '/groups'),
@@ -58,7 +58,7 @@ void main() {
       );
 
       when(mockDio.post('/groups', data: anyNamed('data'))).thenAnswer(
-            (_) async => Response(
+        (_) async => Response(
           data: group.toJson(),
           statusCode: 201,
           requestOptions: RequestOptions(path: '/groups'),

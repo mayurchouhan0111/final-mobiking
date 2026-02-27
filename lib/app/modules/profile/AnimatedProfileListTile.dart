@@ -39,13 +39,17 @@ class AnimatedProfileListTile extends StatelessWidget {
               ),
             ],
           ),
-          child: Material( // Material for ripple effect
+          child: Material(
+            // Material for ripple effect
             color: Colors.transparent,
             child: InkWell(
               borderRadius: BorderRadius.circular(12),
               onTap: onTap,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 14.0,
+                ),
                 child: Row(
                   children: [
                     Icon(

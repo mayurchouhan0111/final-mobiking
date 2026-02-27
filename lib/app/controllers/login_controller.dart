@@ -37,7 +37,8 @@ class LoginController extends GetxController {
 
   Rx<Map<String, dynamic>?> currentUser = Rx<Map<String, dynamic>?>(null);
 
-  final ConnectivityController _connectivityController = Get.find<ConnectivityController>();
+  final ConnectivityController _connectivityController =
+      Get.find<ConnectivityController>();
   final CartController _cartController = Get.find<CartController>();
   final WishlistController _wishlistController = Get.find<WishlistController>();
 
@@ -71,7 +72,8 @@ class LoginController extends GetxController {
             : null;
 
         if (responseData != null && responseData['success'] == true) {
-          currentOtpPhoneNumber.value = phoneNumber; // Store phone number for resend
+          currentOtpPhoneNumber.value =
+              phoneNumber; // Store phone number for resend
           print('LoginController: OTP sent successfully');
           _startOtpResendTimer(); // Start the countdown timer
           return true;
@@ -84,7 +86,10 @@ class LoginController extends GetxController {
         final Map<String, dynamic>? errorData = response.data is Map
             ? response.data as Map<String, dynamic>
             : null;
-        throw Exception(errorData?['message'] ?? 'Failed to send OTP with status ${response.statusCode}');
+        throw Exception(
+          errorData?['message'] ??
+              'Failed to send OTP with status ${response.statusCode}',
+        );
       }
     } catch (e) {
       print('LoginController: Error sending OTP: $e');
@@ -120,7 +125,9 @@ class LoginController extends GetxController {
         await box.write('cartId', cartId);
 
         print('LoginController: User object before setting currentUser: $user');
-        print('LoginController: User _id before setting currentUser: ${user?['_id']}');
+        print(
+          'LoginController: User _id before setting currentUser: ${user?['_id']}',
+        );
         currentUser.value = user;
 
         // Fetch fresh cart data immediately after login to ensure the UI shows up-to-date items
@@ -155,7 +162,9 @@ class LoginController extends GetxController {
     try {
       print('LoginController: Resending OTP to ${currentOtpPhoneNumber.value}');
 
-      final response = await loginService.sendOtp(currentOtpPhoneNumber.value); // Re-use sendOtp
+      final response = await loginService.sendOtp(
+        currentOtpPhoneNumber.value,
+      ); // Re-use sendOtp
 
       if (response.statusCode == 200 && response.data['success'] == true) {
         print('LoginController: OTP resent successfully');
@@ -236,7 +245,9 @@ class LoginController extends GetxController {
           );
           return false;
         }
-        print('LoginController: Confirmation validated. User typed: $confirmationText');
+        print(
+          'LoginController: Confirmation validated. User typed: $confirmationText',
+        );
       }
 
       // Call the delete user API from LoginService (only the basic deleteUser method)
@@ -280,7 +291,8 @@ class LoginController extends GetxController {
         errorMessage = 'Server error occurred. Please try again later';
       } else {
         // Clean up the error message by removing the exception prefix
-        errorMessage = e.toString()
+        errorMessage = e
+            .toString()
             .replaceAll('LoginServiceException: ', '')
             .replaceAll('[Status 401] ', '')
             .replaceAll('[Status 403] ', '')
@@ -302,18 +314,20 @@ class LoginController extends GetxController {
     }
   }
 
-// SIMPLIFIED: Method to check if user can delete account (local validation only)
+  // SIMPLIFIED: Method to check if user can delete account (local validation only)
   bool canDeleteAccount() {
     // Simple local validation - just check if user is logged in and has valid tokens
     final hasUser = currentUser.value != null;
     final hasAccessToken = box.read('accessToken') != null;
 
-    print('LoginController: canDeleteAccount - User: $hasUser, AccessToken: $hasAccessToken');
+    print(
+      'LoginController: canDeleteAccount - User: $hasUser, AccessToken: $hasAccessToken',
+    );
 
     return hasUser && hasAccessToken;
   }
 
-// OPTIONAL: Method to validate account deletion eligibility with additional checks
+  // OPTIONAL: Method to validate account deletion eligibility with additional checks
   Future<bool> validateAccountDeletion() async {
     try {
       // Basic validation first
@@ -321,11 +335,12 @@ class LoginController extends GetxController {
         return false;
       }
 
-
       // Optional: Check service health before allowing deletion
       final isHealthy = await loginService.checkServiceHealth();
       if (!isHealthy) {
-        print('LoginController: Service is not healthy, account deletion not available');
+        print(
+          'LoginController: Service is not healthy, account deletion not available',
+        );
         return false;
       }
 
@@ -367,7 +382,6 @@ class LoginController extends GetxController {
     }
   }
 
-
   void _loadCurrentUserFromStorage() {
     final storedUser = box.read('user');
     if (storedUser != null && storedUser is Map<String, dynamic>) {
@@ -376,8 +390,6 @@ class LoginController extends GetxController {
       currentUser.value = null;
     }
   }
-
-
 
   void _clearLoginData() {
     _otpResendTimer?.cancel();
@@ -424,7 +436,6 @@ class LoginController extends GetxController {
       isLoading.value = false;
     }
   }
-
 
   Map<String, dynamic> getTokenStatus() {
     return loginService.getTokenStatus();

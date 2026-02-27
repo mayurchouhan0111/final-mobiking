@@ -50,10 +50,7 @@ class _FloatingCartButtonState extends State<FloatingCartButton>
       reverseDuration: const Duration(milliseconds: 100),
     );
     _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
-      CurvedAnimation(
-        parent: _scaleController,
-        curve: Curves.easeOutCubic,
-      ),
+      CurvedAnimation(parent: _scaleController, curve: Curves.easeOutCubic),
     );
 
     // Initialize button fade-in animation
@@ -85,24 +82,32 @@ class _FloatingCartButtonState extends State<FloatingCartButton>
     for (int i = 0; i < effectiveUrls.length; i++) {
       final controller = AnimationController(
         vsync: this,
-        duration: const Duration(milliseconds: 500), // Duration for each image animation
+        duration: const Duration(
+          milliseconds: 500,
+        ), // Duration for each image animation
       );
       // Slide animation from slightly below to its final position
-      final slideAnimation = Tween<Offset>(
-        begin: const Offset(0, 0.6), // Starts slightly lower
-        end: Offset.zero,
-      ).animate(CurvedAnimation(
-        parent: controller,
-        curve: Curves.easeOutBack, // Bouncy effect
-      ));
+      final slideAnimation =
+          Tween<Offset>(
+            begin: const Offset(0, 0.6), // Starts slightly lower
+            end: Offset.zero,
+          ).animate(
+            CurvedAnimation(
+              parent: controller,
+              curve: Curves.easeOutBack, // Bouncy effect
+            ),
+          );
       // Scale animation from smaller to full size
-      final scaleAnimation = Tween<double>(
-        begin: 0.7, // Starts smaller
-        end: 1.0,
-      ).animate(CurvedAnimation(
-        parent: controller,
-        curve: Curves.elasticOut, // Elastic effect
-      ));
+      final scaleAnimation =
+          Tween<double>(
+            begin: 0.7, // Starts smaller
+            end: 1.0,
+          ).animate(
+            CurvedAnimation(
+              parent: controller,
+              curve: Curves.elasticOut, // Elastic effect
+            ),
+          );
 
       _imageControllers.add(controller);
       _imageSlideAnimations.add(slideAnimation);
@@ -110,7 +115,8 @@ class _FloatingCartButtonState extends State<FloatingCartButton>
 
       // Add a slight staggered delay for each image
       Future.delayed(Duration(milliseconds: i * 100), () {
-        if (mounted) { // Check if the widget is still in the tree
+        if (mounted) {
+          // Check if the widget is still in the tree
           controller.forward();
         }
       });
@@ -181,7 +187,9 @@ class _FloatingCartButtonState extends State<FloatingCartButton>
     double imageOverlap = 16.0; // Adjusted overlap
 
     // Calculate the width needed for the overlapping image stack (max 3 images)
-    final List<String> effectiveImageUrls = widget.productImageUrls.take(3).toList(); // Convert to List here
+    final List<String> effectiveImageUrls = widget.productImageUrls
+        .take(3)
+        .toList(); // Convert to List here
     double stackWidth = effectiveImageUrls.isNotEmpty
         ? imageSize + (effectiveImageUrls.length - 1) * imageOverlap
         : 0.0;
@@ -195,22 +203,30 @@ class _FloatingCartButtonState extends State<FloatingCartButton>
         child: ScaleTransition(
           scale: _scaleAnimation, // Tap feedback animation
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), // Increased padding
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 8,
+            ), // Increased padding
             decoration: BoxDecoration(
               color: AppColors.success, // Solid green background
-              borderRadius: BorderRadius.circular(35), // More rounded, stadium shape
+              borderRadius: BorderRadius.circular(
+                35,
+              ), // More rounded, stadium shape
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min, // Wrap content tightly
-              mainAxisAlignment: MainAxisAlignment.center, // Center content horizontally
+              mainAxisAlignment:
+                  MainAxisAlignment.center, // Center content horizontally
               children: [
                 // Display product images if available
-                if (effectiveImageUrls.isNotEmpty) ...[ // Use effectiveImageUrls here
+                if (effectiveImageUrls.isNotEmpty) ...[
+                  // Use effectiveImageUrls here
                   SizedBox(
                     width: stackWidth,
                     height: imageSize,
                     child: Stack(
-                      children: effectiveImageUrls.asMap().entries.map((entry) { // Use effectiveImageUrls here
+                      children: effectiveImageUrls.asMap().entries.map((entry) {
+                        // Use effectiveImageUrls here
                         int index = entry.key;
                         String url = entry.value;
 
@@ -228,25 +244,39 @@ class _FloatingCartButtonState extends State<FloatingCartButton>
                             position: slideAnim,
                             child: ScaleTransition(
                               scale: scaleAnim,
-                              child: Container( // Using Container for more control over border
+                              child: Container(
+                                // Using Container for more control over border
                                 width: imageSize,
                                 height: imageSize,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: Colors.grey[800], // Background color while loading/error
-                                  border: Border.all(color: Colors.white, width: 2.0), // White border around images
+                                  color: Colors
+                                      .grey[800], // Background color while loading/error
+                                  border: Border.all(
+                                    color: Colors.white,
+                                    width: 2.0,
+                                  ), // White border around images
                                   image: DecorationImage(
                                     image: NetworkImage(url),
                                     fit: BoxFit.cover,
                                     // Add error handling for NetworkImage
                                     onError: (exception, stackTrace) {
-                                      print('Error loading image: $url, $exception');
+                                      print(
+                                        'Error loading image: $url, $exception',
+                                      );
                                     },
                                   ),
                                 ),
                                 // Fallback for error or while loading (e.g., an icon)
-                                child: (url.isEmpty || !url.startsWith('http')) ?
-                                const Center(child: Icon(Icons.image_not_supported, color: Colors.white, size: 20)) : null,
+                                child: (url.isEmpty || !url.startsWith('http'))
+                                    ? const Center(
+                                        child: Icon(
+                                          Icons.image_not_supported,
+                                          color: Colors.white,
+                                          size: 20,
+                                        ),
+                                      )
+                                    : null,
                               ),
                             ),
                           ),
@@ -259,28 +289,34 @@ class _FloatingCartButtonState extends State<FloatingCartButton>
                 // Animated text for item count and label
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 300),
-                  transitionBuilder: (Widget child, Animation<double> animation) {
-                    final slideAnimation = Tween<Offset>(
-                      begin: const Offset(0, 0.5),
-                      end: Offset.zero,
-                    ).animate(CurvedAnimation(
-                      parent: animation,
-                      curve: Curves.easeOut,
-                    ));
-                    final fadeAnimation = CurvedAnimation(
-                      parent: animation,
-                      curve: Curves.easeIn,
-                    );
-                    return FadeTransition(
-                      opacity: fadeAnimation,
-                      child: SlideTransition(
-                        position: slideAnimation,
-                        child: child,
-                      ),
-                    );
-                  },
+                  transitionBuilder:
+                      (Widget child, Animation<double> animation) {
+                        final slideAnimation =
+                            Tween<Offset>(
+                              begin: const Offset(0, 0.5),
+                              end: Offset.zero,
+                            ).animate(
+                              CurvedAnimation(
+                                parent: animation,
+                                curve: Curves.easeOut,
+                              ),
+                            );
+                        final fadeAnimation = CurvedAnimation(
+                          parent: animation,
+                          curve: Curves.easeIn,
+                        );
+                        return FadeTransition(
+                          opacity: fadeAnimation,
+                          child: SlideTransition(
+                            position: slideAnimation,
+                            child: child,
+                          ),
+                        );
+                      },
                   child: Column(
-                    key: ValueKey<int>(widget.itemCount), // Key is essential for AnimatedSwitcher
+                    key: ValueKey<int>(
+                      widget.itemCount,
+                    ), // Key is essential for AnimatedSwitcher
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -295,7 +331,9 @@ class _FloatingCartButtonState extends State<FloatingCartButton>
                       Text(
                         "${widget.itemCount} items", // e.g., "2 ITEMS"
                         style: GoogleFonts.inter(
-                          color: Colors.white.withOpacity(0.8), // Slightly subdued color
+                          color: Colors.white.withOpacity(
+                            0.8,
+                          ), // Slightly subdued color
                           fontWeight: FontWeight.w500, // Medium weight
                           fontSize: 12, // Increased font size
                         ),
@@ -305,7 +343,11 @@ class _FloatingCartButtonState extends State<FloatingCartButton>
                 ),
                 const SizedBox(width: 12), // Spacing before the arrow icon
                 // Right-facing arrow icon (chevron)
-                const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 16), // Chevron icon
+                const Icon(
+                  Icons.arrow_forward_ios,
+                  color: Colors.white,
+                  size: 16,
+                ), // Chevron icon
               ],
             ),
           ),

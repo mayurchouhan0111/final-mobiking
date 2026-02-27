@@ -15,16 +15,18 @@ class CategoryService {
   static const String categoriesBoxName = 'categories';
   static const String categoryDetailsBoxName = 'category_details';
   static const String metadataBoxName = 'metadata';
-  static const String lastFetchCategoriesKey = 'last_fetch_categories_timestamp';
+  static const String lastFetchCategoriesKey =
+      'last_fetch_categories_timestamp';
   static const String lastFetchDetailsPrefix = 'last_fetch_details_';
   static const Duration cacheValidDuration = Duration(minutes: 10);
 
-  late Box<CategoryModel> _categoriesBox;    // ✅ Added generic type
-  late Box<Map> _categoryDetailsBox;         // ✅ Added generic type
-  late Box<String> _metadataBox;             // ✅ Added generic type
+  late Box<CategoryModel> _categoriesBox; // ✅ Added generic type
+  late Box<Map> _categoryDetailsBox; // ✅ Added generic type
+  late Box<String> _metadataBox; // ✅ Added generic type
 
   // Initialize Hive boxes
-  Future<void> init() async {  // ✅ Added return type
+  Future<void> init() async {
+    // ✅ Added return type
     try {
       _categoriesBox = await Hive.openBox<CategoryModel>(categoriesBoxName);
       _categoryDetailsBox = await Hive.openBox<Map>(categoryDetailsBoxName);
@@ -45,19 +47,23 @@ class CategoryService {
     final now = DateTime.now();
     final isValid = now.difference(lastFetch) < cacheValidDuration;
 
-    print('[CategoryService] Cache valid for $key: $isValid (Last fetch: $lastFetch)');
+    print(
+      '[CategoryService] Cache valid for $key: $isValid (Last fetch: $lastFetch)',
+    );
     return isValid;
   }
 
   // Get cached categories
-  List<CategoryModel> _getCachedCategories() {  // ✅ Added generic type
+  List<CategoryModel> _getCachedCategories() {
+    // ✅ Added generic type
     final cached = _categoriesBox.values.toList();
     print('[CategoryService] Retrieved ${cached.length} categories from cache');
     return cached;
   }
 
   // Save categories to cache
-  Future<void> _cacheCategories(List<CategoryModel> categories) async {  // ✅ Added generic types
+  Future<void> _cacheCategories(List<CategoryModel> categories) async {
+    // ✅ Added generic types
     try {
       // Clear existing cache
       await _categoriesBox.clear();
@@ -68,7 +74,10 @@ class CategoryService {
       }
 
       // Update last fetch timestamp
-      await _metadataBox.put(lastFetchCategoriesKey, DateTime.now().toIso8601String());
+      await _metadataBox.put(
+        lastFetchCategoriesKey,
+        DateTime.now().toIso8601String(),
+      );
 
       print('[CategoryService] Cached ${categories.length} categories');
     } catch (e) {
@@ -80,35 +89,49 @@ class CategoryService {
   Map<String, dynamic>? _getCachedCategoryDetails(String slug) {
     final cached = _categoryDetailsBox.get(slug);
     if (cached != null) {
-      print('[CategoryService] Retrieved cached category details for slug: $slug');
+      print(
+        '[CategoryService] Retrieved cached category details for slug: $slug',
+      );
       // Convert the cached Map back to the expected format
       return {
         'category': cached['category'] != null
-            ? CategoryModel.fromJson(Map<String, dynamic>.from(cached['category']))
+            ? CategoryModel.fromJson(
+                Map<String, dynamic>.from(cached['category']),
+              )
             : null,
-        'subCategories': (cached['subCategories'] as List?)
-            ?.map((e) => SubCategory.fromJson(Map<String, dynamic>.from(e)))
-            .toList() ?? <SubCategory>[],
+        'subCategories':
+            (cached['subCategories'] as List?)
+                ?.map((e) => SubCategory.fromJson(Map<String, dynamic>.from(e)))
+                .toList() ??
+            <SubCategory>[],
       };
     }
     return null;
   }
 
   // Save category details to cache
-  Future<void> _cacheCategoryDetails(String slug, Map<String, dynamic> details) async {
+  Future<void> _cacheCategoryDetails(
+    String slug,
+    Map<String, dynamic> details,
+  ) async {
     try {
       // Convert to a serializable format
       final cacheData = {
         'category': details['category']?.toJson(),
-        'subCategories': (details['subCategories'] as List<SubCategory>?)
-            ?.map((e) => e.toJson())
-            .toList() ?? [],
+        'subCategories':
+            (details['subCategories'] as List<SubCategory>?)
+                ?.map((e) => e.toJson())
+                .toList() ??
+            [],
       };
 
       await _categoryDetailsBox.put(slug, cacheData);
 
       // Update last fetch timestamp for this specific slug
-      await _metadataBox.put('$lastFetchDetailsPrefix$slug', DateTime.now().toIso8601String());
+      await _metadataBox.put(
+        '$lastFetchDetailsPrefix$slug',
+        DateTime.now().toIso8601String(),
+      );
 
       print('[CategoryService] Cached category details for slug: $slug');
     } catch (e) {
@@ -116,23 +139,32 @@ class CategoryService {
     }
   }
 
-  Future<Map<String, dynamic>> getCategoryDetails(String slug, {bool forceRefresh = false}) async {
+  Future<Map<String, dynamic>> getCategoryDetails(
+    String slug, {
+    bool forceRefresh = false,
+  }) async {
     // Ensure boxes are initialized (handled by onInit now)
 
     // Return cached data if valid and not forcing refresh
     if (!forceRefresh && _isCacheValid('$lastFetchDetailsPrefix$slug')) {
       final cached = _getCachedCategoryDetails(slug);
       if (cached != null) {
-        print('[CategoryService] Returning cached category details for slug: $slug');
+        print(
+          '[CategoryService] Returning cached category details for slug: $slug',
+        );
         return cached;
       }
     }
 
     // Fetch from API
-    print('[CategoryService] Fetching fresh category details from API for slug: $slug');
+    print(
+      '[CategoryService] Fetching fresh category details from API for slug: $slug',
+    );
 
     try {
-      final response = await http.get(Uri.parse('$baseUrl/categories/details/$slug'));
+      final response = await http.get(
+        Uri.parse('$baseUrl/categories/details/$slug'),
+      );
 
       if (response.statusCode == 200) {
         final raw = json.decode(response.body);
@@ -150,40 +182,38 @@ class CategoryService {
         }
 
         final category = CategoryModel.fromJson(data);
-        final subCategories = (data['subCategories'] as List?)
-            ?.map((e) => SubCategory.fromJson(e)).where((element) => element.active)
-            .toList() ?? <SubCategory>[];
+        final subCategories =
+            (data['subCategories'] as List?)
+                ?.map((e) => SubCategory.fromJson(e))
+                .where((element) => element.active)
+                .toList() ??
+            <SubCategory>[];
 
-        final result = {
-          'category': category,
-          'subCategories': subCategories,
-        };
+        final result = {'category': category, 'subCategories': subCategories};
 
         // Cache the fresh data
         await _cacheCategoryDetails(slug, result);
 
-        print('CategoryService: Successfully fetched category details for slug: $slug');
+        print(
+          'CategoryService: Successfully fetched category details for slug: $slug',
+        );
 
         // Show success message only for forced refresh
-        if (forceRefresh) {
-
-        }
+        if (forceRefresh) {}
 
         return result;
       } else {
-        print('CategoryService: Failed to load category details for slug: $slug. Status: ${response.statusCode}');
+        print(
+          'CategoryService: Failed to load category details for slug: $slug. Status: ${response.statusCode}',
+        );
 
         // Try to return cached data as fallback
         final cached = _getCachedCategoryDetails(slug);
         if (cached != null) {
-
           return cached;
         }
 
-        return {
-          'category': null,
-          'subCategories': <SubCategory>[],
-        };
+        return {'category': null, 'subCategories': <SubCategory>[]};
       }
     } catch (e) {
       print('CategoryService: Exception in getCategoryDetails: $e');
@@ -191,14 +221,10 @@ class CategoryService {
       // Try to return cached data as fallback
       final cached = _getCachedCategoryDetails(slug);
       if (cached != null) {
-
         return cached;
       }
 
-      return {
-        'category': null,
-        'subCategories': <SubCategory>[],
-      };
+      return {'category': null, 'subCategories': <SubCategory>[]};
     }
   }
 
@@ -235,7 +261,9 @@ class CategoryService {
         }
 
         if (dataField is! List) {
-          print('CategoryService: Data field is not a list: ${dataField.runtimeType}');
+          print(
+            'CategoryService: Data field is not a list: ${dataField.runtimeType}',
+          );
           return <CategoryModel>[];
         }
 
@@ -256,7 +284,9 @@ class CategoryService {
               final category = CategoryModel.fromJson(categoryJson);
               categories.add(category);
             } else {
-              print('CategoryService: Invalid category data at index $i: $categoryJson');
+              print(
+                'CategoryService: Invalid category data at index $i: $categoryJson',
+              );
             }
           } catch (e) {
             print('CategoryService: Error parsing category at index $i: $e');
@@ -269,25 +299,25 @@ class CategoryService {
         // Sort categories alphabetically by name
         activeCategories.sort((a, b) => a.name.compareTo(b.name));
 
-        print('CategoryService: Successfully parsed ${activeCategories.length} categories');
+        print(
+          'CategoryService: Successfully parsed ${activeCategories.length} categories',
+        );
 
         // Cache the fresh data
         await _cacheCategories(activeCategories);
 
         // Show success message only for forced refresh
-        if (forceRefresh && activeCategories.isNotEmpty) {
-
-        }
+        if (forceRefresh && activeCategories.isNotEmpty) {}
 
         return activeCategories;
-
       } else {
-        print('CategoryService: HTTP error ${response.statusCode}: ${response.reasonPhrase}');
+        print(
+          'CategoryService: HTTP error ${response.statusCode}: ${response.reasonPhrase}',
+        );
 
         // Try to return cached data as fallback
         final cached = _getCachedCategories();
         if (cached.isNotEmpty) {
-
           return cached;
         }
 
@@ -299,7 +329,6 @@ class CategoryService {
       // Try to return cached data as fallback
       final cached = _getCachedCategories();
       if (cached.isNotEmpty) {
-
         return cached;
       }
 
@@ -327,7 +356,9 @@ class CategoryService {
       // Clear all category details
       await _categoryDetailsBox.clear();
       // Clear all details timestamps
-      final keys = _metadataBox.keys.where((key) => key.startsWith(lastFetchDetailsPrefix)).toList();
+      final keys = _metadataBox.keys
+          .where((key) => key.startsWith(lastFetchDetailsPrefix))
+          .toList();
       for (final key in keys) {
         await _metadataBox.delete(key);
       }
@@ -346,7 +377,8 @@ class CategoryService {
   Map<String, dynamic> getCacheInfo() {
     try {
       // Ensure boxes are initialized
-      if (!Hive.isBoxOpen(categoriesBoxName) || !Hive.isBoxOpen(metadataBoxName)) {
+      if (!Hive.isBoxOpen(categoriesBoxName) ||
+          !Hive.isBoxOpen(metadataBoxName)) {
         return {
           'cachedCategoriesCount': 0,
           'cachedDetailsCount': 0,
@@ -358,7 +390,9 @@ class CategoryService {
       final categoriesCount = _categoriesBox.length;
       final detailsCount = _categoryDetailsBox.length;
       final lastFetchString = _metadataBox.get(lastFetchCategoriesKey);
-      final lastFetch = lastFetchString != null ? DateTime.parse(lastFetchString) : null;
+      final lastFetch = lastFetchString != null
+          ? DateTime.parse(lastFetchString)
+          : null;
       final isCategoriesCacheValid = _isCacheValid(lastFetchCategoriesKey);
 
       return {
@@ -391,7 +425,9 @@ class CategoryService {
   // Fetch products by subcategory slug
   Future<List<ProductModel>> getProductsBySubCategorySlug(String slug) async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/categories/subCategories/details/$slug'));
+      final response = await http.get(
+        Uri.parse('$baseUrl/categories/subCategories/details/$slug'),
+      );
 
       if (response.statusCode == 200) {
         final raw = json.decode(response.body);
@@ -402,13 +438,17 @@ class CategoryService {
           return <ProductModel>[];
         }
 
-        final products = (data['products'] as List?)
-            ?.map((e) => ProductModel.fromJson(e))
-            .toList() ?? <ProductModel>[];
+        final products =
+            (data['products'] as List?)
+                ?.map((e) => ProductModel.fromJson(e))
+                .toList() ??
+            <ProductModel>[];
 
         return products;
       } else {
-        print('CategoryService: Failed to load products for slug: $slug. Status: ${response.statusCode}');
+        print(
+          'CategoryService: Failed to load products for slug: $slug. Status: ${response.statusCode}',
+        );
         return <ProductModel>[];
       }
     } catch (e) {

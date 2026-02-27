@@ -4,14 +4,14 @@ import 'package:dio/dio.dart';
 class PincodeService {
   static final Dio _dio = Dio();
 
-  static Future<Map<String, String>?> getLocationByPincode(String pincode) async {
+  static Future<Map<String, String>?> getLocationByPincode(
+    String pincode,
+  ) async {
     try {
       // Using India Post API (free and reliable)
       final response = await _dio.get(
         'https://api.postalpincode.in/pincode/$pincode',
-        options: Options(
-          receiveTimeout: const Duration(seconds: 10),
-        ),
+        options: Options(receiveTimeout: const Duration(seconds: 10)),
       );
 
       if (response.statusCode == 200 && response.data is List) {

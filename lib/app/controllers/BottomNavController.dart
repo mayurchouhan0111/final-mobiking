@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:mobiking/app/controllers/system_ui_controller.dart';
 
-
 import '../modules/Categories/Categories_screen.dart';
 import '../modules/home/home_screen.dart';
 import '../modules/profile/profile_screen.dart';
@@ -16,8 +15,8 @@ class BottomNavController extends GetxController {
 
   // Remove OrdersScreen from this list
   final List<Widget> pages = [
-     HomeScreen(),
-     CategorySectionScreen(),
+    HomeScreen(),
+    CategorySectionScreen(),
     // Remove: const OrdersScreen(), // <-- Remove this line
     const ProfileScreen(),
   ];
@@ -29,7 +28,8 @@ class BottomNavController extends GetxController {
     isFabVisible.value = (index != 2); // Profile tab is at index 2
 
     // Update your SystemUI logic if needed
-    final SystemUIController systemUiController = Get.find<SystemUIController>();
+    final SystemUIController systemUiController =
+        Get.find<SystemUIController>();
 
     switch (index) {
       case 0: // Home

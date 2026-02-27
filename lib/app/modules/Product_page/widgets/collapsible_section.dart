@@ -20,7 +20,8 @@ class CollapsibleSection extends StatefulWidget {
   State<CollapsibleSection> createState() => _CollapsibleSectionState();
 }
 
-class _CollapsibleSectionState extends State<CollapsibleSection> with SingleTickerProviderStateMixin {
+class _CollapsibleSectionState extends State<CollapsibleSection>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
   bool _isExpanded = false;
@@ -33,10 +34,7 @@ class _CollapsibleSectionState extends State<CollapsibleSection> with SingleTick
       vsync: this,
       duration: const Duration(milliseconds: 300),
     );
-    _animation = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOut,
-    );
+    _animation = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
 
     if (_isExpanded) {
       _controller.value = 1.0;
@@ -76,7 +74,10 @@ class _CollapsibleSectionState extends State<CollapsibleSection> with SingleTick
             borderRadius: BorderRadius.circular(12), // Match card border
             splashFactory: InkRipple.splashFactory, // Nice ripple effect
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 14.0,
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -110,7 +111,12 @@ class _CollapsibleSectionState extends State<CollapsibleSection> with SingleTick
               child: Offstage(
                 offstage: !_isExpanded && _controller.isDismissed,
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16), // Adjusted padding
+                  padding: const EdgeInsets.fromLTRB(
+                    16,
+                    0,
+                    16,
+                    16,
+                  ), // Adjusted padding
                   child: widget.content,
                 ),
               ),

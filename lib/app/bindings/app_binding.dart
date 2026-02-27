@@ -36,7 +36,6 @@ class AppBinding extends Bindings {
     Get.put<CategoryController>(CategoryController());
     Get.put<SubCategoryController>(SubCategoryController());
 
-
     // Dependent Feature Controllers
 
     Get.put<AddressController>(AddressController());

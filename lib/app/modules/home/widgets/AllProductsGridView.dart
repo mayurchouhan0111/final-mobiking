@@ -32,7 +32,6 @@ class AllProductsGridView extends StatefulWidget {
 
 class _AllProductsGridViewState extends State<AllProductsGridView>
     with AutomaticKeepAliveClientMixin {
-
   @override
   bool get wantKeepAlive => true;
 
@@ -94,7 +93,8 @@ class _AllProductsGridViewState extends State<AllProductsGridView>
     if (_isLoadingTriggered ||
         widget.isLoadingMore ||
         !widget.hasMoreProducts ||
-        widget.onLoadMore == null) return;
+        widget.onLoadMore == null)
+      return;
 
     _isLoadingTriggered = true;
 
@@ -110,17 +110,18 @@ class _AllProductsGridViewState extends State<AllProductsGridView>
 
     final currentHash = Object.hashAll(widget.products.map((p) => p.id));
 
-    if (_cachedFilteredProducts != null && _lastProductHashCode == currentHash) {
+    if (_cachedFilteredProducts != null &&
+        _lastProductHashCode == currentHash) {
       return _cachedFilteredProducts!;
     }
 
     // Create a copy and sort by stock status
     final sortedProducts = List<ProductModel>.from(widget.products);
-    
+
     sortedProducts.sort((a, b) {
       bool aInStock = a.totalStock > 0 || a.variants.values.any((v) => v > 0);
       bool bInStock = b.totalStock > 0 || b.variants.values.any((v) => v > 0);
-      
+
       if (aInStock && !bInStock) return -1;
       if (!aInStock && bInStock) return 1;
       return 0;
@@ -133,7 +134,8 @@ class _AllProductsGridViewState extends State<AllProductsGridView>
   }
 
   bool _isProductOutOfStock(ProductModel product) {
-    return product.totalStock <= 0 && !product.variants.values.any((v) => v > 0);
+    return product.totalStock <= 0 &&
+        !product.variants.values.any((v) => v > 0);
   }
 
   @override
@@ -235,7 +237,7 @@ class _AllProductsGridViewState extends State<AllProductsGridView>
         return RepaintBoundary(
           child: GestureDetector(
             onTap: () => Get.to(
-                  () => ProductPage(product: product, heroTag: heroTag),
+              () => ProductPage(product: product, heroTag: heroTag),
               transition: Transition.fadeIn,
               duration: const Duration(milliseconds: 200),
             ),
@@ -247,17 +249,14 @@ class _AllProductsGridViewState extends State<AllProductsGridView>
   }
 
   Widget _buildProductCard(
-      ProductModel product,
-      bool isOutOfStock,
-      String heroTag,
-      TextTheme textTheme
-      ) {
+    ProductModel product,
+    bool isOutOfStock,
+    String heroTag,
+    TextTheme textTheme,
+  ) {
     return Stack(
       children: [
-        AllProductGridCard(
-          product: product,
-          heroTag: heroTag,
-        ),
+        AllProductGridCard(product: product, heroTag: heroTag),
 
         if (isOutOfStock)
           Positioned.fill(
@@ -268,7 +267,10 @@ class _AllProductsGridViewState extends State<AllProductsGridView>
               ),
               child: Center(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.red.shade600,
                     borderRadius: BorderRadius.circular(4),
@@ -348,10 +350,7 @@ class _AllProductsGridViewState extends State<AllProductsGridView>
             SizedBox(height: 12),
             Text(
               'Loading products...',
-              style: TextStyle(
-                color: AppColors.textLight,
-                fontSize: 14,
-              ),
+              style: TextStyle(color: AppColors.textLight, fontSize: 14),
             ),
           ],
         ),

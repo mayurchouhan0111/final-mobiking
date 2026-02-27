@@ -34,13 +34,9 @@ class CategoryController extends GetxController {
       print('[CategoryController] Fetched categories count: ${result.length}');
 
       // Show success message only for forced refresh
-      if (forceRefresh && result.isNotEmpty) {
-
-      }
-
+      if (forceRefresh && result.isNotEmpty) {}
     } catch (e) {
       print('[CategoryController] Error in fetchCategories: $e');
-
     } finally {
       isLoading.value = false;
       isInitialLoad.value = false;
@@ -48,16 +44,23 @@ class CategoryController extends GetxController {
   }
 
   /// Fetch category details with caching
-  Future<void> fetchCategoryDetails(String slug, {bool forceRefresh = false}) async {
+  Future<void> fetchCategoryDetails(
+    String slug, {
+    bool forceRefresh = false,
+  }) async {
     try {
       isLoading.value = true;
       print('[CategoryController] Fetching category details for slug: $slug');
 
-      final response = await _service.getCategoryDetails(slug, forceRefresh: forceRefresh);
+      final response = await _service.getCategoryDetails(
+        slug,
+        forceRefresh: forceRefresh,
+      );
       selectedCategory.value = response['category'] as CategoryModel?;
 
-      print('[CategoryController] Category details fetched for: ${selectedCategory.value?.name}');
-
+      print(
+        '[CategoryController] Category details fetched for: ${selectedCategory.value?.name}',
+      );
     } catch (e) {
       print('[CategoryController] Error in fetchCategoryDetails: $e');
       // Get.snackbar('Error', 'Failed to load category details: $e');
@@ -75,7 +78,6 @@ class CategoryController extends GetxController {
   Future<void> clearCache() async {
     try {
       await _service.clearAllCache();
-
     } catch (e) {
       print('[CategoryController] Error clearing cache: $e');
     }

@@ -1,4 +1,3 @@
-
 import 'group_model.dart';
 import 'category_model.dart'; // Assuming you have a CategoryModel defined
 
@@ -116,11 +115,18 @@ class CategoryModel {
       photos: List<String>.from(json['photos'] ?? []),
       parentCategory: json['parentCategory'] as String?,
       products: List<String>.from(json['products'] ?? []),
-      createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '') ?? DateTime.now(),
-      updatedAt: DateTime.tryParse(json['updatedAt'] as String? ?? '') ?? DateTime.now(),
-      deliveryCharge: (json['deliveryCharge'] as num?)?.toDouble(), // ✅ safe cast
-      minFreeDeliveryOrderAmount: (json['minFreeDeliveryOrderAmount'] as num?)?.toDouble(), // ✅ safe cast
-      minOrderAmount: (json['minOrderAmount'] as num?)?.toDouble(), // ✅ safe cast
+      createdAt:
+          DateTime.tryParse(json['createdAt'] as String? ?? '') ??
+          DateTime.now(),
+      updatedAt:
+          DateTime.tryParse(json['updatedAt'] as String? ?? '') ??
+          DateTime.now(),
+      deliveryCharge: (json['deliveryCharge'] as num?)
+          ?.toDouble(), // ✅ safe cast
+      minFreeDeliveryOrderAmount: (json['minFreeDeliveryOrderAmount'] as num?)
+          ?.toDouble(), // ✅ safe cast
+      minOrderAmount: (json['minOrderAmount'] as num?)
+          ?.toDouble(), // ✅ safe cast
       icon: json['icon'] as String?,
       theme: json['theme'] as String?,
     );

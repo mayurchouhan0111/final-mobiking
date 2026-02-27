@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobiking/app/controllers/sub_category_controller.dart';
@@ -43,10 +42,12 @@ class GroupCategoriesSection extends StatelessWidget {
               final matchingSubs = subCategoryController.subCategories
                   .where((sub) => sub.parentCategory?.id == category.id)
                   .toList();
-              Get.to(() => CategoryProductsGridScreen(
-                    categoryName: category.name,
-                    subCategories: matchingSubs,
-                  ));
+              Get.to(
+                () => CategoryProductsGridScreen(
+                  categoryName: category.name,
+                  subCategories: matchingSubs,
+                ),
+              );
             },
           );
         },

@@ -305,147 +305,152 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
   // Verify Button
   Widget _buildVerifyButton(TextTheme textTheme) {
-    return Obx(() => Container(
-      width: double.infinity,
-      height: 52,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: _loginController.isOtpLoading.value
-              ? [
-            AppColors.textLight.withOpacity(0.5),
-            AppColors.textLight.withOpacity(0.7),
-          ]
-              : [
-            AppColors.primaryPurple,
-            AppColors.darkPurple,
-          ],
-        ),
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: _loginController.isOtpLoading.value
-            ? []
-            : [
-          BoxShadow(
-            color: AppColors.primaryPurple.withOpacity(0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
+    return Obx(
+      () => Container(
+        width: double.infinity,
+        height: 52,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: _loginController.isOtpLoading.value
+                ? [
+                    AppColors.textLight.withOpacity(0.5),
+                    AppColors.textLight.withOpacity(0.7),
+                  ]
+                : [AppColors.primaryPurple, AppColors.darkPurple],
           ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
           borderRadius: BorderRadius.circular(14),
-          onTap: _loginController.isOtpLoading.value ? null : _handleVerifyOtp,
-          child: Center(
-            child: _loginController.isOtpLoading.value
-                ? SizedBox(
-              width: 22,
-              height: 22,
-              child: CircularProgressIndicator(
-                color: AppColors.white,
-                strokeWidth: 2.5,
-              ),
-            )
-                : Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Verify Code',
-                  style: textTheme.titleLarge?.copyWith(
-                    color: AppColors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16,
+          boxShadow: _loginController.isOtpLoading.value
+              ? []
+              : [
+                  BoxShadow(
+                    color: AppColors.primaryPurple.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Icon(
-                  Icons.check_circle_outline,
-                  color: AppColors.white,
-                  size: 18,
-                ),
-              ],
+                ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(14),
+            onTap: _loginController.isOtpLoading.value
+                ? null
+                : _handleVerifyOtp,
+            child: Center(
+              child: _loginController.isOtpLoading.value
+                  ? SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                        color: AppColors.white,
+                        strokeWidth: 2.5,
+                      ),
+                    )
+                  : Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Verify Code',
+                          style: textTheme.titleLarge?.copyWith(
+                            color: AppColors.white,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Icon(
+                          Icons.check_circle_outline,
+                          color: AppColors.white,
+                          size: 18,
+                        ),
+                      ],
+                    ),
             ),
           ),
         ),
       ),
-    ));
+    );
   }
 
   // Resend Section
   Widget _buildResendSection(TextTheme textTheme) {
     return Column(
       children: [
-        Obx(() => _loginController.otpTimeRemaining.value > 0
-            ? RichText(
-          textAlign: TextAlign.center,
-          text: TextSpan(
-            text: "Resend code in ",
-            style: textTheme.bodySmall?.copyWith(
-              color: AppColors.textLight,
-              fontSize: 13,
-            ),
-            children: [
-              TextSpan(
-                text: _loginController.getFormattedTimeRemaining(),
-                style: TextStyle(
-                  color: AppColors.primaryPurple,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        )
-            : Text(
-          "Didn't receive the code?",
-          style: textTheme.bodySmall?.copyWith(
-            color: AppColors.textLight,
-            fontSize: 13,
-          ),
-        )),
-        const SizedBox(height: 8),
-        Obx(() => TextButton(
-          onPressed: _loginController.canResendOtp() ? _resendOtp : null,
-          style: TextButton.styleFrom(
-            foregroundColor: _loginController.canResendOtp()
-                ? AppColors.primaryPurple
-                : AppColors.textLight.withOpacity(0.5),
-            padding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          ),
-          child: _loginController.isResendingOtp.value
-              ? Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox(
-                width: 14,
-                height: 14,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                      AppColors.primaryPurple),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                "Sending...",
-                style: textTheme.bodySmall?.copyWith(
-                  color: AppColors.primaryPurple,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          )
+        Obx(
+          () => _loginController.otpTimeRemaining.value > 0
+              ? RichText(
+                  textAlign: TextAlign.center,
+                  text: TextSpan(
+                    text: "Resend code in ",
+                    style: textTheme.bodySmall?.copyWith(
+                      color: AppColors.textLight,
+                      fontSize: 13,
+                    ),
+                    children: [
+                      TextSpan(
+                        text: _loginController.getFormattedTimeRemaining(),
+                        style: TextStyle(
+                          color: AppColors.primaryPurple,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
               : Text(
-            "Resend OTP",
-            style: textTheme.bodySmall?.copyWith(
-              color: _loginController.canResendOtp()
+                  "Didn't receive the code?",
+                  style: textTheme.bodySmall?.copyWith(
+                    color: AppColors.textLight,
+                    fontSize: 13,
+                  ),
+                ),
+        ),
+        const SizedBox(height: 8),
+        Obx(
+          () => TextButton(
+            onPressed: _loginController.canResendOtp() ? _resendOtp : null,
+            style: TextButton.styleFrom(
+              foregroundColor: _loginController.canResendOtp()
                   ? AppColors.primaryPurple
                   : AppColors.textLight.withOpacity(0.5),
-              fontWeight: FontWeight.w600,
-              fontSize: 13,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             ),
+            child: _loginController.isResendingOtp.value
+                ? Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            AppColors.primaryPurple,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        "Sending...",
+                        style: textTheme.bodySmall?.copyWith(
+                          color: AppColors.primaryPurple,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  )
+                : Text(
+                    "Resend OTP",
+                    style: textTheme.bodySmall?.copyWith(
+                      color: _loginController.canResendOtp()
+                          ? AppColors.primaryPurple
+                          : AppColors.textLight.withOpacity(0.5),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                  ),
           ),
-        )),
+        ),
       ],
     );
   }

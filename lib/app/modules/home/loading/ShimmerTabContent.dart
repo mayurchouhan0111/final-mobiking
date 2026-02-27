@@ -12,11 +12,7 @@ class ShimmerTabContent extends StatelessWidget {
       physics: NeverScrollableScrollPhysics(),
       child: Column(
         children: [
-          ShimmerBanner(
-            width: double.infinity,
-            height: 160,
-            borderRadius: 12,
-          ),
+          ShimmerBanner(width: double.infinity, height: 160, borderRadius: 12),
           SizedBox(height: 8),
           ShimmerGroupSection(),
           ShimmerProductGrid(),

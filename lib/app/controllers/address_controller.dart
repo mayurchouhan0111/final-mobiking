@@ -13,7 +13,8 @@ import '../services/PincodeService.dart';
 
 class AddressController extends GetxController {
   final AddressService _addressService = Get.find<AddressService>();
-  final ConnectivityController _connectivityController = Get.find<ConnectivityController>();
+  final ConnectivityController _connectivityController =
+      Get.find<ConnectivityController>();
 
   final RxList<AddressModel> addresses = <AddressModel>[].obs;
   final Rx<AddressModel?> selectedAddress = Rx<AddressModel?>(null);
@@ -91,33 +92,47 @@ class AddressController extends GetxController {
     try {
       final locationData = await PincodeService.getLocationByPincode(pincode);
 
-      if (locationData != null && locationData['city']!.isNotEmpty && locationData['state']!.isNotEmpty) {
+      if (locationData != null &&
+          locationData['city']!.isNotEmpty &&
+          locationData['state']!.isNotEmpty) {
         // Auto-fill city and state
         cityController.text = locationData['city']!;
         stateController.text = locationData['state']!;
 
-        print('AddressController: Location detected - City: ${locationData['city']}, State: ${locationData['state']}');
+        print(
+          'AddressController: Location detected - City: ${locationData['city']}, State: ${locationData['state']}',
+        );
 
         // Show success message
-        _showToast('City and State have been auto-filled.', backgroundColor: Colors.green);
+        _showToast(
+          'City and State have been auto-filled.',
+          backgroundColor: Colors.green,
+        );
       } else {
         detectionError.value = 'Could not detect location for this PIN code';
-        print('AddressController: Could not detect location for PIN code: $pincode');
+        print(
+          'AddressController: Could not detect location for PIN code: $pincode',
+        );
 
-        _showToast('Could not detect location for this PIN code.', backgroundColor: Colors.amber);
+        _showToast(
+          'Could not detect location for this PIN code.',
+          backgroundColor: Colors.amber,
+        );
       }
     } catch (e) {
       detectionError.value = 'Network error while detecting location';
-      print('AddressController: Error detecting location for PIN code $pincode: $e');
-
-      
+      print(
+        'AddressController: Error detecting location for PIN code $pincode: $e',
+      );
     } finally {
       isDetectingLocation.value = false;
     }
   }
 
   Future<void> _handleConnectionRestored() async {
-    print('AddressController: Internet connection restored. Re-fetching addresses...');
+    print(
+      'AddressController: Internet connection restored. Re-fetching addresses...',
+    );
     await fetchAddresses();
   }
 
@@ -144,7 +159,8 @@ class AddressController extends GetxController {
       addresses.assignAll(fetchedList);
       if (addresses.isEmpty) {
         selectedAddress.value = null;
-      } else if (selectedAddress.value != null && !addresses.any((a) => a.id == selectedAddress.value!.id)) {
+      } else if (selectedAddress.value != null &&
+          !addresses.any((a) => a.id == selectedAddress.value!.id)) {
         selectedAddress.value = null;
       }
     } on AddressServiceException catch (e) {
@@ -152,7 +168,8 @@ class AddressController extends GetxController {
       addressErrorMessage.value = e.message;
     } catch (e) {
       print('AddressController: Unexpected error fetching addresses: $e');
-      addressErrorMessage.value = 'An unexpected error occurred while fetching addresses.';
+      addressErrorMessage.value =
+          'An unexpected error occurred while fetching addresses.';
     } finally {
       isLoading.value = false;
     }
@@ -187,7 +204,10 @@ class AddressController extends GetxController {
       }
 
       if (finalLabel.isEmpty) {
-        _showToast('Please specify a label for your address (e.g., Home, Work).', backgroundColor: Colors.amber);
+        _showToast(
+          'Please specify a label for your address (e.g., Home, Work).',
+          backgroundColor: Colors.amber,
+        );
         isLoading.value = false;
         return false;
       }
@@ -196,16 +216,21 @@ class AddressController extends GetxController {
           cityController.text.trim().isEmpty ||
           stateController.text.trim().isEmpty ||
           pinCodeController.text.trim().isEmpty) {
-        _showToast('Please fill in all address fields.', backgroundColor: Colors.amber);
+        _showToast(
+          'Please fill in all address fields.',
+          backgroundColor: Colors.amber,
+        );
         isLoading.value = false;
         return false;
       }
 
       // ✅ Enhanced PIN code validation
       final pinCode = pinCodeController.text.trim();
-      if (!RegExp(r'^\d{6}'
-).hasMatch(pinCode)) {
-        _showToast('Please enter a valid 6-digit PIN code.', backgroundColor: Colors.amber);
+      if (!RegExp(r'^\d{6}').hasMatch(pinCode)) {
+        _showToast(
+          'Please enter a valid 6-digit PIN code.',
+          backgroundColor: Colors.amber,
+        );
         isLoading.value = false;
         return false;
       }
@@ -227,32 +252,46 @@ class AddressController extends GetxController {
       AddressModel? resultAddress;
       if (_isEditing.value) {
         if (addressToSave.id == null) {
-          throw AddressServiceException('Address ID is missing for update operation.');
+          throw AddressServiceException(
+            'Address ID is missing for update operation.',
+          );
         }
-        resultAddress = await _addressService.updateAddress(addressToSave.id!, addressToSave);
+        resultAddress = await _addressService.updateAddress(
+          addressToSave.id!,
+          addressToSave,
+        );
       } else {
         resultAddress = await _addressService.addAddress(addressToSave);
       }
 
       if (resultAddress != null) {
         if (_isEditing.value) {
-          final int index = addresses.indexWhere((addr) => addr.id == resultAddress!.id);
+          final int index = addresses.indexWhere(
+            (addr) => addr.id == resultAddress!.id,
+          );
           if (index != -1) {
             addresses[index] = resultAddress;
           }
           if (selectedAddress.value?.id == resultAddress.id) {
             selectedAddress.value = resultAddress;
           }
-          _showToast('Address updated successfully.', backgroundColor: Colors.green);
+          _showToast(
+            'Address updated successfully.',
+            backgroundColor: Colors.green,
+          );
         } else {
           addresses.add(resultAddress);
-          _showToast('Your new address has been added.', backgroundColor: Colors.green);
+          _showToast(
+            'Your new address has been added.',
+            backgroundColor: Colors.green,
+          );
           selectedAddress.value = resultAddress; // Select the new address
         }
         cancelEditing();
         return true;
       } else {
-        addressErrorMessage.value = 'Operation failed due to unexpected response.';
+        addressErrorMessage.value =
+            'Operation failed due to unexpected response.';
         return false;
       }
     } on AddressServiceException catch (e) {
@@ -261,7 +300,8 @@ class AddressController extends GetxController {
       return false;
     } catch (e) {
       print('AddressController: Unexpected error saving address: $e');
-      addressErrorMessage.value = 'An unexpected error occurred. Please try again later.';
+      addressErrorMessage.value =
+          'An unexpected error occurred. Please try again later.';
       return false;
     } finally {
       isLoading.value = false;
@@ -279,7 +319,10 @@ class AddressController extends GetxController {
         if (selectedAddress.value?.id == addressId) {
           selectedAddress.value = addresses.isNotEmpty ? addresses.first : null;
         }
-        _showToast('Address removed successfully.', backgroundColor: Colors.green);
+        _showToast(
+          'Address removed successfully.',
+          backgroundColor: Colors.green,
+        );
         return true;
       }
       return false;
@@ -289,7 +332,8 @@ class AddressController extends GetxController {
       return false;
     } catch (e) {
       print('AddressController: Unexpected error deleting address: $e');
-      addressErrorMessage.value = 'An unexpected error occurred while deleting address.';
+      addressErrorMessage.value =
+          'An unexpected error occurred while deleting address.';
       return false;
     } finally {
       isLoading.value = false;

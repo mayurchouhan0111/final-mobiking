@@ -24,7 +24,8 @@ class OrderServiceException implements Exception {
 
 class OrderService extends GetxService {
   static const String _baseUrl = 'https://boxbudy.com/api/v1/orders';
-  static const String _userRequestBaseUrl = 'https://boxbudy.com/api/v1/users/request';
+  static const String _userRequestBaseUrl =
+      'https://boxbudy.com/api/v1/users/request';
   final GetStorage _box = GetStorage();
 
   // ENHANCED: Timeout configurations
@@ -51,7 +52,10 @@ class OrderService extends GetxService {
       if (token != null) {
         headers['Authorization'] = 'Bearer $token';
       } else {
-        throw OrderServiceException('Authentication required. Access token not found.', statusCode: 401);
+        throw OrderServiceException(
+          'Authentication required. Access token not found.',
+          statusCode: 401,
+        );
       }
     }
     return headers;
@@ -59,10 +63,10 @@ class OrderService extends GetxService {
 
   // ENHANCED: Retry mechanism with exponential backoff
   Future<http.Response> _makeRequest(
-      Future<http.Response> Function() requestFunction,
-      String operationName, {
-        int maxRetries = _maxRetries,
-      }) async {
+    Future<http.Response> Function() requestFunction,
+    String operationName, {
+    int maxRetries = _maxRetries,
+  }) async {
     int attempt = 0;
     Duration delay = const Duration(seconds: 1);
 
@@ -72,9 +76,14 @@ class OrderService extends GetxService {
 
       try {
         final response = await requestFunction().timeout(
-          Duration(seconds: 20 + (attempt * 10)), // Progressive timeout: 30s, 40s, 50s
+          Duration(
+            seconds: 20 + (attempt * 10),
+          ), // Progressive timeout: 30s, 40s, 50s
           onTimeout: () {
-            throw TimeoutException('Request timeout after ${20 + (attempt * 10)} seconds', null);
+            throw TimeoutException(
+              'Request timeout after ${20 + (attempt * 10)} seconds',
+              null,
+            );
           },
         );
 
@@ -85,14 +94,15 @@ class OrderService extends GetxService {
 
         // Server error, retry if we have attempts left
         if (attempt < maxRetries) {
-          _log('$operationName - Server error (${response.statusCode}), retrying in ${delay.inSeconds}s...');
+          _log(
+            '$operationName - Server error (${response.statusCode}), retrying in ${delay.inSeconds}s...',
+          );
           await Future.delayed(delay);
           delay = Duration(seconds: delay.inSeconds * 2); // Exponential backoff
           continue;
         }
 
         return response;
-
       } on TimeoutException catch (e) {
         _log('$operationName - Timeout on attempt $attempt: ${e.message}');
         if (attempt < maxRetries) {
@@ -106,7 +116,9 @@ class OrderService extends GetxService {
           statusCode: 408,
         );
       } on SocketException catch (e) {
-        _log('$operationName - Network error on attempt $attempt: ${e.message}');
+        _log(
+          '$operationName - Network error on attempt $attempt: ${e.message}',
+        );
         if (attempt < maxRetries) {
           _log('$operationName - Retrying in ${delay.inSeconds}s...');
           await Future.delayed(delay);
@@ -125,7 +137,10 @@ class OrderService extends GetxService {
           delay = Duration(seconds: delay.inSeconds * 2);
           continue;
         }
-        throw OrderServiceException('Network error: ${e.message}', statusCode: 0);
+        throw OrderServiceException(
+          'Network error: ${e.message}',
+          statusCode: 0,
+        );
       } catch (e) {
         _log('$operationName - Unexpected error on attempt $attempt: $e');
         if (attempt < maxRetries) {
@@ -149,9 +164,13 @@ class OrderService extends GetxService {
     // If no ID is passed, try to retrieve the MongoDB _id from GetStorage
     if (idToFetch == null || idToFetch.isEmpty) {
       idToFetch = _box.read(_lastOrderIdKey);
-      _log("No ID passed. Trying from _lastOrderIdKey (MongoDB _id): $idToFetch");
+      _log(
+        "No ID passed. Trying from _lastOrderIdKey (MongoDB _id): $idToFetch",
+      );
       if (idToFetch == null || idToFetch.isEmpty) {
-        throw OrderServiceException('No order ID provided and no last order ID found in storage.');
+        throw OrderServiceException(
+          'No order ID provided and no last order ID found in storage.',
+        );
       }
     }
 
@@ -163,25 +182,33 @@ class OrderService extends GetxService {
     } on OrderServiceException {
       rethrow;
     } catch (e) {
-      throw OrderServiceException('Failed to prepare headers for order details request: $e');
+      throw OrderServiceException(
+        'Failed to prepare headers for order details request: $e',
+      );
     }
 
     try {
       final response = await _makeRequest(
-            () => http.get(url, headers: headers),
+        () => http.get(url, headers: headers),
         'getOrderDetails',
       );
 
       final responseBody = jsonDecode(response.body);
-      _log("getOrderDetails Status: ${response.statusCode}, Body: ${response.body}");
+      _log(
+        "getOrderDetails Status: ${response.statusCode}, Body: ${response.body}",
+      );
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        if (responseBody['success'] == true && responseBody.containsKey('data')) {
+        if (responseBody['success'] == true &&
+            responseBody.containsKey('data')) {
           _log("Successfully fetched order details");
-          return OrderModel.fromJson(responseBody['data'] as Map<String, dynamic>);
+          return OrderModel.fromJson(
+            responseBody['data'] as Map<String, dynamic>,
+          );
         } else {
           throw OrderServiceException(
-            responseBody['message'] ?? 'Invalid response format for order details.',
+            responseBody['message'] ??
+                'Invalid response format for order details.',
             statusCode: response.statusCode,
           );
         }
@@ -193,11 +220,16 @@ class OrderService extends GetxService {
       }
     } on FormatException catch (e) {
       _log('Server response format error for order details: $e');
-      throw OrderServiceException('Server response format error for order details: $e', statusCode: 0);
+      throw OrderServiceException(
+        'Server response format error for order details: $e',
+        statusCode: 0,
+      );
     } catch (e) {
       if (e is OrderServiceException) rethrow;
       _log('Unexpected error while fetching order details: $e');
-      throw OrderServiceException('Unexpected error while fetching order details: $e');
+      throw OrderServiceException(
+        'Unexpected error while fetching order details: $e',
+      );
     }
   }
 
@@ -215,7 +247,7 @@ class OrderService extends GetxService {
 
     try {
       final response = await _makeRequest(
-            () => http.post(
+        () => http.post(
           url,
           headers: headers,
           body: jsonEncode(orderRequest.toJson()),
@@ -224,24 +256,33 @@ class OrderService extends GetxService {
       );
 
       final responseBody = jsonDecode(response.body);
-      _log("placeCodOrder Status: ${response.statusCode}, Body: ${response.body}");
+      _log(
+        "placeCodOrder Status: ${response.statusCode}, Body: ${response.body}",
+      );
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        if (responseBody['success'] == true && responseBody.containsKey('data')) {
-          final OrderModel order = OrderModel.fromJson(responseBody['data']['order'] as Map<String, dynamic>);
+        if (responseBody['success'] == true &&
+            responseBody.containsKey('data')) {
+          final OrderModel order = OrderModel.fromJson(
+            responseBody['data']['order'] as Map<String, dynamic>,
+          );
           await _box.write(_lastOrderIdKey, order.id);
           _log('COD Order MongoDB _id stored: ${order.id}');
 
           // Show success message to user
-          Get.snackbar('Success', 'COD order placed successfully!',
-              snackPosition: SnackPosition.BOTTOM,
-              backgroundColor: Colors.green.shade600,
-              colorText: Colors.white);
+          Get.snackbar(
+            'Success',
+            'COD order placed successfully!',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.green.shade600,
+            colorText: Colors.white,
+          );
 
           return order;
         } else {
           throw OrderServiceException(
-            responseBody['message'] ?? 'Failed to place COD order: Invalid success status or data format.',
+            responseBody['message'] ??
+                'Failed to place COD order: Invalid success status or data format.',
             statusCode: response.statusCode,
           );
         }
@@ -253,43 +294,60 @@ class OrderService extends GetxService {
       }
     } on FormatException catch (e) {
       _log('Server response format error during COD order placement: $e');
-      throw OrderServiceException('Server response format error during COD order placement: $e', statusCode: 0);
+      throw OrderServiceException(
+        'Server response format error during COD order placement: $e',
+        statusCode: 0,
+      );
     } catch (e) {
       if (e is OrderServiceException) rethrow;
       _log('Unexpected error occurred during COD order placement: $e');
-      throw OrderServiceException('An unexpected error occurred during COD order placement: $e');
+      throw OrderServiceException(
+        'An unexpected error occurred during COD order placement: $e',
+      );
     }
   }
 
   // ENHANCED: Initiate online payment (get Razorpay order details)
-  Future<Map<String, dynamic>> initiateOnlineOrder(CreateOrderRequestModel orderRequest) async {
-    final url = Uri.parse('$_baseUrl/online/new'); // New endpoint for payment initiation
+  Future<Map<String, dynamic>> initiateOnlineOrder(
+    CreateOrderRequestModel orderRequest,
+  ) async {
+    final url = Uri.parse(
+      '$_baseUrl/online/new',
+    ); // New endpoint for payment initiation
     Map<String, String> headers;
     try {
       headers = _getHeaders();
     } on OrderServiceException {
       rethrow;
     } catch (e) {
-      throw OrderServiceException('Failed to prepare headers for online payment initiation: $e');
+      throw OrderServiceException(
+        'Failed to prepare headers for online payment initiation: $e',
+      );
     }
 
     try {
       final response = await _makeRequest(
-            () => http.post(
+        () => http.post(
           url,
           headers: headers,
           body: jsonEncode(orderRequest.toJson()),
         ),
         'initiateOnlineOrder',
-        maxRetries: 2, // Reduce retries for payment initiation to avoid duplicate orders
+        maxRetries:
+            2, // Reduce retries for payment initiation to avoid duplicate orders
       );
 
       final responseBody = jsonDecode(response.body);
-      _log("initiateOnlineOrder Status: ${response.statusCode}, Body: ${response.body}");
+      _log(
+        "initiateOnlineOrder Status: ${response.statusCode}, Body: ${response.body}",
+      );
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        if (responseBody['success'] == true && responseBody.containsKey('data') && responseBody['data'] is Map<String, dynamic>) {
-          final Map<String, dynamic> responseData = responseBody['data'] as Map<String, dynamic>;
+        if (responseBody['success'] == true &&
+            responseBody.containsKey('data') &&
+            responseBody['data'] is Map<String, dynamic>) {
+          final Map<String, dynamic> responseData =
+              responseBody['data'] as Map<String, dynamic>;
 
           // Store initial Razorpay response for later verification if needed
           await _box.write('razorpay_init_response', responseData);
@@ -300,7 +358,8 @@ class OrderService extends GetxService {
           return responseData; // This should contain Razorpay order_id, amount, key, etc.
         } else {
           throw OrderServiceException(
-            responseBody['message'] ?? 'Failed to initiate online payment: Invalid success status or data format. Expected data map.',
+            responseBody['message'] ??
+                'Failed to initiate online payment: Invalid success status or data format. Expected data map.',
             statusCode: response.statusCode,
           );
         }
@@ -312,42 +371,52 @@ class OrderService extends GetxService {
       }
     } on FormatException catch (e) {
       _log('Server response format error during online payment initiation: $e');
-      throw OrderServiceException('Server response format error during online payment initiation: $e', statusCode: 0);
+      throw OrderServiceException(
+        'Server response format error during online payment initiation: $e',
+        statusCode: 0,
+      );
     } catch (e) {
       if (e is OrderServiceException) rethrow;
       _log('Unexpected error occurred during online payment initiation: $e');
-      throw OrderServiceException('An unexpected error occurred during online payment initiation: $e');
+      throw OrderServiceException(
+        'An unexpected error occurred during online payment initiation: $e',
+      );
     }
   }
 
   // NEW: Finalize online order after successful payment
   Future<OrderModel> finalizeOnlineOrder(Map<String, dynamic> orderData) async {
-    final url = Uri.parse('$_baseUrl/online/finalize'); // New endpoint for order finalization
+    final url = Uri.parse(
+      '$_baseUrl/online/finalize',
+    ); // New endpoint for order finalization
     Map<String, String> headers;
     try {
       headers = _getHeaders();
     } on OrderServiceException {
       rethrow;
     } catch (e) {
-      throw OrderServiceException('Failed to prepare headers for online order finalization: $e');
+      throw OrderServiceException(
+        'Failed to prepare headers for online order finalization: $e',
+      );
     }
 
     try {
       final response = await _makeRequest(
-            () => http.post(
-          url,
-          headers: headers,
-          body: jsonEncode(orderData),
-        ),
+        () => http.post(url, headers: headers, body: jsonEncode(orderData)),
         'finalizeOnlineOrder',
       );
 
       final responseBody = jsonDecode(response.body);
-      _log("finalizeOnlineOrder Status: ${response.statusCode}, Body: ${response.body}");
+      _log(
+        "finalizeOnlineOrder Status: ${response.statusCode}, Body: ${response.body}",
+      );
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        if (responseBody['success'] == true && responseBody.containsKey('data')) {
-          final OrderModel order = OrderModel.fromJson(responseBody['data'] as Map<String, dynamic>);
+        if (responseBody['success'] == true &&
+            responseBody.containsKey('data')) {
+          final OrderModel order = OrderModel.fromJson(
+            responseBody['data'] as Map<String, dynamic>,
+          );
           await _box.write(_lastOrderIdKey, order.id);
           _log('Online Order finalized and MongoDB _id stored: ${order.id}');
 
@@ -356,7 +425,8 @@ class OrderService extends GetxService {
           return order;
         } else {
           throw OrderServiceException(
-            responseBody['message'] ?? 'Failed to finalize online order: Invalid success status or data format.',
+            responseBody['message'] ??
+                'Failed to finalize online order: Invalid success status or data format.',
             statusCode: response.statusCode,
           );
         }
@@ -368,15 +438,22 @@ class OrderService extends GetxService {
       }
     } on FormatException catch (e) {
       _log('Server response format error during online order finalization: $e');
-      throw OrderServiceException('Server response format error during online order finalization: $e', statusCode: 0);
+      throw OrderServiceException(
+        'Server response format error during online order finalization: $e',
+        statusCode: 0,
+      );
     } catch (e) {
       if (e is OrderServiceException) rethrow;
       _log('Unexpected error occurred during online order finalization: $e');
-      throw OrderServiceException('An unexpected error occurred during online order finalization: $e');
+      throw OrderServiceException(
+        'An unexpected error occurred during online order finalization: $e',
+      );
     }
   }
 
-  Future<OrderModel> verifyRazorpayPayment(RazorpayVerifyRequest verifyRequest) async {
+  Future<OrderModel> verifyRazorpayPayment(
+    RazorpayVerifyRequest verifyRequest,
+  ) async {
     final url = Uri.parse('$_baseUrl/online/verify');
     Map<String, String> headers;
     try {
@@ -384,12 +461,14 @@ class OrderService extends GetxService {
     } on OrderServiceException {
       rethrow;
     } catch (e) {
-      throw OrderServiceException('Failed to prepare headers for Razorpay verification: $e');
+      throw OrderServiceException(
+        'Failed to prepare headers for Razorpay verification: $e',
+      );
     }
 
     try {
       final response = await _makeRequest(
-            () => http.post(
+        () => http.post(
           url,
           headers: headers,
           body: jsonEncode(verifyRequest.toJson()),
@@ -398,27 +477,36 @@ class OrderService extends GetxService {
       );
 
       final responseBody = jsonDecode(response.body);
-      _log("verifyRazorpayPayment Status: ${response.statusCode}, Body: ${response.body}");
+      _log(
+        "verifyRazorpayPayment Status: ${response.statusCode}, Body: ${response.body}",
+      );
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        if (responseBody['success'] == true && responseBody.containsKey('data')) {
+        if (responseBody['success'] == true &&
+            responseBody.containsKey('data')) {
           await _box.remove('razorpay_init_response');
           _log('Razorpay init response cleared from storage.');
 
-          final OrderModel order = OrderModel.fromJson(responseBody['data'] as Map<String, dynamic>);
+          final OrderModel order = OrderModel.fromJson(
+            responseBody['data'] as Map<String, dynamic>,
+          );
           await _box.write(_lastOrderIdKey, order.id);
           _log('Verified Online Order MongoDB _id stored: ${order.id}');
 
           // Show success message to user
-          Get.snackbar('Success', 'Payment verified and order placed successfully!',
-              snackPosition: SnackPosition.BOTTOM,
-              backgroundColor: Colors.green.shade600,
-              colorText: Colors.white);
+          Get.snackbar(
+            'Success',
+            'Payment verified and order placed successfully!',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.green.shade600,
+            colorText: Colors.white,
+          );
 
           return order;
         } else {
           throw OrderServiceException(
-            responseBody['message'] ?? 'Razorpay verification failed: Invalid success status or data format.',
+            responseBody['message'] ??
+                'Razorpay verification failed: Invalid success status or data format.',
             statusCode: response.statusCode,
           );
         }
@@ -430,11 +518,16 @@ class OrderService extends GetxService {
       }
     } on FormatException catch (e) {
       _log('Server response format error during Razorpay verification: $e');
-      throw OrderServiceException('Server response format error during Razorpay verification: $e', statusCode: 0);
+      throw OrderServiceException(
+        'Server response format error during Razorpay verification: $e',
+        statusCode: 0,
+      );
     } catch (e) {
       if (e is OrderServiceException) rethrow;
       _log('Unexpected error occurred during Razorpay verification: $e');
-      throw OrderServiceException('An unexpected error occurred during Razorpay verification: $e');
+      throw OrderServiceException(
+        'An unexpected error occurred during Razorpay verification: $e',
+      );
     }
   }
 
@@ -447,32 +540,44 @@ class OrderService extends GetxService {
     } on OrderServiceException {
       rethrow;
     } catch (e) {
-      throw OrderServiceException('Failed to prepare headers for fetching orders: $e');
+      throw OrderServiceException(
+        'Failed to prepare headers for fetching orders: $e',
+      );
     }
 
     try {
       final response = await _makeRequest(
-            () => http.get(url, headers: headers),
+        () => http.get(url, headers: headers),
         'getUserOrders',
       );
 
       final responseBody = jsonDecode(response.body);
-      _log('getUserOrders Status: ${response.statusCode}, Body: ${response.body}');
+      _log(
+        'getUserOrders Status: ${response.statusCode}, Body: ${response.body}',
+      );
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        if (responseBody['success'] == true && responseBody.containsKey('data') && responseBody['data'] is List) {
+        if (responseBody['success'] == true &&
+            responseBody.containsKey('data') &&
+            responseBody['data'] is List) {
           final orders = (responseBody['data'] as List)
-              .map((itemJson) => OrderModel.fromJson(itemJson as Map<String, dynamic>))
+              .map(
+                (itemJson) =>
+                    OrderModel.fromJson(itemJson as Map<String, dynamic>),
+              )
               .toList();
 
           _log('Successfully fetched ${orders.length} orders');
           return orders;
-        } else if (responseBody['success'] == true && responseBody['data'] is List && (responseBody['data'] as List).isEmpty) {
+        } else if (responseBody['success'] == true &&
+            responseBody['data'] is List &&
+            (responseBody['data'] as List).isEmpty) {
           _log('No orders found for user');
           return [];
         } else {
           throw OrderServiceException(
-            responseBody['message'] ?? 'Failed to load orders: Invalid success status or data format.',
+            responseBody['message'] ??
+                'Failed to load orders: Invalid success status or data format.',
             statusCode: response.statusCode,
           );
         }
@@ -484,7 +589,10 @@ class OrderService extends GetxService {
       }
     } on FormatException catch (e) {
       _log('Server response format error: $e');
-      throw OrderServiceException('Server response format error: $e', statusCode: 0);
+      throw OrderServiceException(
+        'Server response format error: $e',
+        statusCode: 0,
+      );
     } catch (e) {
       if (e is OrderServiceException) rethrow;
       _log('Unexpected error occurred: $e');
@@ -495,7 +603,10 @@ class OrderService extends GetxService {
   // ENHANCED: Request methods with better error handling
 
   /// Sends a request to the backend to cancel an order.
-  Future<Map<String, dynamic>> requestCancel(String orderId, String reason) async {
+  Future<Map<String, dynamic>> requestCancel(
+    String orderId,
+    String reason,
+  ) async {
     final url = Uri.parse('$_userRequestBaseUrl/cancel');
     Map<String, String> headers;
     try {
@@ -503,32 +614,36 @@ class OrderService extends GetxService {
     } on OrderServiceException {
       rethrow;
     } catch (e) {
-      throw OrderServiceException('Failed to prepare headers for cancel request: $e');
+      throw OrderServiceException(
+        'Failed to prepare headers for cancel request: $e',
+      );
     }
 
     try {
       final response = await _makeRequest(
-            () => http.post(
+        () => http.post(
           url,
           headers: headers,
-          body: jsonEncode({
-            "reason": reason,
-            "orderId": orderId,
-          }),
+          body: jsonEncode({"reason": reason, "orderId": orderId}),
         ),
         'requestCancel',
       );
 
       final responseBody = jsonDecode(response.body);
-      _log("requestCancel Status: ${response.statusCode}, Body: ${response.body}");
+      _log(
+        "requestCancel Status: ${response.statusCode}, Body: ${response.body}",
+      );
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         if (responseBody['success'] == true) {
           // Show success message to user
-          Get.snackbar('Success', 'Cancel request submitted successfully!',
-              snackPosition: SnackPosition.BOTTOM,
-              backgroundColor: Colors.green.shade600,
-              colorText: Colors.white);
+          Get.snackbar(
+            'Success',
+            'Cancel request submitted successfully!',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.green.shade600,
+            colorText: Colors.white,
+          );
 
           return responseBody as Map<String, dynamic>;
         } else {
@@ -545,16 +660,24 @@ class OrderService extends GetxService {
       }
     } on FormatException catch (e) {
       _log('Server response format error during cancel request: $e');
-      throw OrderServiceException('Server response format error during cancel request: $e', statusCode: 0);
+      throw OrderServiceException(
+        'Server response format error during cancel request: $e',
+        statusCode: 0,
+      );
     } catch (e) {
       if (e is OrderServiceException) rethrow;
       _log('Unexpected error occurred during cancel request: $e');
-      throw OrderServiceException('An unexpected error occurred during cancel request: $e');
+      throw OrderServiceException(
+        'An unexpected error occurred during cancel request: $e',
+      );
     }
   }
 
   /// Sends a request to the backend for order warranty.
-  Future<Map<String, dynamic>> requestWarranty(String orderId, String reason) async {
+  Future<Map<String, dynamic>> requestWarranty(
+    String orderId,
+    String reason,
+  ) async {
     final url = Uri.parse('$_userRequestBaseUrl/warranty');
     Map<String, String> headers;
     try {
@@ -562,32 +685,36 @@ class OrderService extends GetxService {
     } on OrderServiceException {
       rethrow;
     } catch (e) {
-      throw OrderServiceException('Failed to prepare headers for warranty request: $e');
+      throw OrderServiceException(
+        'Failed to prepare headers for warranty request: $e',
+      );
     }
 
     try {
       final response = await _makeRequest(
-            () => http.post(
+        () => http.post(
           url,
           headers: headers,
-          body: jsonEncode({
-            "reason": reason,
-            "orderId": orderId,
-          }),
+          body: jsonEncode({"reason": reason, "orderId": orderId}),
         ),
         'requestWarranty',
       );
 
       final responseBody = jsonDecode(response.body);
-      _log("requestWarranty Status: ${response.statusCode}, Body: ${response.body}");
+      _log(
+        "requestWarranty Status: ${response.statusCode}, Body: ${response.body}",
+      );
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         if (responseBody['success'] == true) {
           // Show success message to user
-          Get.snackbar('Success', 'Warranty request submitted successfully!',
-              snackPosition: SnackPosition.BOTTOM,
-              backgroundColor: Colors.green.shade600,
-              colorText: Colors.white);
+          Get.snackbar(
+            'Success',
+            'Warranty request submitted successfully!',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.green.shade600,
+            colorText: Colors.white,
+          );
 
           return responseBody as Map<String, dynamic>;
         } else {
@@ -604,16 +731,24 @@ class OrderService extends GetxService {
       }
     } on FormatException catch (e) {
       _log('Server response format error during warranty request: $e');
-      throw OrderServiceException('Server response format error during warranty request: $e', statusCode: 0);
+      throw OrderServiceException(
+        'Server response format error during warranty request: $e',
+        statusCode: 0,
+      );
     } catch (e) {
       if (e is OrderServiceException) rethrow;
       _log('Unexpected error occurred during warranty request: $e');
-      throw OrderServiceException('An unexpected error occurred during warranty request: $e');
+      throw OrderServiceException(
+        'An unexpected error occurred during warranty request: $e',
+      );
     }
   }
 
   /// Sends a request to the backend for order return.
-  Future<Map<String, dynamic>> requestReturn(String orderId, String reason) async {
+  Future<Map<String, dynamic>> requestReturn(
+    String orderId,
+    String reason,
+  ) async {
     final url = Uri.parse('$_userRequestBaseUrl/return');
     Map<String, String> headers;
     try {
@@ -621,32 +756,36 @@ class OrderService extends GetxService {
     } on OrderServiceException {
       rethrow;
     } catch (e) {
-      throw OrderServiceException('Failed to prepare headers for return request: $e');
+      throw OrderServiceException(
+        'Failed to prepare headers for return request: $e',
+      );
     }
 
     try {
       final response = await _makeRequest(
-            () => http.post(
+        () => http.post(
           url,
           headers: headers,
-          body: jsonEncode({
-            "reason": reason,
-            "orderId": orderId,
-          }),
+          body: jsonEncode({"reason": reason, "orderId": orderId}),
         ),
         'requestReturn',
       );
 
       final responseBody = jsonDecode(response.body);
-      _log("requestReturn Status: ${response.statusCode}, Body: ${response.body}");
+      _log(
+        "requestReturn Status: ${response.statusCode}, Body: ${response.body}",
+      );
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         if (responseBody['success'] == true) {
           // Show success message to user
-          Get.snackbar('Success', 'Return request submitted successfully!',
-              snackPosition: SnackPosition.BOTTOM,
-              backgroundColor: Colors.green.shade600,
-              colorText: Colors.white);
+          Get.snackbar(
+            'Success',
+            'Return request submitted successfully!',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.green.shade600,
+            colorText: Colors.white,
+          );
 
           return responseBody as Map<String, dynamic>;
         } else {
@@ -663,21 +802,28 @@ class OrderService extends GetxService {
       }
     } on FormatException catch (e) {
       _log('Server response format error during return request: $e');
-      throw OrderServiceException('Server response format error during return request: $e', statusCode: 0);
+      throw OrderServiceException(
+        'Server response format error during return request: $e',
+        statusCode: 0,
+      );
     } catch (e) {
       if (e is OrderServiceException) rethrow;
       _log('Unexpected error occurred during return request: $e');
-      throw OrderServiceException('An unexpected error occurred during return request: $e');
+      throw OrderServiceException(
+        'An unexpected error occurred during return request: $e',
+      );
     }
   }
 
   // ADDED: Network health check method
   Future<bool> checkNetworkHealth() async {
     try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl/health'),
-        headers: _getHeaders(requireAuth: false),
-      ).timeout(const Duration(seconds: 10));
+      final response = await http
+          .get(
+            Uri.parse('$_baseUrl/health'),
+            headers: _getHeaders(requireAuth: false),
+          )
+          .timeout(const Duration(seconds: 10));
 
       _log('Network health check: ${response.statusCode}');
       return response.statusCode == 200;
@@ -694,7 +840,11 @@ class OrderService extends GetxService {
     _log('Cleared stored order data');
   }
 
-  Future<void> submitReview(String orderId, double rating, String review) async {
+  Future<void> submitReview(
+    String orderId,
+    double rating,
+    String review,
+  ) async {
     final url = Uri.parse('$_baseUrl/review');
     final headers = _getHeaders();
     final body = jsonEncode({
@@ -711,7 +861,9 @@ class OrderService extends GetxService {
       );
 
       final responseBody = jsonDecode(response.body);
-      _log("submitReview Status: ${response.statusCode}, Body: ${response.body}");
+      _log(
+        "submitReview Status: ${response.statusCode}, Body: ${response.body}",
+      );
 
       if (response.statusCode < 200 || response.statusCode >= 300) {
         throw OrderServiceException(
@@ -721,11 +873,16 @@ class OrderService extends GetxService {
       }
     } on FormatException catch (e) {
       _log('Server response format error during review submission: $e');
-      throw OrderServiceException('Server response format error during review submission: $e', statusCode: 0);
+      throw OrderServiceException(
+        'Server response format error during review submission: $e',
+        statusCode: 0,
+      );
     } catch (e) {
       if (e is OrderServiceException) rethrow;
       _log('Unexpected error occurred during review submission: $e');
-      throw OrderServiceException('An unexpected error occurred during review submission: $e');
+      throw OrderServiceException(
+        'An unexpected error occurred during review submission: $e',
+      );
     }
   }
 }

@@ -7,7 +7,6 @@ class CartModel {
   // e.g., final String productName;
   // final String? imageUrl;
 
-
   CartModel({
     required this.productId,
     required this.variantName, // Add to constructor
@@ -19,7 +18,8 @@ class CartModel {
 
   factory CartModel.fromJson(Map<String, dynamic> json) {
     return CartModel(
-      productId: json['productId']['_id'] as String, // CORRECTED: Access nested _id
+      productId:
+          json['productId']['_id'] as String, // CORRECTED: Access nested _id
       variantName: json['variantName'] as String, // Add variantName parsing
       quantity: json['quantity'] as int? ?? 1,
       price: (json['price'] as num).toDouble(),
@@ -32,7 +32,8 @@ class CartModel {
 
   Map<String, dynamic> toJson() {
     return {
-      'productId': productId, // This would send just the ID back to backend if needed
+      'productId':
+          productId, // This would send just the ID back to backend if needed
       'variantName': variantName,
       'quantity': quantity,
       'price': price,

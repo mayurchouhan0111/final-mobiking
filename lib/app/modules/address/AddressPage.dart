@@ -18,7 +18,12 @@ class AddressPage extends StatefulWidget {
   final bool showAddressListFirst;
   final bool initialShowUserSection;
 
-  AddressPage({Key? key, this.initialUser, this.showAddressListFirst = false, this.initialShowUserSection = false}) : super(key: key) {
+  AddressPage({
+    Key? key,
+    this.initialUser,
+    this.showAddressListFirst = false,
+    this.initialShowUserSection = false,
+  }) : super(key: key) {
     if (!Get.isRegistered<AddressController>()) {
       Get.put(AddressController());
     }
@@ -82,7 +87,6 @@ class _AddressPageState extends State<AddressPage> {
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-
         return false;
       }
     }
@@ -91,12 +95,11 @@ class _AddressPageState extends State<AddressPage> {
       Get.dialog(
         AlertDialog(
           title: Text('Location Permission Required'),
-          content: Text('Please enable location permission in settings to use this feature.'),
+          content: Text(
+            'Please enable location permission in settings to use this feature.',
+          ),
           actions: [
-            TextButton(
-              onPressed: () => Get.back(),
-              child: Text('Cancel'),
-            ),
+            TextButton(onPressed: () => Get.back(), child: Text('Cancel')),
             ElevatedButton(
               onPressed: () {
                 Get.back();
@@ -120,7 +123,6 @@ class _AddressPageState extends State<AddressPage> {
       // Check if location services are enabled
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-
         return;
       }
 
@@ -144,7 +146,8 @@ class _AddressPageState extends State<AddressPage> {
 
         // Fill the form fields with the fetched location
         controller.streetController.text = _buildStreetAddress(place);
-        controller.cityController.text = place.locality ?? place.subAdministrativeArea ?? '';
+        controller.cityController.text =
+            place.locality ?? place.subAdministrativeArea ?? '';
         controller.stateController.text = place.administrativeArea ?? '';
         controller.pinCodeController.text = place.postalCode ?? '';
 
@@ -159,8 +162,7 @@ class _AddressPageState extends State<AddressPage> {
 
         _showLocationOptions.value = false;
       }
-    }  catch (e) {
-
+    } catch (e) {
     } finally {
       _isLoadingLocation.value = false;
     }
@@ -214,18 +216,15 @@ class _AddressPageState extends State<AddressPage> {
               onTap: () {
                 Get.back();
                 // Focus on the first field
-                FocusScope.of(context).requestFocus(
-                  FocusNode()..requestFocus(),
-                );
+                FocusScope.of(
+                  context,
+                ).requestFocus(FocusNode()..requestFocus());
               },
             ),
           ],
         ),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: Text('Cancel'),
-          ),
+          TextButton(onPressed: () => Get.back(), child: Text('Cancel')),
         ],
       ),
     );
@@ -243,9 +242,15 @@ class _AddressPageState extends State<AddressPage> {
 
   void _initializeUserControllers() {
     final userInfo = widget.initialUser ?? _storage.read('user') ?? {};
-    _nameController = TextEditingController(text: _safeStringExtract(userInfo['name']));
-    _emailController = TextEditingController(text: _safeStringExtract(userInfo['email']));
-    _phoneController = TextEditingController(text: _safeStringExtract(userInfo['phoneNo']));
+    _nameController = TextEditingController(
+      text: _safeStringExtract(userInfo['name']),
+    );
+    _emailController = TextEditingController(
+      text: _safeStringExtract(userInfo['email']),
+    );
+    _phoneController = TextEditingController(
+      text: _safeStringExtract(userInfo['phoneNo']),
+    );
   }
 
   void _setupUserChangeListener() {
@@ -275,26 +280,29 @@ class _AddressPageState extends State<AddressPage> {
           color: AppColors.textDark,
         ),
         automaticallyImplyLeading: false,
-        title: Obx(() => Text(
-          controller.isEditingMode
-              ? 'Edit Address'
-              : 'Profile & Addresses',
-          style: textTheme.titleLarge?.copyWith(
-            color: AppColors.textDark,
-            fontWeight: FontWeight.w700,
+        title: Obx(
+          () => Text(
+            controller.isEditingMode ? 'Edit Address' : 'Profile & Addresses',
+            style: textTheme.titleLarge?.copyWith(
+              color: AppColors.textDark,
+              fontWeight: FontWeight.w700,
+            ),
           ),
-        )),
+        ),
         backgroundColor: AppColors.white,
         elevation: 0.5,
-        actions: [
-          const SizedBox.shrink()
-        ],
+        actions: [const SizedBox.shrink()],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: Obx(() {
-        if (!controller.isFormOpen && !controller.isLoading.value && !_showUserSection.value) {
+        if (!controller.isFormOpen &&
+            !controller.isLoading.value &&
+            !_showUserSection.value) {
           return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 8.0,
+            ),
             child: SizedBox(
               width: double.infinity,
               height: 54,
@@ -348,18 +356,26 @@ class _AddressPageState extends State<AddressPage> {
                   onPressed: () => _showUserSection.value = true,
                   icon: Icon(
                     Icons.person_outline,
-                    color: _showUserSection.value ? AppColors.white : AppColors.blinkitGreen,
+                    color: _showUserSection.value
+                        ? AppColors.white
+                        : AppColors.blinkitGreen,
                   ),
                   label: Text(
                     'User Info',
                     style: textTheme.labelLarge?.copyWith(
-                      color: _showUserSection.value ? AppColors.white : AppColors.blinkitGreen,
+                      color: _showUserSection.value
+                          ? AppColors.white
+                          : AppColors.blinkitGreen,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _showUserSection.value ? AppColors.blinkitGreen : AppColors.white,
-                    foregroundColor: _showUserSection.value ? AppColors.white : AppColors.blinkitGreen,
+                    backgroundColor: _showUserSection.value
+                        ? AppColors.blinkitGreen
+                        : AppColors.white,
+                    foregroundColor: _showUserSection.value
+                        ? AppColors.white
+                        : AppColors.blinkitGreen,
                     side: BorderSide(color: AppColors.blinkitGreen),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -373,18 +389,26 @@ class _AddressPageState extends State<AddressPage> {
                   onPressed: () => _showUserSection.value = false,
                   icon: Icon(
                     Icons.location_on_outlined,
-                    color: !_showUserSection.value ? AppColors.white : AppColors.blinkitGreen,
+                    color: !_showUserSection.value
+                        ? AppColors.white
+                        : AppColors.blinkitGreen,
                   ),
                   label: Text(
                     'Addresses',
                     style: textTheme.labelLarge?.copyWith(
-                      color: !_showUserSection.value ? AppColors.white : AppColors.blinkitGreen,
+                      color: !_showUserSection.value
+                          ? AppColors.white
+                          : AppColors.blinkitGreen,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: !_showUserSection.value ? AppColors.blinkitGreen : AppColors.white,
-                    foregroundColor: !_showUserSection.value ? AppColors.white : AppColors.blinkitGreen,
+                    backgroundColor: !_showUserSection.value
+                        ? AppColors.blinkitGreen
+                        : AppColors.white,
+                    foregroundColor: !_showUserSection.value
+                        ? AppColors.white
+                        : AppColors.blinkitGreen,
                     side: BorderSide(color: AppColors.blinkitGreen),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -418,7 +442,11 @@ class _AddressPageState extends State<AddressPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildSectionHeader('Personal Information', Icons.person_outline, textTheme),
+            _buildSectionHeader(
+              'Personal Information',
+              Icons.person_outline,
+              textTheme,
+            ),
             const SizedBox(height: 16),
             _buildInfoCard([
               _buildUserTextField(
@@ -450,39 +478,47 @@ class _AddressPageState extends State<AddressPage> {
               ),
             ]),
             const SizedBox(height: 32),
-            Obx(() => SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _hasUserChanges.value && !_isUserLoading.value ? _saveUserInfoAndNavigateBack : null,
-                icon: _isUserLoading.value
-                    ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: AppColors.white,
+            Obx(
+              () => SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: _hasUserChanges.value && !_isUserLoading.value
+                      ? _saveUserInfoAndNavigateBack
+                      : null,
+                  icon: _isUserLoading.value
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.white,
+                          ),
+                        )
+                      : const Icon(Icons.save_outlined, color: AppColors.white),
+                  label: Text(
+                    _isUserLoading.value
+                        ? 'Saving...'
+                        : 'Save & Continue to Checkout',
+                    style: textTheme.labelLarge?.copyWith(
+                      color: AppColors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                )
-                    : const Icon(Icons.save_outlined, color: AppColors.white),
-                label: Text(
-                  _isUserLoading.value ? 'Saving...' : 'Save & Continue to Checkout',
-                  style: textTheme.labelLarge?.copyWith(
-                    color: AppColors.white,
-                    fontWeight: FontWeight.w600,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.blinkitGreen,
+                    foregroundColor: AppColors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 2,
+                    disabledBackgroundColor: AppColors.blinkitGreen.withOpacity(
+                      0.6,
+                    ),
                   ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.blinkitGreen,
-                  foregroundColor: AppColors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 2,
-                  disabledBackgroundColor: AppColors.blinkitGreen.withOpacity(0.6),
                 ),
               ),
-            )),
+            ),
             const SizedBox(height: 24),
             Center(
               child: TextButton(
@@ -521,11 +557,7 @@ class _AddressPageState extends State<AddressPage> {
         const SizedBox(height: 6),
         Row(
           children: [
-            Icon(
-              Icons.info_outline,
-              size: 14,
-              color: AppColors.textLight,
-            ),
+            Icon(Icons.info_outline, size: 14, color: AppColors.textLight),
             const SizedBox(width: 6),
             Expanded(
               child: Text(
@@ -570,16 +602,18 @@ class _AddressPageState extends State<AddressPage> {
                   const SizedBox(height: 16),
                   Text(
                     'No addresses found.',
-                    style: Theme.of(context).textTheme.headlineSmall
-                        ?.copyWith(color: AppColors.textMedium),
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      color: AppColors.textMedium,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Tap "Add New Address" below to get started!',
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyMedium
-                        ?.copyWith(color: AppColors.textLight),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.textLight,
+                    ),
                   ),
                 ],
               ),
@@ -609,7 +643,8 @@ class _AddressPageState extends State<AddressPage> {
         separatorBuilder: (_, __) => const SizedBox(height: 12),
         itemBuilder: (_, index) {
           final AddressModel addr = controller.addresses[index];
-          final bool isSelected = controller.selectedAddress.value?.id == addr.id;
+          final bool isSelected =
+              controller.selectedAddress.value?.id == addr.id;
 
           return InkWell(
             onTap: () {
@@ -620,8 +655,8 @@ class _AddressPageState extends State<AddressPage> {
             borderRadius: BorderRadius.circular(16),
             child: ClipRRect(
               borderRadius: const BorderRadius.only(
-                  bottomRight: Radius.circular(14),
-                  topRight: Radius.circular(14)
+                bottomRight: Radius.circular(14),
+                topRight: Radius.circular(14),
               ),
               child: CustomPaint(
                 painter: AddressCardPainter(
@@ -635,7 +670,9 @@ class _AddressPageState extends State<AddressPage> {
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.textDark.withOpacity(isSelected ? 0.1 : 0.05),
+                        color: AppColors.textDark.withOpacity(
+                          isSelected ? 0.1 : 0.05,
+                        ),
                         blurRadius: 6,
                         offset: const Offset(0, 3),
                       ),
@@ -656,13 +693,17 @@ class _AddressPageState extends State<AddressPage> {
                           const SizedBox(height: 8),
                           Text(
                             addr.street,
-                            style: textTheme.bodyLarge
-                                ?.copyWith(color: AppColors.textMedium, height: 1.4),
+                            style: textTheme.bodyLarge?.copyWith(
+                              color: AppColors.textMedium,
+                              height: 1.4,
+                            ),
                           ),
                           Text(
                             '${addr.city}, ${addr.state} - ${addr.pinCode}',
-                            style: textTheme.bodyLarge
-                                ?.copyWith(color: AppColors.textMedium, height: 1.4),
+                            style: textTheme.bodyLarge?.copyWith(
+                              color: AppColors.textMedium,
+                              height: 1.4,
+                            ),
                           ),
                         ],
                       ),
@@ -673,62 +714,96 @@ class _AddressPageState extends State<AddressPage> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
-                              icon: Icon(Icons.edit, color: AppColors.blinkitGreen, size: 20),
+                              icon: Icon(
+                                Icons.edit,
+                                color: AppColors.blinkitGreen,
+                                size: 20,
+                              ),
                               onPressed: () {
                                 controller.startEditingAddress(addr);
                               },
                               padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints.tightFor(width: 36, height: 36),
+                              constraints: const BoxConstraints.tightFor(
+                                width: 36,
+                                height: 36,
+                              ),
                               splashRadius: 20,
                             ),
                             IconButton(
-                              icon: Icon(Icons.delete, color: AppColors.danger, size: 20),
+                              icon: Icon(
+                                Icons.delete,
+                                color: AppColors.danger,
+                                size: 20,
+                              ),
                               onPressed: () async {
                                 if (addr.id != null) {
-                                  final bool confirmed = await Get.dialog<bool>(
-                                    AlertDialog(
-                                      title: Text('Delete Address',
-                                          style: textTheme.titleLarge),
-                                      content: Text(
-                                          'Are you sure you want to delete this address?',
-                                          style: textTheme.bodyMedium),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () => Get.back(result: false),
-                                          child: Text('Cancel',
-                                              style: textTheme.labelLarge?.copyWith(
-                                                  color: AppColors.textMedium)),
-                                        ),
-                                        ElevatedButton(
-                                          onPressed: () => Get.back(result: true),
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: AppColors.danger,
-                                            shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(8)),
+                                  final bool confirmed =
+                                      await Get.dialog<bool>(
+                                        AlertDialog(
+                                          title: Text(
+                                            'Delete Address',
+                                            style: textTheme.titleLarge,
                                           ),
-                                          child: Text('Delete',
-                                              style: textTheme.labelLarge?.copyWith(
-                                                  color: AppColors.white)),
+                                          content: Text(
+                                            'Are you sure you want to delete this address?',
+                                            style: textTheme.bodyMedium,
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () =>
+                                                  Get.back(result: false),
+                                              child: Text(
+                                                'Cancel',
+                                                style: textTheme.labelLarge
+                                                    ?.copyWith(
+                                                      color:
+                                                          AppColors.textMedium,
+                                                    ),
+                                              ),
+                                            ),
+                                            ElevatedButton(
+                                              onPressed: () =>
+                                                  Get.back(result: true),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor:
+                                                    AppColors.danger,
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                ),
+                                              ),
+                                              child: Text(
+                                                'Delete',
+                                                style: textTheme.labelLarge
+                                                    ?.copyWith(
+                                                      color: AppColors.white,
+                                                    ),
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                      ],
-                                    ),
-                                  ) ?? false;
+                                      ) ??
+                                      false;
                                   if (confirmed) {
                                     await controller.deleteAddress(addr.id!);
                                   }
-                                } else {
-
-                                }
+                                } else {}
                               },
                               padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints.tightFor(width: 36, height: 36),
+                              constraints: const BoxConstraints.tightFor(
+                                width: 36,
+                                height: 36,
+                              ),
                               splashRadius: 20,
                             ),
                             if (isSelected)
                               Padding(
                                 padding: const EdgeInsets.only(left: 8.0),
-                                child: Icon(Icons.check_circle_rounded,
-                                    color: AppColors.blinkitGreen, size: 24),
+                                child: Icon(
+                                  Icons.check_circle_rounded,
+                                  color: AppColors.blinkitGreen,
+                                  size: 24,
+                                ),
                               ),
                           ],
                         ),
@@ -768,34 +843,40 @@ class _AddressPageState extends State<AddressPage> {
             Container(
               width: double.infinity,
               margin: EdgeInsets.only(bottom: 20),
-              child: Obx(() => ElevatedButton.icon(
-                onPressed: _isLoadingLocation.value ? null : _showLocationDialog,
-                icon: _isLoadingLocation.value
-                    ? SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: AppColors.white,
+              child: Obx(
+                () => ElevatedButton.icon(
+                  onPressed: _isLoadingLocation.value
+                      ? null
+                      : _showLocationDialog,
+                  icon: _isLoadingLocation.value
+                      ? SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.white,
+                          ),
+                        )
+                      : Icon(Icons.my_location, color: AppColors.white),
+                  label: Text(
+                    _isLoadingLocation.value
+                        ? 'Getting Location...'
+                        : 'Use Current Location',
+                    style: textTheme.labelLarge?.copyWith(
+                      color: AppColors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                )
-                    : Icon(Icons.my_location, color: AppColors.white),
-                label: Text(
-                  _isLoadingLocation.value ? 'Getting Location...' : 'Use Current Location',
-                  style: textTheme.labelLarge?.copyWith(
-                    color: AppColors.white,
-                    fontWeight: FontWeight.w600,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.blinkitGreen,
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 2,
                   ),
                 ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.blinkitGreen,
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 2,
-                ),
-              )),
+              ),
             ),
 
             // ✅ Manual Entry Hint
@@ -805,11 +886,17 @@ class _AddressPageState extends State<AddressPage> {
               decoration: BoxDecoration(
                 color: AppColors.blinkitGreen.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppColors.blinkitGreen.withOpacity(0.3)),
+                border: Border.all(
+                  color: AppColors.blinkitGreen.withOpacity(0.3),
+                ),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.info_outline, color: AppColors.blinkitGreen, size: 20),
+                  Icon(
+                    Icons.info_outline,
+                    color: AppColors.blinkitGreen,
+                    size: 20,
+                  ),
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -828,8 +915,9 @@ class _AddressPageState extends State<AddressPage> {
               context: context,
               label: "Street Address, House No.",
               controller: controller.streetController,
-              validator: (val) =>
-              val == null || val.trim().isEmpty ? 'Street address is required' : null,
+              validator: (val) => val == null || val.trim().isEmpty
+                  ? 'Street address is required'
+                  : null,
             ),
             const SizedBox(height: 16),
 
@@ -839,7 +927,8 @@ class _AddressPageState extends State<AddressPage> {
               controller: controller.pinCodeController,
               keyboardType: TextInputType.number,
               validator: (val) {
-                if (val == null || val.trim().isEmpty) return 'PIN code is required';
+                if (val == null || val.trim().isEmpty)
+                  return 'PIN code is required';
                 if (!RegExp(r'^\d{4,10}$').hasMatch(val.trim()))
                   return 'Invalid PIN code (4-10 digits)';
                 return null;
@@ -851,7 +940,8 @@ class _AddressPageState extends State<AddressPage> {
               context: context,
               label: "City",
               controller: controller.cityController,
-              validator: (val) => val == null || val.trim().isEmpty ? 'City is required' : null,
+              validator: (val) =>
+                  val == null || val.trim().isEmpty ? 'City is required' : null,
             ),
             const SizedBox(height: 16),
 
@@ -859,7 +949,9 @@ class _AddressPageState extends State<AddressPage> {
               context: context,
               label: "State / Province",
               controller: controller.stateController,
-              validator: (val) => val == null || val.trim().isEmpty ? 'State is required' : null,
+              validator: (val) => val == null || val.trim().isEmpty
+                  ? 'State is required'
+                  : null,
             ),
             const SizedBox(height: 24),
 
@@ -880,7 +972,8 @@ class _AddressPageState extends State<AddressPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: ['Home', 'Work', 'Other'].map((label) {
-                      final isSelected = controller.selectedLabel.value == label;
+                      final isSelected =
+                          controller.selectedLabel.value == label;
                       return ChoiceChip(
                         label: Text(label),
                         selected: isSelected,
@@ -888,8 +981,13 @@ class _AddressPageState extends State<AddressPage> {
                           if (selected) controller.selectedLabel.value = label;
                         },
                         labelStyle: textTheme.labelMedium?.copyWith(
-                            color: isSelected ? AppColors.white : AppColors.textDark,
-                            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500),
+                          color: isSelected
+                              ? AppColors.white
+                              : AppColors.textDark,
+                          fontWeight: isSelected
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                        ),
                         backgroundColor: AppColors.neutralBackground,
                         selectedColor: AppColors.blinkitGreen,
                         shape: RoundedRectangleBorder(
@@ -912,8 +1010,9 @@ class _AddressPageState extends State<AddressPage> {
                       context: context,
                       label: 'Custom Label (e.g., "Friend\'s House")',
                       controller: controller.customLabelController,
-                      validator: (val) =>
-                      val == null || val.trim().isEmpty ? 'A custom label is required' : null,
+                      validator: (val) => val == null || val.trim().isEmpty
+                          ? 'A custom label is required'
+                          : null,
                     ),
                   ],
                 ],
@@ -923,60 +1022,70 @@ class _AddressPageState extends State<AddressPage> {
             SizedBox(
               width: double.infinity,
               height: 54,
-              child: Obx(() => ElevatedButton.icon(
-                icon: controller.isLoading.value
-                    ? const SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(
-                    color: AppColors.white,
-                    strokeWidth: 2,
+              child: Obx(
+                () => ElevatedButton.icon(
+                  icon: controller.isLoading.value
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            color: AppColors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : Icon(
+                          controller.isEditingMode ? Icons.update : Icons.save,
+                          color: AppColors.white,
+                        ),
+                  onPressed: controller.isLoading.value
+                      ? null
+                      : () async {
+                          if (_formKey.currentState!.validate()) {
+                            final success = await controller.saveAddress();
+                            if (success) {
+                              Get.back(result: true);
+                            }
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.blinkitGreen,
+                    disabledBackgroundColor: AppColors.blinkitGreen.withOpacity(
+                      0.5,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 4,
                   ),
-                )
-                    : Icon(
-                  controller.isEditingMode ? Icons.update : Icons.save,
-                  color: AppColors.white,
-                ),
-                onPressed: controller.isLoading.value
-                    ? null
-                    : () async {
-                  if (_formKey.currentState!.validate()) {
-                    final success = await controller.saveAddress();
-                    if (success) {
-                      Get.back(result: true);
-                    }
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.blinkitGreen,
-                  disabledBackgroundColor: AppColors.blinkitGreen.withOpacity(0.5),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 4,
-                ),
-                label: Text(
-                  controller.isLoading.value
-                      ? (controller.isEditingMode ? "Updating..." : "Saving...")
-                      : (controller.isEditingMode ? "Update Address" : "Save Address"),
-                  style: textTheme.labelLarge?.copyWith(
-                    color: AppColors.white,
-                    fontWeight: FontWeight.w700,
+                  label: Text(
+                    controller.isLoading.value
+                        ? (controller.isEditingMode
+                              ? "Updating..."
+                              : "Saving...")
+                        : (controller.isEditingMode
+                              ? "Update Address"
+                              : "Save Address"),
+                    style: textTheme.labelLarge?.copyWith(
+                      color: AppColors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
-              )),
+              ),
             ),
             const SizedBox(height: 12),
             TextButton(
               onPressed: controller.isLoading.value
                   ? null
                   : () {
-                controller.cancelEditing();
-              },
+                      controller.cancelEditing();
+                    },
               child: Text(
                 'Cancel',
                 style: textTheme.labelLarge?.copyWith(
-                    color: AppColors.textMedium, fontWeight: FontWeight.w600),
+                  color: AppColors.textMedium,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
             const SizedBox(height: 20),
@@ -1044,7 +1153,8 @@ class _AddressPageState extends State<AddressPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
+        Text(
+          label,
           style: Theme.of(context).textTheme.labelMedium?.copyWith(
             fontWeight: FontWeight.w600,
             color: AppColors.textDark,
@@ -1091,7 +1201,10 @@ class _AddressPageState extends State<AddressPage> {
             ),
             filled: true,
             fillColor: AppColors.white,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 16,
+            ),
             hintStyle: TextStyle(color: AppColors.textLight, fontSize: 14),
           ),
         ),
@@ -1120,7 +1233,10 @@ class _AddressPageState extends State<AddressPage> {
         ),
         filled: true,
         fillColor: AppColors.white,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
         border: OutlineInputBorder(
           borderSide: BorderSide(color: AppColors.neutralBackground),
           borderRadius: BorderRadius.circular(8),
@@ -1169,7 +1285,8 @@ class _AddressPageState extends State<AddressPage> {
   }
 
   String? _validatePhone(String? value) {
-    if (value == null || value.trim().isEmpty) return 'Phone number is required';
+    if (value == null || value.trim().isEmpty)
+      return 'Phone number is required';
     if (!GetUtils.isPhoneNumber(value.trim()) || value.trim().length != 10)
       return 'Please enter a valid 10-digit phone number';
     return null;
@@ -1190,9 +1307,7 @@ class _AddressPageState extends State<AddressPage> {
         icon: Icon(Icons.check_circle, color: AppColors.white),
         duration: const Duration(seconds: 1),
       );
-
     } catch (e) {
-
     } finally {
       _isUserLoading.value = false;
     }
@@ -1243,7 +1358,13 @@ class _AddressPageState extends State<AddressPage> {
     Get.dialog(
       AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Delete Account', style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700, color: AppColors.danger)),
+        title: Text(
+          'Delete Account',
+          style: textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w700,
+            color: AppColors.danger,
+          ),
+        ),
         content: Text(
           'Are you sure you want to delete your account? This action is irreversible and all your data will be lost.',
           style: textTheme.bodyMedium,
@@ -1251,7 +1372,12 @@ class _AddressPageState extends State<AddressPage> {
         actions: [
           TextButton(
             onPressed: () => Get.back(),
-            child: Text('Cancel', style: textTheme.labelLarge?.copyWith(color: AppColors.textMedium)),
+            child: Text(
+              'Cancel',
+              style: textTheme.labelLarge?.copyWith(
+                color: AppColors.textMedium,
+              ),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
@@ -1260,9 +1386,14 @@ class _AddressPageState extends State<AddressPage> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.danger,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
-            child: Text('Yes, Delete', style: textTheme.labelLarge?.copyWith(color: AppColors.white)),
+            child: Text(
+              'Yes, Delete',
+              style: textTheme.labelLarge?.copyWith(color: AppColors.white),
+            ),
           ),
         ],
       ),
@@ -1277,7 +1408,13 @@ class _AddressPageState extends State<AddressPage> {
     Get.dialog(
       AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Confirm Account Deletion', style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700, color: AppColors.danger)),
+        title: Text(
+          'Confirm Account Deletion',
+          style: textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w700,
+            color: AppColors.danger,
+          ),
+        ),
         content: Form(
           key: _confirmFormKey,
           child: Column(
@@ -1293,7 +1430,9 @@ class _AddressPageState extends State<AddressPage> {
                 controller: confirmController,
                 decoration: InputDecoration(
                   hintText: 'Type Deleteaccount',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
                 validator: (value) {
                   if (value != 'Deleteaccount') {
@@ -1308,20 +1447,31 @@ class _AddressPageState extends State<AddressPage> {
         actions: [
           TextButton(
             onPressed: () => Get.back(),
-            child: Text('Cancel', style: textTheme.labelLarge?.copyWith(color: AppColors.textMedium)),
+            child: Text(
+              'Cancel',
+              style: textTheme.labelLarge?.copyWith(
+                color: AppColors.textMedium,
+              ),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
               if (_confirmFormKey.currentState!.validate()) {
                 Get.back(); // Close confirmation dialog
-                loginController.deleteAccount(); // Call the actual delete account logic
+                loginController
+                    .deleteAccount(); // Call the actual delete account logic
               }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.danger,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
-            child: Text('Delete My Account', style: textTheme.labelLarge?.copyWith(color: AppColors.white)),
+            child: Text(
+              'Delete My Account',
+              style: textTheme.labelLarge?.copyWith(color: AppColors.white),
+            ),
           ),
         ],
       ),

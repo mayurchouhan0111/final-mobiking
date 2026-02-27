@@ -24,7 +24,8 @@ class MainContainerScreen extends StatefulWidget {
   State<MainContainerScreen> createState() => _MainContainerScreenState();
 }
 
-class _MainContainerScreenState extends State<MainContainerScreen> with WidgetsBindingObserver {
+class _MainContainerScreenState extends State<MainContainerScreen>
+    with WidgetsBindingObserver {
   final BottomNavController navController = Get.find<BottomNavController>();
   final CartController cartController = Get.find<CartController>();
   // Initialize SystemUiController here if it's the first place it's needed globally
@@ -37,7 +38,9 @@ class _MainContainerScreenState extends State<MainContainerScreen> with WidgetsB
     WidgetsBinding.instance.addObserver(this);
     // Initialize the system UI style based on the current systemUiController's value.
     // This value would have been set by BottomNavController's onInit based on selectedIndex.
-    SystemChrome.setSystemUIOverlayStyle(systemUiController.currentUiStyle.value);
+    SystemChrome.setSystemUIOverlayStyle(
+      systemUiController.currentUiStyle.value,
+    );
   }
 
   @override
@@ -53,7 +56,9 @@ class _MainContainerScreenState extends State<MainContainerScreen> with WidgetsB
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       // When app resumes, reapply the *current* style from the controller
-      SystemChrome.setSystemUIOverlayStyle(systemUiController.currentUiStyle.value);
+      SystemChrome.setSystemUIOverlayStyle(
+        systemUiController.currentUiStyle.value,
+      );
     }
   }
 
@@ -68,7 +73,7 @@ class _MainContainerScreenState extends State<MainContainerScreen> with WidgetsB
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: Obx(
-              () => IndexedStack(
+          () => IndexedStack(
             index: navController.selectedIndex.value,
             children: navController.pages,
           ),
@@ -86,7 +91,9 @@ class _MainContainerScreenState extends State<MainContainerScreen> with WidgetsB
           }
 
           // Get product images for the FAB
-          final List<String> imageUrls = cartController.cartItems.take(3).map((item) {
+          final List<String> imageUrls = cartController.cartItems.take(3).map((
+            item,
+          ) {
             final product = item['productId'];
             String? imageUrl;
 
@@ -103,29 +110,34 @@ class _MainContainerScreenState extends State<MainContainerScreen> with WidgetsB
                 imageUrl = imagesData;
               }
             }
-            return imageUrl ?? 'https://placehold.co/50x50/cccccc/ffffff?text=No+Img';
+            return imageUrl ??
+                'https://placehold.co/50x50/cccccc/ffffff?text=No+Img';
           }).toList();
 
           // CORRECTED: Calculate fabBottomMargin to float above the bottom bar
-          final double fabBottomMargin = 0.0; // 16px padding + bottom bar height
+          final double fabBottomMargin =
+              0.0; // 16px padding + bottom bar height
 
           return Container(
-            margin: EdgeInsets.only(left: 16, right: 16, bottom: fabBottomMargin),
+            margin: EdgeInsets.only(
+              left: 16,
+              right: 16,
+              bottom: fabBottomMargin,
+            ),
             child: FloatingCartButton(
               label: "View Cart",
               productImageUrls: imageUrls,
               itemCount: totalItemsInCart,
               onTap: () {
                 // ✅ Navigate with custom transition
-                                  Get.to(
-                        () => CheckoutScreen(),
-                    transition: Transition.rightToLeft,
-                    duration: const Duration(milliseconds: 300),
-                  );
+                Get.to(
+                  () => CheckoutScreen(),
+                  transition: Transition.rightToLeft,
+                  duration: const Duration(milliseconds: 300),
+                );
               },
             ),
           );
-
         }),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       ),

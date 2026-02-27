@@ -23,10 +23,15 @@ class WishlistCard extends StatelessWidget {
     final TextTheme textTheme = Theme.of(context).textTheme;
 
     // Determine the actual price to display.
-    final num regularPrice = product.sellingPrice.isNotEmpty ? product.sellingPrice.first.price : 0.0;
+    final num regularPrice = product.sellingPrice.isNotEmpty
+        ? product.sellingPrice.first.price
+        : 0.0;
     // Assuming discounted price is at index 1 if available
-    final int? discountedPrice = product.sellingPrice.length > 1 ? product.sellingPrice[1].price : null;
-    final bool hasDiscount = discountedPrice != null && discountedPrice < regularPrice;
+    final int? discountedPrice = product.sellingPrice.length > 1
+        ? product.sellingPrice[1].price
+        : null;
+    final bool hasDiscount =
+        discountedPrice != null && discountedPrice < regularPrice;
 
     final num displayPrice = hasDiscount ? discountedPrice! : regularPrice;
 
@@ -39,10 +44,14 @@ class WishlistCard extends StatelessWidget {
       // Replacing Card with Container for more precise styling control
       decoration: BoxDecoration(
         color: AppColors.white, // Pure white background for the card
-        borderRadius: BorderRadius.circular(12), // Rounded corners for the entire card
+        borderRadius: BorderRadius.circular(
+          12,
+        ), // Rounded corners for the entire card
         boxShadow: [
           BoxShadow(
-            color: AppColors.textDark.withOpacity(0.04), // Very subtle, diffused shadow
+            color: AppColors.textDark.withOpacity(
+              0.04,
+            ), // Very subtle, diffused shadow
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -50,19 +59,27 @@ class WishlistCard extends StatelessWidget {
       ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12), // Match container's border radius
+        borderRadius: BorderRadius.circular(
+          12,
+        ), // Match container's border radius
         child: Padding(
-          padding: const EdgeInsets.all(12), // Reduced padding for a more compact card
+          padding: const EdgeInsets.all(
+            12,
+          ), // Reduced padding for a more compact card
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start, // Align content to the top
+            crossAxisAlignment:
+                CrossAxisAlignment.start, // Align content to the top
             children: [
               // --- Product Image ---
               Container(
                 width: 90, // Consistent image size
                 height: 90,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8), // Slightly less rounded than card
-                  color: AppColors.neutralBackground, // Light background for image area
+                  borderRadius: BorderRadius.circular(
+                    8,
+                  ), // Slightly less rounded than card
+                  color: AppColors
+                      .neutralBackground, // Light background for image area
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
@@ -73,7 +90,11 @@ class WishlistCard extends StatelessWidget {
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) => Container(
                       color: AppColors.neutralBackground,
-                      child: Icon(Icons.broken_image_rounded, color: AppColors.textLight, size: 36), // Themed broken image icon
+                      child: Icon(
+                        Icons.broken_image_rounded,
+                        color: AppColors.textLight,
+                        size: 36,
+                      ), // Themed broken image icon
                     ),
                   ),
                 ),
@@ -89,7 +110,8 @@ class WishlistCard extends StatelessWidget {
                       product.name,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: textTheme.titleSmall?.copyWith( // Using titleSmall for product name
+                      style: textTheme.titleSmall?.copyWith(
+                        // Using titleSmall for product name
                         fontWeight: FontWeight.w500,
                         color: AppColors.textDark,
                         height: 1.3, // Adjust line height for readability
@@ -97,15 +119,18 @@ class WishlistCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Row(
-                      crossAxisAlignment: CrossAxisAlignment.baseline, // Align text baselines
+                      crossAxisAlignment:
+                          CrossAxisAlignment.baseline, // Align text baselines
                       textBaseline: TextBaseline.alphabetic,
                       children: [
                         // Display the actual selling price (discounted or regular)
                         Text(
                           '₹${displayPrice.toStringAsFixed(2)}',
-                          style: textTheme.titleMedium?.copyWith( // Larger and bolder for main price
+                          style: textTheme.titleMedium?.copyWith(
+                            // Larger and bolder for main price
                             fontWeight: FontWeight.w600,
-                            color: AppColors.primaryGreen, // Discounted/Current price in Blinkit green
+                            color: AppColors
+                                .primaryGreen, // Discounted/Current price in Blinkit green
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -113,9 +138,11 @@ class WishlistCard extends StatelessWidget {
                         if (hasDiscount)
                           Text(
                             '₹${regularPrice.toStringAsFixed(2)}',
-                            style: textTheme.bodyLarge?.copyWith( // bodyLarge for strikethrough price
+                            style: textTheme.bodyLarge?.copyWith(
+                              // bodyLarge for strikethrough price
                               fontWeight: FontWeight.w500,
-                              color: AppColors.textMedium, // Medium grey for strikethrough
+                              color: AppColors
+                                  .textMedium, // Medium grey for strikethrough
                               decoration: TextDecoration.lineThrough,
                               decorationColor: AppColors.textMedium,
                               decorationThickness: 1.5,
@@ -124,7 +151,6 @@ class WishlistCard extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 12), // Space before action buttons
-
                     // --- Actions: Remove and Add to Cart ---
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -132,7 +158,11 @@ class WishlistCard extends StatelessWidget {
                         // Remove Button (leading edge)
                         TextButton.icon(
                           onPressed: onRemove,
-                          icon: Icon(Icons.close_rounded, color: AppColors.textMedium, size: 20), // Clear 'X' icon for remove
+                          icon: Icon(
+                            Icons.close_rounded,
+                            color: AppColors.textMedium,
+                            size: 20,
+                          ), // Clear 'X' icon for remove
                           label: Text(
                             'Remove',
                             style: textTheme.labelSmall?.copyWith(
@@ -144,7 +174,8 @@ class WishlistCard extends StatelessWidget {
                             padding: EdgeInsets.zero,
                             minimumSize: Size.zero,
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            foregroundColor: AppColors.textMedium, // Ripple color
+                            foregroundColor:
+                                AppColors.textMedium, // Ripple color
                           ),
                         ),
                         // Add to Cart Button (trailing edge)
@@ -157,14 +188,19 @@ class WishlistCard extends StatelessWidget {
                                 backgroundColor: AppColors.primaryGreen,
                                 foregroundColor: AppColors.white,
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8), // Slightly rounded corners
+                                  borderRadius: BorderRadius.circular(
+                                    8,
+                                  ), // Slightly rounded corners
                                 ),
-                                padding: const EdgeInsets.symmetric(horizontal: 16), // Horizontal padding
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                ), // Horizontal padding
                                 elevation: 2, // Subtle elevation
                               ),
                               child: Text(
                                 'Add', // Simple "Add" text
-                                style: textTheme.labelMedium?.copyWith( // labelLarge for button text
+                                style: textTheme.labelMedium?.copyWith(
+                                  // labelLarge for button text
                                   fontWeight: FontWeight.w500,
                                   color: AppColors.white,
                                 ),

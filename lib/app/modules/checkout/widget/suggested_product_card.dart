@@ -20,10 +20,8 @@ import '../../../data/product_model.dart';
 class SuggestedProductCard extends StatelessWidget {
   final ProductModel product;
 
-  const SuggestedProductCard({
-    Key? key,
-    required this.product,
-  }) : super(key: key);
+  const SuggestedProductCard({Key? key, required this.product})
+    : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -37,9 +35,10 @@ class SuggestedProductCard extends StatelessWidget {
         : 'https://via.placeholder.com/120x90';
 
     // Safely get price, handling potential empty list or null values
-    final String displayPrice = (product.sellingPrice != null &&
-        product.sellingPrice.isNotEmpty &&
-        product.sellingPrice[0].price != null)
+    final String displayPrice =
+        (product.sellingPrice != null &&
+            product.sellingPrice.isNotEmpty &&
+            product.sellingPrice[0].price != null)
         ? "₹${product.sellingPrice[0].price!.toStringAsFixed(2)}" // Format to 2 decimal places
         : "₹0.00"; // Default value
 
@@ -48,7 +47,10 @@ class SuggestedProductCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.shade400, width: 1), // ADDED BORDER, REMOVED SHADOW
+        border: Border.all(
+          color: Colors.grey.shade400,
+          width: 1,
+        ), // ADDED BORDER, REMOVED SHADOW
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

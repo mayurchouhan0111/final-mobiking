@@ -83,5 +83,4 @@ class DefaultFirebaseOptions {
     authDomain: 'mobiking-25fc3.firebaseapp.com',
     storageBucket: 'mobiking-25fc3.firebasestorage.app',
   );
-
 }

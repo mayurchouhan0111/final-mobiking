@@ -32,12 +32,12 @@ void main() {
           "minFreeDeliveryOrderAmount": 500,
           "photos": ["photo1.jpg"],
           "parentCategory": "cat1",
-          "products": ["prod1"]
-        }
+          "products": ["prod1"],
+        },
       ];
 
       when(mockDio.get('/subcategories')).thenAnswer(
-            (_) async => Response(
+        (_) async => Response(
           data: dummyData,
           statusCode: 200,
           requestOptions: RequestOptions(path: '/subcategories'),

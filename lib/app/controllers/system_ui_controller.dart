@@ -81,7 +81,9 @@ class SystemUIController extends GetxController {
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.light,
       statusBarBrightness: Brightness.dark,
-      systemNavigationBarColor: Color(0xFF6C63FF), // Replace with your primary color
+      systemNavigationBarColor: Color(
+        0xFF6C63FF,
+      ), // Replace with your primary color
       systemNavigationBarIconBrightness: Brightness.light,
     );
   }

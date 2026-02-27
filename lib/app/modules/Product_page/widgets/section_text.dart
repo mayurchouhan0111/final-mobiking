@@ -6,11 +6,7 @@ class SectionText extends StatelessWidget {
   final String title;
   final String content;
 
-  const SectionText({
-    super.key,
-    required this.title,
-    required this.content,
-  });
+  const SectionText({super.key, required this.title, required this.content});
 
   @override
   Widget build(BuildContext context) {
@@ -18,16 +14,14 @@ class SectionText extends StatelessWidget {
       fontSize: 16,
       fontWeight: FontWeight.bold,
     );
-    final labelStyle = GoogleFonts.poppins(
-      fontSize: 14,
-      color: Colors.black87,
-    );
+    final labelStyle = GoogleFonts.poppins(fontSize: 14, color: Colors.black87);
 
     return Container(
       padding: EdgeInsets.all(8),
       decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          color: AppColors.neutralBackground),
+        borderRadius: BorderRadius.circular(8),
+        color: AppColors.neutralBackground,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

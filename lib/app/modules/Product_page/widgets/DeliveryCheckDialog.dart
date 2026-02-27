@@ -9,10 +9,8 @@ typedef DeliveryCheckCallback = Future<bool> Function(String postalCode);
 class DeliveryCheckButton extends StatelessWidget {
   final DeliveryCheckCallback onCheckDelivery;
 
-  const DeliveryCheckButton({
-    Key? key,
-    required this.onCheckDelivery,
-  }) : super(key: key);
+  const DeliveryCheckButton({Key? key, required this.onCheckDelivery})
+    : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -22,9 +20,7 @@ class DeliveryCheckButton extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF2BAE66), // Blinkit green
           padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           elevation: 4,
           shadowColor: Colors.greenAccent.shade100,
           textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
@@ -33,7 +29,8 @@ class DeliveryCheckButton extends StatelessWidget {
         onPressed: () {
           showDialog(
             context: context,
-            builder: (_) => DeliveryCheckDialog(onCheckDelivery: onCheckDelivery),
+            builder: (_) =>
+                DeliveryCheckDialog(onCheckDelivery: onCheckDelivery),
           );
         },
       ),
@@ -44,10 +41,8 @@ class DeliveryCheckButton extends StatelessWidget {
 class DeliveryCheckDialog extends StatefulWidget {
   final DeliveryCheckCallback onCheckDelivery;
 
-  const DeliveryCheckDialog({
-    Key? key,
-    required this.onCheckDelivery,
-  }) : super(key: key);
+  const DeliveryCheckDialog({Key? key, required this.onCheckDelivery})
+    : super(key: key);
 
   @override
   State<DeliveryCheckDialog> createState() => _DeliveryCheckDialogState();
@@ -123,21 +118,36 @@ class _DeliveryCheckDialogState extends State<DeliveryCheckDialog> {
                   hintText: 'e.g. 560001',
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Color(0xFF2BAE66), width: 2),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF2BAE66),
+                      width: 2,
+                    ),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: Colors.grey.shade300, width: 1.5),
+                    borderSide: BorderSide(
+                      color: Colors.grey.shade300,
+                      width: 1.5,
+                    ),
                   ),
                   errorBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Colors.redAccent, width: 2),
+                    borderSide: const BorderSide(
+                      color: Colors.redAccent,
+                      width: 2,
+                    ),
                   ),
                   focusedErrorBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Colors.redAccent, width: 2),
+                    borderSide: const BorderSide(
+                      color: Colors.redAccent,
+                      width: 2,
+                    ),
                   ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
@@ -161,16 +171,23 @@ class _DeliveryCheckDialogState extends State<DeliveryCheckDialog> {
                 padding: const EdgeInsets.only(bottom: 16),
                 child: Text(
                   _errorText!,
-                  style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                    color: Colors.redAccent,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             if (_isAvailable != null && !_isLoading)
               Padding(
                 padding: const EdgeInsets.only(bottom: 16),
                 child: Text(
-                  _isAvailable! ? 'Delivery available to this PIN code' : 'Delivery not available',
+                  _isAvailable!
+                      ? 'Delivery available to this PIN code'
+                      : 'Delivery not available',
                   style: TextStyle(
-                    color: _isAvailable! ? const Color(0xFF2BAE66) : Colors.redAccent,
+                    color: _isAvailable!
+                        ? const Color(0xFF2BAE66)
+                        : Colors.redAccent,
                     fontWeight: FontWeight.w700,
                     fontSize: 16,
                   ),
@@ -194,18 +211,24 @@ class _DeliveryCheckDialogState extends State<DeliveryCheckDialog> {
                   onPressed: _isLoading ? null : _checkAvailability,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.success,
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                     elevation: 4,
                     shadowColor: Colors.greenAccent.shade100,
-                    textStyle: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16),
+                    textStyle: GoogleFonts.poppins(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
                   ),
                   child: const Text('Check'),
                 ),
               ],
-            )
+            ),
           ],
         ),
       ),

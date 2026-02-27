@@ -33,17 +33,17 @@ void main() {
           "bestSeller": false,
           "recommended": true,
           "sellingPrice": [
-            {"price": 999.99}
+            {"price": 999.99},
           ],
           "category": "electronics",
           "stock": ["s1", "s2"],
           "orders": ["o1"],
-          "groups": ["g1"]
-        }
+          "groups": ["g1"],
+        },
       ];
 
       when(mockDio.get('/products')).thenAnswer(
-            (_) async => Response(
+        (_) async => Response(
           data: mockResponseData,
           statusCode: 200,
           requestOptions: RequestOptions(path: '/products'),
@@ -73,7 +73,7 @@ void main() {
       );
 
       when(mockDio.post('/products', data: anyNamed('data'))).thenAnswer(
-            (_) async => Response(
+        (_) async => Response(
           data: product.toJson(),
           statusCode: 201,
           requestOptions: RequestOptions(path: '/products'),

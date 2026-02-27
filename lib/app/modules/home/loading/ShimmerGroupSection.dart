@@ -14,17 +14,9 @@ class ShimmerGroupSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            height: 140,
-            width: double.infinity,
-            color: Colors.white,
-          ),
+          Container(height: 140, width: double.infinity, color: Colors.white),
           const SizedBox(height: 16),
-          Container(
-            height: 20,
-            width: 150,
-            color: Colors.white,
-          ),
+          Container(height: 20, width: 150, color: Colors.white),
           const SizedBox(height: 12),
           const ShimmerProductGrid(),
         ],

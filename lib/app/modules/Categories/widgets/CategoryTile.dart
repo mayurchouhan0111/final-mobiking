@@ -17,7 +17,6 @@ class _AppColors {
   static const Color placeholderText = Color(0xff71717a); // zinc-500
 }
 
-
 class CategoryTile extends StatelessWidget {
   final String title;
   final String? imageUrl;
@@ -60,9 +59,7 @@ class CategoryTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 // This container holds the image and gives it the rounded background
-                Expanded(
-                  child: _buildImageSection(),
-                ),
+                Expanded(child: _buildImageSection()),
                 const SizedBox(height: 8),
                 _buildTitleSection(context),
               ],
@@ -92,7 +89,10 @@ class CategoryTile extends StatelessWidget {
   Widget _buildImageWidget() {
     // Priority for local SVG string icon
     if (icon != null && icon!.isNotEmpty) {
-      final modifiedIcon = icon!.replaceAll('stroke-width="3"', 'stroke-width="1.5"');
+      final modifiedIcon = icon!.replaceAll(
+        'stroke-width="3"',
+        'stroke-width="1.5"',
+      );
       return Center(
         child: SizedBox(
           width: 60,
@@ -139,7 +139,6 @@ class CategoryTile extends StatelessWidget {
       cacheWidth: 200,
     );
   }
-
 
   Widget _buildFallbackWidget() {
     return Center(

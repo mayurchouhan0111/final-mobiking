@@ -15,16 +15,15 @@ void showLogoutDialog(BuildContext context) {
     context: context,
     builder: (context) => AlertDialog(
       backgroundColor: AppColors.neutralBackground, // Use AppColors
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       title: Row(
         children: [
           Icon(Icons.logout, color: AppColors.primaryPurple), // Use AppColors
           const SizedBox(width: 8),
           Text(
             'Logout',
-            style: textTheme.titleMedium?.copyWith( // Use titleMedium
+            style: textTheme.titleMedium?.copyWith(
+              // Use titleMedium
               fontWeight: FontWeight.bold,
               color: AppColors.primaryPurple, // Use AppColors
             ),
@@ -33,7 +32,8 @@ void showLogoutDialog(BuildContext context) {
       ),
       content: Text(
         'Are you sure you want to logout from your account?',
-        style: textTheme.bodyLarge?.copyWith( // Use bodyLarge
+        style: textTheme.bodyLarge?.copyWith(
+          // Use bodyLarge
           color: AppColors.textDark, // Use AppColors for consistent dark text
         ),
       ),
@@ -44,7 +44,9 @@ void showLogoutDialog(BuildContext context) {
           icon: Icon(Icons.cancel, color: AppColors.textLight), // Use AppColors
           label: Text(
             'Cancel',
-            style: textTheme.labelLarge?.copyWith(color: AppColors.textLight), // Use labelLarge
+            style: textTheme.labelLarge?.copyWith(
+              color: AppColors.textLight,
+            ), // Use labelLarge
           ),
         ),
         ElevatedButton.icon(
@@ -63,9 +65,7 @@ void showLogoutDialog(BuildContext context) {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      CircularProgressIndicator(
-                        color: AppColors.primaryPurple,
-                      ),
+                      CircularProgressIndicator(color: AppColors.primaryPurple),
                       const SizedBox(height: 16),
                       Text(
                         'Logging out...',
@@ -96,11 +96,10 @@ void showLogoutDialog(BuildContext context) {
                 icon: Icon(Icons.check_circle, color: AppColors.white),
                 duration: const Duration(seconds: 2),
               );
-
             } catch (error) {
               // ✅ Handle logout error
               Get.back(); // Close loading dialog
-           /*   Get.snackbar(
+              /*   Get.snackbar(
                 'Error',
                 'Failed to logout. Please try again.',
                 backgroundColor: AppColors.danger,
@@ -110,14 +109,21 @@ void showLogoutDialog(BuildContext context) {
               );*/
             }
           },
-          icon: const Icon(Icons.check_circle_outline, color: Colors.white), // Ensure icon color is white for contrast
+          icon: const Icon(
+            Icons.check_circle_outline,
+            color: Colors.white,
+          ), // Ensure icon color is white for contrast
           label: Text(
             'Logout',
-            style: textTheme.labelLarge?.copyWith(color: Colors.white), // Use labelLarge
+            style: textTheme.labelLarge?.copyWith(
+              color: Colors.white,
+            ), // Use labelLarge
           ),
           style: ElevatedButton.styleFrom(
-            foregroundColor: Colors.white, // This covers the label and icon color
-            backgroundColor: AppColors.danger, // Use AppColors for a clear "danger" action
+            foregroundColor:
+                Colors.white, // This covers the label and icon color
+            backgroundColor:
+                AppColors.danger, // Use AppColors for a clear "danger" action
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),

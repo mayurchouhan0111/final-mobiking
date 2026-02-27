@@ -26,8 +26,9 @@ class _SubCategoryProductsScreenState extends State<SubCategoryProductsScreen> {
   @override
   void initState() {
     super.initState();
-    _productsFuture =
-        CategoryService().getProductsBySubCategorySlug(widget.subcategorySlug);
+    _productsFuture = CategoryService().getProductsBySubCategorySlug(
+      widget.subcategorySlug,
+    );
   }
 
   @override

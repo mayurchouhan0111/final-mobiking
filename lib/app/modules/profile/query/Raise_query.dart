@@ -15,7 +15,8 @@ class RaiseQueryDialog extends StatefulWidget {
   State<RaiseQueryDialog> createState() => _RaiseQueryDialogState();
 }
 
-class _RaiseQueryDialogState extends State<RaiseQueryDialog> with TickerProviderStateMixin {
+class _RaiseQueryDialogState extends State<RaiseQueryDialog>
+    with TickerProviderStateMixin {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _messageController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
@@ -52,7 +53,7 @@ class _RaiseQueryDialogState extends State<RaiseQueryDialog> with TickerProvider
         message: _messageController.text.trim(),
         orderId: widget.orderId,
       );
-      
+
       Get.snackbar(
         'Success',
         'Your query has been raised successfully.',
@@ -60,13 +61,13 @@ class _RaiseQueryDialogState extends State<RaiseQueryDialog> with TickerProvider
         colorText: Colors.white,
         snackPosition: SnackPosition.BOTTOM,
       );
-      
+
       // Close the dialog
-      Navigator.of(context).pop(); 
+      Navigator.of(context).pop();
 
       // Refresh data
       queryController.refreshMyQueries();
-      
+
       final orderController = Get.find<OrderController>();
       orderController.fetchOrderHistory();
     } catch (e) {
@@ -82,13 +83,13 @@ class _RaiseQueryDialogState extends State<RaiseQueryDialog> with TickerProvider
 
   void _showSuccessSnackbar() {
     Fluttertoast.showToast(
-        msg: "Query raised successfully",
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.CENTER,
-        timeInSecForIosWeb: 1,
-        backgroundColor: Colors.green,
-        textColor: Colors.white,
-        fontSize: 16.0
+      msg: "Query raised successfully",
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.CENTER,
+      timeInSecForIosWeb: 1,
+      backgroundColor: Colors.green,
+      textColor: Colors.white,
+      fontSize: 16.0,
     );
   }
 
@@ -100,8 +101,8 @@ class _RaiseQueryDialogState extends State<RaiseQueryDialog> with TickerProvider
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: EdgeInsets.symmetric(
-          horizontal: mq.size.width * 0.05,
-          vertical: mq.size.height * 0.06
+        horizontal: mq.size.width * 0.05,
+        vertical: mq.size.height * 0.06,
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -110,8 +111,8 @@ class _RaiseQueryDialogState extends State<RaiseQueryDialog> with TickerProvider
             padding: EdgeInsets.only(bottom: mq.viewInsets.bottom),
             child: ConstrainedBox(
               constraints: BoxConstraints(
-                  maxWidth: 500,
-                  maxHeight: mq.size.height * 0.9
+                maxWidth: 500,
+                maxHeight: mq.size.height * 0.9,
               ),
               child: Container(
                 decoration: BoxDecoration(
@@ -133,7 +134,8 @@ class _RaiseQueryDialogState extends State<RaiseQueryDialog> with TickerProvider
                 child: Form(
                   key: _formKey,
                   child: Column(
-                    mainAxisSize: MainAxisSize.min, // This respects the content!
+                    mainAxisSize:
+                        MainAxisSize.min, // This respects the content!
                     children: [
                       _buildHeader(textTheme),
                       Flexible(
@@ -173,7 +175,11 @@ class _RaiseQueryDialogState extends State<RaiseQueryDialog> with TickerProvider
             color: AppColors.primaryPurple.withOpacity(0.1),
             shape: BoxShape.circle,
           ),
-          child: Icon(Icons.help_outline_rounded, color: AppColors.primaryPurple, size: 32),
+          child: Icon(
+            Icons.help_outline_rounded,
+            color: AppColors.primaryPurple,
+            size: 32,
+          ),
         ),
         const SizedBox(height: 16),
         Text(
@@ -189,7 +195,10 @@ class _RaiseQueryDialogState extends State<RaiseQueryDialog> with TickerProvider
         Text(
           'We\'re here to help! Let us know what\'s on your mind.',
           textAlign: TextAlign.center,
-          style: textTheme.bodyMedium?.copyWith(color: AppColors.textMedium, fontSize: 14),
+          style: textTheme.bodyMedium?.copyWith(
+            color: AppColors.textMedium,
+            fontSize: 14,
+          ),
         ),
       ],
     ),
@@ -219,16 +228,18 @@ class _RaiseQueryDialogState extends State<RaiseQueryDialog> with TickerProvider
     decoration: InputDecoration(
       labelText: 'Query Title *',
       hintText: 'e.g.: Issue with delivery of order #12345',
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
       filled: true,
       fillColor: AppColors.neutralBackground.withOpacity(0.5),
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
     ),
-    style: textTheme.bodyMedium?.copyWith(color: AppColors.textDark, fontSize: 16),
+    style: textTheme.bodyMedium?.copyWith(
+      color: AppColors.textDark,
+      fontSize: 16,
+    ),
     validator: (value) {
-      if (value == null || value.trim().isEmpty) return 'Please enter a title for your query';
+      if (value == null || value.trim().isEmpty)
+        return 'Please enter a title for your query';
       if (value.trim().length < 3) return 'Title must be at least 3 characters';
       return null;
     },
@@ -243,18 +254,23 @@ class _RaiseQueryDialogState extends State<RaiseQueryDialog> with TickerProvider
     minLines: 4,
     decoration: InputDecoration(
       labelText: 'Detailed Message *',
-      hintText: 'Describe your query in detail, including relevant dates/order numbers...',
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      hintText:
+          'Describe your query in detail, including relevant dates/order numbers...',
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
       filled: true,
       fillColor: AppColors.neutralBackground.withOpacity(0.5),
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
     ),
-    style: textTheme.bodyMedium?.copyWith(color: AppColors.textDark, fontSize: 16, height: 1.4),
+    style: textTheme.bodyMedium?.copyWith(
+      color: AppColors.textDark,
+      fontSize: 16,
+      height: 1.4,
+    ),
     validator: (value) {
-      if (value == null || value.trim().isEmpty) return 'Please describe your query in detail';
-      if (value.trim().length < 10) return 'Message must be at least 10 characters long';
+      if (value == null || value.trim().isEmpty)
+        return 'Please describe your query in detail';
+      if (value.trim().length < 10)
+        return 'Message must be at least 10 characters long';
       return null;
     },
     keyboardType: TextInputType.multiline,
@@ -266,7 +282,10 @@ class _RaiseQueryDialogState extends State<RaiseQueryDialog> with TickerProvider
     padding: const EdgeInsets.all(24),
     decoration: BoxDecoration(
       color: AppColors.neutralBackground.withOpacity(0.3),
-      borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(24), bottomRight: Radius.circular(24)),
+      borderRadius: const BorderRadius.only(
+        bottomLeft: Radius.circular(24),
+        bottomRight: Radius.circular(24),
+      ),
     ),
     child: Row(
       children: [
@@ -279,10 +298,18 @@ class _RaiseQueryDialogState extends State<RaiseQueryDialog> with TickerProvider
             style: TextButton.styleFrom(
               foregroundColor: AppColors.textMedium,
               backgroundColor: AppColors.white,
-              side: BorderSide(color: AppColors.lightGreyBackground, width: 1.5),
-              textStyle: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600, fontSize: 16),
+              side: BorderSide(
+                color: AppColors.lightGreyBackground,
+                width: 1.5,
+              ),
+              textStyle: textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+                fontSize: 16,
+              ),
               padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
             child: const Text('Cancel'),
           ),
@@ -290,42 +317,54 @@ class _RaiseQueryDialogState extends State<RaiseQueryDialog> with TickerProvider
         const SizedBox(width: 16),
         Expanded(
           flex: 2,
-          child: Obx(() => ElevatedButton(
-            onPressed: queryController.isLoading ? null : _submitQuery,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryPurple,
-              foregroundColor: AppColors.white,
-              disabledBackgroundColor: AppColors.textLight.withOpacity(0.3),
-              textStyle: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700, fontSize: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              elevation: queryController.isLoading ? 0 : 4,
-              shadowColor: AppColors.primaryPurple.withOpacity(0.3),
-            ),
-            child: queryController.isLoading
-                ? Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SizedBox(
-                  height: 20, width: 20,
-                  child: CircularProgressIndicator(
-                    color: AppColors.white,
-                    strokeWidth: 2,
-                  ),
+          child: Obx(
+            () => ElevatedButton(
+              onPressed: queryController.isLoading ? null : _submitQuery,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryPurple,
+                foregroundColor: AppColors.white,
+                disabledBackgroundColor: AppColors.textLight.withOpacity(0.3),
+                textStyle: textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
                 ),
-                const SizedBox(width: 12),
-                const Text('Submitting...'),
-              ],
-            )
-                : Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.send_rounded, size: 20, color: AppColors.white),
-                const SizedBox(width: 8),
-                const Text('Submit Query'),
-              ],
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                elevation: queryController.isLoading ? 0 : 4,
+                shadowColor: AppColors.primaryPurple.withOpacity(0.3),
+              ),
+              child: queryController.isLoading
+                  ? Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            color: AppColors.white,
+                            strokeWidth: 2,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Text('Submitting...'),
+                      ],
+                    )
+                  : Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.send_rounded,
+                          size: 20,
+                          color: AppColors.white,
+                        ),
+                        const SizedBox(width: 8),
+                        const Text('Submit Query'),
+                      ],
+                    ),
             ),
-          )),
+          ),
         ),
       ],
     ),

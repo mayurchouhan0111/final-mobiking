@@ -15,7 +15,9 @@ void main() {
     setUp(() {
       mockDio = MockDio();
       service = StockService();
-      service.overrideDio(mockDio); // Make sure your StockService has this method
+      service.overrideDio(
+        mockDio,
+      ); // Make sure your StockService has this method
     });
 
     test('getAllStocks returns a list of stocks', () async {
@@ -26,11 +28,11 @@ void main() {
           "quantity": "50",
           "variantName": "prod1",
           "purchasePrice": 100,
-        }
+        },
       ];
 
       when(mockDio.get('/stocks')).thenAnswer(
-            (_) async => Response(
+        (_) async => Response(
           data: dummyStockData,
           statusCode: 200,
           requestOptions: RequestOptions(path: '/stocks'),
@@ -53,7 +55,7 @@ void main() {
       );
 
       when(mockDio.post('/stocks', data: anyNamed('data'))).thenAnswer(
-            (_) async => Response(
+        (_) async => Response(
           data: stock.toJson(),
           statusCode: 201,
           requestOptions: RequestOptions(path: '/stocks'),

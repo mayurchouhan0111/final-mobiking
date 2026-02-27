@@ -30,9 +30,9 @@ class _AboutScreenState extends State<AboutScreen> {
     final Uri uri = Uri.parse(url);
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not open link')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Could not open link')));
       }
     }
   }
@@ -78,10 +78,7 @@ class _AboutScreenState extends State<AboutScreen> {
       appBar: AppBar(
         title: const Text(
           'About Us',
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 18,
-          ),
+          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
         ),
         elevation: 0,
         backgroundColor: AppColors.white,
@@ -89,10 +86,7 @@ class _AboutScreenState extends State<AboutScreen> {
         surfaceTintColor: Colors.transparent,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(
-            color: Colors.grey.shade200,
-            height: 1,
-          ),
+          child: Container(color: Colors.grey.shade200, height: 1),
         ),
       ),
       body: FutureBuilder<CompanyDetails>(
@@ -266,15 +260,14 @@ class _AboutScreenState extends State<AboutScreen> {
                     _buildSectionCard(
                       title: 'Follow Us',
                       icon: Icons.share_outlined,
-                      children: [
-                        _buildSocialMediaGrid(details),
-                      ],
+                      children: [_buildSocialMediaGrid(details)],
                     ),
 
                     const SizedBox(height: 16),
 
                     // App Links Section
-                    if (details.androidAppLink.isNotEmpty || details.iosAppLink != null)
+                    if (details.androidAppLink.isNotEmpty ||
+                        details.iosAppLink != null)
                       _buildSectionCard(
                         title: 'Download Our App',
                         icon: Icons.smartphone_outlined,
@@ -286,7 +279,8 @@ class _AboutScreenState extends State<AboutScreen> {
                               color: Colors.green,
                               onTap: () => _launchUrl(details.androidAppLink),
                             ),
-                          if (details.androidAppLink.isNotEmpty && details.iosAppLink != null)
+                          if (details.androidAppLink.isNotEmpty &&
+                              details.iosAppLink != null)
                             const SizedBox(height: 12),
                           if (details.iosAppLink != null)
                             _buildAppDownloadButton(
@@ -341,10 +335,7 @@ class _AboutScreenState extends State<AboutScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.grey.shade200,
-          width: 1,
-        ),
+        border: Border.all(color: Colors.grey.shade200, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -356,7 +347,9 @@ class _AboutScreenState extends State<AboutScreen> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: (AppColors.primaryPurple ?? Colors.blue).withOpacity(0.1),
+                    color: (AppColors.primaryPurple ?? Colors.blue).withOpacity(
+                      0.1,
+                    ),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
@@ -380,9 +373,7 @@ class _AboutScreenState extends State<AboutScreen> {
           Divider(height: 1, color: Colors.grey.shade200),
           Padding(
             padding: const EdgeInsets.all(16),
-            child: Column(
-              children: children,
-            ),
+            child: Column(children: children),
           ),
         ],
       ),
@@ -494,10 +485,7 @@ class _AboutScreenState extends State<AboutScreen> {
     if (socialMedia.isEmpty) {
       return Text(
         'No social media links available',
-        style: TextStyle(
-          fontSize: 14,
-          color: Colors.grey.shade600,
-        ),
+        style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
       );
     }
 
@@ -561,10 +549,7 @@ class _AboutScreenState extends State<AboutScreen> {
         decoration: BoxDecoration(
           color: color.withOpacity(0.1),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: color.withOpacity(0.3),
-            width: 1,
-          ),
+          border: Border.all(color: color.withOpacity(0.3), width: 1),
         ),
         child: Row(
           children: [
@@ -580,11 +565,7 @@ class _AboutScreenState extends State<AboutScreen> {
                 ),
               ),
             ),
-            Icon(
-              Icons.arrow_forward_ios_rounded,
-              size: 16,
-              color: color,
-            ),
+            Icon(Icons.arrow_forward_ios_rounded, size: 16, color: color),
           ],
         ),
       ),

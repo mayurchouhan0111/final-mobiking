@@ -23,11 +23,7 @@ class ShimmerBanner extends StatelessWidget {
           bottomRight: Radius.circular(borderRadius),
         ),
         gradient: LinearGradient(
-          colors: [
-            Colors.grey[300]!,
-            Colors.grey[100]!,
-            Colors.grey[300]!,
-          ],
+          colors: [Colors.grey[300]!, Colors.grey[100]!, Colors.grey[300]!],
           stops: const [0.1, 0.5, 0.9],
         ),
       ),

@@ -1,4 +1,3 @@
-
 class ParentCategoryModel {
   final String id;
   final String name;
@@ -22,11 +21,6 @@ class ParentCategoryModel {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      '_id': id,
-      'name': name,
-      'slug': slug,
-      'image': image,
-    };
+    return {'_id': id, 'name': name, 'slug': slug, 'image': image};
   }
 }

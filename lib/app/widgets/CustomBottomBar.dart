@@ -23,7 +23,7 @@ class CustomBottomBar extends StatelessWidget {
     final double bottomSafeAreaPadding = MediaQuery.of(context).padding.bottom;
 
     return Obx(
-          () => Container(
+      () => Container(
         height: contentHeight + bottomSafeAreaPadding,
         decoration: BoxDecoration(
           color: AppColors.white,
@@ -42,20 +42,29 @@ class CustomBottomBar extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: List.generate(navItems.length, (index) {
-              final bool isSelected = navController.selectedIndex.value == index;
+              final bool isSelected =
+                  navController.selectedIndex.value == index;
               final String iconPath = navItems[index]['icon'];
               final String label = navItems[index]['label'];
 
               Color iconColor = isSelected
-                  ? (label == 'Home' ? Colors.yellow[700]! : AppColors.accentNeon)
+                  ? (label == 'Home'
+                        ? Colors.yellow[700]!
+                        : AppColors.accentNeon)
                   : AppColors.textLight;
 
-              Color textColor = isSelected ? AppColors.textDark : AppColors.textLight;
-              FontWeight fontWeight = isSelected ? FontWeight.w700 : FontWeight.w500;
+              Color textColor = isSelected
+                  ? AppColors.textDark
+                  : AppColors.textLight;
+              FontWeight fontWeight = isSelected
+                  ? FontWeight.w700
+                  : FontWeight.w500;
 
               return Expanded(
                 child: InkWell(
-                  onTap: () => navController.changeTabIndex(index), // ✅ Correct method call
+                  onTap: () => navController.changeTabIndex(
+                    index,
+                  ), // ✅ Correct method call
                   highlightColor: Colors.transparent,
                   splashColor: AppColors.accentNeon.withOpacity(0.1),
                   child: Padding(

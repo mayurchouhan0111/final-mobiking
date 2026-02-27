@@ -84,7 +84,6 @@ class ProductController extends GetxController {
       hasMoreProducts.value = products.length == _productsPerPage;
       initialLoadCompleted.value = true;
       _lastFetchTime = DateTime.now();
-
     } catch (e) {
       print('❌ Error fetching initial products: $e');
       hasMoreProducts.value = false;
@@ -97,7 +96,9 @@ class ProductController extends GetxController {
   Future<void> fetchMoreProducts() async {
     // 🚀 OPTIMIZATION: Prevent duplicate requests
     if (isFetchingMore.value || !hasMoreProducts.value || isLoading.value) {
-      print("⏸ Skipping fetch more - isFetching: ${isFetchingMore.value}, hasMore: ${hasMoreProducts.value}");
+      print(
+        "⏸ Skipping fetch more - isFetching: ${isFetchingMore.value}, hasMore: ${hasMoreProducts.value}",
+      );
       return;
     }
 
@@ -121,7 +122,9 @@ class ProductController extends GetxController {
       );
 
       // Filter for active products
-      final activeNewProducts = newProducts.where((p) => p.active == true).toList();
+      final activeNewProducts = newProducts
+          .where((p) => p.active == true)
+          .toList();
 
       print("✨ Fetched ${activeNewProducts.length} new active products");
 
@@ -131,7 +134,8 @@ class ProductController extends GetxController {
       } else {
         // 🚀 OPTIMIZATION: Memory management - remove old products if cache is too large
         if (allProducts.length > _maxCacheSize) {
-          final removeCount = allProducts.length - _maxCacheSize + activeNewProducts.length;
+          final removeCount =
+              allProducts.length - _maxCacheSize + activeNewProducts.length;
           allProducts.removeRange(0, removeCount);
           print("🧹 Removed $removeCount old products to manage memory");
         }
@@ -141,26 +145,33 @@ class ProductController extends GetxController {
         hasMoreProducts.value = activeNewProducts.length == _productsPerPage;
         _lastFetchTime = DateTime.now();
       }
-
     } catch (e) {
       print('❌ Error fetching more products: $e');
       // 🚀 OPTIMIZATION: Don't disable hasMore on network error, allow retry
       _currentPage--; // Rollback page increment
     } finally {
       isFetchingMore.value = false;
-      print("✅ Completed loading page $_currentPage (Total: $_totalProductsLoaded products)");
+      print(
+        "✅ Completed loading page $_currentPage (Total: $_totalProductsLoaded products)",
+      );
     }
   }
 
   /// 🚀 LAZY LOADING: Get products for specific category (lazy loaded)
-  Future<List<ProductModel>> getProductsByCategory(String categoryId, {int limit = 6}) async {
+  Future<List<ProductModel>> getProductsByCategory(
+    String categoryId, {
+    int limit = 6,
+  }) async {
     // First check if we have products in memory
-    final categoryProducts = allProducts.where((product) =>
-    product.category?.id == categoryId
-    ).take(limit).toList();
+    final categoryProducts = allProducts
+        .where((product) => product.category?.id == categoryId)
+        .take(limit)
+        .toList();
 
     if (categoryProducts.length >= limit || !hasMoreProducts.value) {
-      print("📋 Using cached products for category $categoryId: ${categoryProducts.length} items");
+      print(
+        "📋 Using cached products for category $categoryId: ${categoryProducts.length} items",
+      );
       return categoryProducts;
     }
 
@@ -169,9 +180,10 @@ class ProductController extends GetxController {
     await loadProductsOnDemand();
 
     // Return updated results
-    return allProducts.where((product) =>
-    product.category?.id == categoryId
-    ).take(limit).toList();
+    return allProducts
+        .where((product) => product.category?.id == categoryId)
+        .take(limit)
+        .toList();
   }
 
   /// 🚀 LAZY LOADING: Optimized search with caching
@@ -198,7 +210,6 @@ class ProductController extends GetxController {
 
       searchResults.assignAll(activeResults);
       print("🎯 Found ${activeResults.length} active search results");
-
     } catch (e) {
       print('❌ Search error: $e');
       searchResults.clear();
@@ -212,7 +223,7 @@ class ProductController extends GetxController {
     try {
       // Check if product is already in cache
       final cachedProduct = allProducts.firstWhereOrNull(
-              (product) => product.slug == slug
+        (product) => product.slug == slug,
       );
 
       if (cachedProduct != null) {
@@ -232,7 +243,6 @@ class ProductController extends GetxController {
       if (!allProducts.any((p) => p.id == product.id)) {
         allProducts.add(product);
       }
-
     } catch (e) {
       print('❌ Error fetching product by slug: $e');
     } finally {
@@ -251,7 +261,6 @@ class ProductController extends GetxController {
       _totalProductsLoaded++;
 
       print("✅ Product added successfully: ${newProduct.name}");
-
     } catch (e) {
       print('❌ Error adding product: $e');
     } finally {
@@ -260,24 +269,35 @@ class ProductController extends GetxController {
   }
 
   /// 🚀 LAZY LOADING: Get related products with smart caching
-  List<ProductModel> getProductsInSameParentCategory(String currentProductId, String? parentCategory) {
+  List<ProductModel> getProductsInSameParentCategory(
+    String currentProductId,
+    String? parentCategory,
+  ) {
     if (parentCategory == null || parentCategory.isEmpty) {
       return [];
     }
 
-    final relatedProducts = allProducts.where((product) {
-      return product.active == true &&
-          product.id != currentProductId &&
-          product.category != null &&
-          product.category!.id == parentCategory;
-    }).take(6).toList(); // Limit to 6 for performance
+    final relatedProducts = allProducts
+        .where((product) {
+          return product.active == true &&
+              product.id != currentProductId &&
+              product.category != null &&
+              product.category!.id == parentCategory;
+        })
+        .take(6)
+        .toList(); // Limit to 6 for performance
 
-    print("🔗 Found ${relatedProducts.length} related products for category $parentCategory");
+    print(
+      "🔗 Found ${relatedProducts.length} related products for category $parentCategory",
+    );
     return relatedProducts;
   }
 
   /// 🚀 LAZY LOADING: Get related products by group
-  List<ProductModel> getProductsInSameGroup(String currentProductId, List<String> groupIds) {
+  List<ProductModel> getProductsInSameGroup(
+    String currentProductId,
+    List<String> groupIds,
+  ) {
     print("DEBUG: currentProductId = $currentProductId");
     print("DEBUG: groupIds = $groupIds");
     print("DEBUG: allProducts.length = ${allProducts.length}");
@@ -286,22 +306,27 @@ class ProductController extends GetxController {
       return [];
     }
 
-    final relatedProducts = allProducts.where((product) {
-      if (product.active == false) {
-        return false;
-      }
-      if (product.id == currentProductId) {
-        return false;
-      }
-      if (product.groupIds.isEmpty) {
-        return false;
-      }
-      // Check if there is any intersection between the product's groups and the current product's groups.
-      return product.groupIds.any((groupId) => groupIds.contains(groupId));
-    }).take(6).toList();
+    final relatedProducts = allProducts
+        .where((product) {
+          if (product.active == false) {
+            return false;
+          }
+          if (product.id == currentProductId) {
+            return false;
+          }
+          if (product.groupIds.isEmpty) {
+            return false;
+          }
+          // Check if there is any intersection between the product's groups and the current product's groups.
+          return product.groupIds.any((groupId) => groupIds.contains(groupId));
+        })
+        .take(6)
+        .toList();
 
     print("DEBUG: found ${relatedProducts.length} related products");
-    print("🔗 Found ${relatedProducts.length} related products for groups $groupIds");
+    print(
+      "🔗 Found ${relatedProducts.length} related products for groups $groupIds",
+    );
     return relatedProducts;
   }
 

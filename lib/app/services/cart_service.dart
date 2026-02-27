@@ -18,7 +18,9 @@ class CartService {
     try {
       String? accessToken = box.read('accessToken');
 
-      _log('Access Token Status: ${accessToken != null && accessToken.isNotEmpty ? "Present" : "Missing"}');
+      _log(
+        'Access Token Status: ${accessToken != null && accessToken.isNotEmpty ? "Present" : "Missing"}',
+      );
 
       final headers = {
         'Content-Type': 'application/json',
@@ -69,7 +71,9 @@ class CartService {
 
     try {
       final url = Uri.parse('$baseUrl/cart/add');
-      _log('Adding to cart - Product: $productId, Cart: $cartId, Variant: $variantName');
+      _log(
+        'Adding to cart - Product: $productId, Cart: $cartId, Variant: $variantName',
+      );
 
       final headers = _getHeaders();
       if (headers == null) {
@@ -87,17 +91,15 @@ class CartService {
         'quantity': 1,
       });
 
-      final response = await http.post(
-        url,
-        headers: headers,
-        body: body,
-      ).timeout(
-        const Duration(seconds: 30),
-        onTimeout: () {
-          _log('Request timeout while adding to cart');
-          return http.Response('Request timeout', 408);
-        },
-      );
+      final response = await http
+          .post(url, headers: headers, body: body)
+          .timeout(
+            const Duration(seconds: 30),
+            onTimeout: () {
+              _log('Request timeout while adding to cart');
+              return http.Response('Request timeout', 408);
+            },
+          );
 
       _log('Add to Cart Response Status: ${response.statusCode}');
 
@@ -128,10 +130,7 @@ class CartService {
         };
       } else if (response.statusCode == 404) {
         _log('Product or cart not found');
-        return {
-          'success': false,
-          'message': 'Product or cart not found.',
-        };
+        return {'success': false, 'message': 'Product or cart not found.'};
       } else if (response.statusCode == 400) {
         _log('Bad request during add to cart');
         String errorMessage = 'Invalid request. Please check your input.';
@@ -143,10 +142,7 @@ class CartService {
         } catch (e) {
           _log('Failed to parse error response: $e');
         }
-        return {
-          'success': false,
-          'message': errorMessage,
-        };
+        return {'success': false, 'message': errorMessage};
       } else {
         _log('Add to cart failed with status: ${response.statusCode}');
         String errorMessage = 'Failed to add item to cart.';
@@ -158,10 +154,7 @@ class CartService {
         } catch (e) {
           _log('Failed to parse error response: $e');
         }
-        return {
-          'success': false,
-          'message': errorMessage,
-        };
+        return {'success': false, 'message': errorMessage};
       }
     } catch (e) {
       _log('Exception in addToCart: $e');
@@ -196,7 +189,9 @@ class CartService {
 
     try {
       final url = Uri.parse('$baseUrl/cart/remove');
-      _log('Removing from cart - Product: $productId, Cart: $cartId, Variant: $variantName');
+      _log(
+        'Removing from cart - Product: $productId, Cart: $cartId, Variant: $variantName',
+      );
 
       final headers = _getHeaders();
       if (headers == null) {
@@ -219,7 +214,10 @@ class CartService {
         const Duration(seconds: 30),
         onTimeout: () {
           _log('Request timeout while removing from cart');
-          throw TimeoutException('Request timeout', const Duration(seconds: 30));
+          throw TimeoutException(
+            'Request timeout',
+            const Duration(seconds: 30),
+          );
         },
       );
 
@@ -232,7 +230,7 @@ class CartService {
           _log('Successfully removed from cart');
 
           // Show success message to user
-         /* Get.snackbar('Success', 'Item removed from cart successfully!',
+          /* Get.snackbar('Success', 'Item removed from cart successfully!',
               snackPosition: SnackPosition.BOTTOM,
               backgroundColor: Colors.green.shade600,
               colorText: Colors.white);
@@ -253,10 +251,7 @@ class CartService {
         };
       } else if (response.statusCode == 404) {
         _log('Product or cart not found for removal');
-        return {
-          'success': false,
-          'message': 'Product not found in cart.',
-        };
+        return {'success': false, 'message': 'Product not found in cart.'};
       } else if (response.statusCode == 400) {
         _log('Bad request during remove from cart');
         String errorMessage = 'Invalid request. Please check your input.';
@@ -268,10 +263,7 @@ class CartService {
         } catch (e) {
           _log('Failed to parse error response: $e');
         }
-        return {
-          'success': false,
-          'message': errorMessage,
-        };
+        return {'success': false, 'message': errorMessage};
       } else {
         _log('Remove from cart failed with status: ${response.statusCode}');
         String errorMessage = 'Failed to remove item from cart.';
@@ -283,10 +275,7 @@ class CartService {
         } catch (e) {
           _log('Failed to parse error response: $e');
         }
-        return {
-          'success': false,
-          'message': errorMessage,
-        };
+        return {'success': false, 'message': errorMessage};
       }
     } catch (e) {
       _log('Exception in removeFromCart: $e');
@@ -312,16 +301,15 @@ class CartService {
         };
       }
 
-      final response = await http.get(
-        url,
-        headers: headers,
-      ).timeout(
-        const Duration(seconds: 30),
-        onTimeout: () {
-          _log('Request timeout while fetching cart');
-          return http.Response('Request timeout', 408);
-        },
-      );
+      final response = await http
+          .get(url, headers: headers)
+          .timeout(
+            const Duration(seconds: 30),
+            onTimeout: () {
+              _log('Request timeout while fetching cart');
+              return http.Response('Request timeout', 408);
+            },
+          );
 
       _log('Fetch Cart Response Status: ${response.statusCode}');
 
@@ -345,10 +333,7 @@ class CartService {
         };
       } else if (response.statusCode == 404) {
         _log('Cart not found');
-        return {
-          'success': false,
-          'message': 'Cart not found.',
-        };
+        return {'success': false, 'message': 'Cart not found.'};
       } else {
         _log('Fetch cart failed with status: ${response.statusCode}');
         String errorMessage = 'Failed to fetch cart.';
@@ -360,10 +345,7 @@ class CartService {
         } catch (e) {
           _log('Failed to parse error response: $e');
         }
-        return {
-          'success': false,
-          'message': errorMessage,
-        };
+        return {'success': false, 'message': errorMessage};
       }
     } catch (e) {
       _log('Exception in fetchCart: $e');
@@ -404,7 +386,9 @@ class CartService {
 
     try {
       final url = Uri.parse('$baseUrl/cart/update');
-      _log('Updating cart quantity - Product: $productId, Cart: $cartId, Quantity: $quantity');
+      _log(
+        'Updating cart quantity - Product: $productId, Cart: $cartId, Quantity: $quantity',
+      );
 
       final headers = _getHeaders();
       if (headers == null) {
@@ -422,17 +406,15 @@ class CartService {
         'quantity': quantity,
       });
 
-      final response = await http.put(
-        url,
-        headers: headers,
-        body: body,
-      ).timeout(
-        const Duration(seconds: 30),
-        onTimeout: () {
-          _log('Request timeout while updating cart');
-          return http.Response('Request timeout', 408);
-        },
-      );
+      final response = await http
+          .put(url, headers: headers, body: body)
+          .timeout(
+            const Duration(seconds: 30),
+            onTimeout: () {
+              _log('Request timeout while updating cart');
+              return http.Response('Request timeout', 408);
+            },
+          );
 
       _log('Update Cart Response Status: ${response.statusCode}');
 
@@ -440,7 +422,7 @@ class CartService {
         try {
           final responseData = jsonDecode(response.body);
           _log('Successfully updated cart quantity');
-/*
+          /*
           // Show success message to user
           Get.snackbar('Success', 'Cart updated successfully!',
               snackPosition: SnackPosition.BOTTOM,
@@ -466,10 +448,7 @@ class CartService {
         } catch (e) {
           _log('Failed to parse error response: $e');
         }
-        return {
-          'success': false,
-          'message': errorMessage,
-        };
+        return {'success': false, 'message': errorMessage};
       }
     } catch (e) {
       _log('Exception in updateCartItemQuantity: $e');
@@ -500,17 +479,19 @@ class CartService {
         };
       }
 
-      final response = await http.delete(
-        url,
-        headers: headers,
-        body: jsonEncode({'cartId': cartId.trim()}),
-      ).timeout(
-        const Duration(seconds: 30),
-        onTimeout: () {
-          _log('Request timeout while clearing cart');
-          return http.Response('Request timeout', 408);
-        },
-      );
+      final response = await http
+          .delete(
+            url,
+            headers: headers,
+            body: jsonEncode({'cartId': cartId.trim()}),
+          )
+          .timeout(
+            const Duration(seconds: 30),
+            onTimeout: () {
+              _log('Request timeout while clearing cart');
+              return http.Response('Request timeout', 408);
+            },
+          );
 
       if (response.statusCode == 200) {
         try {
@@ -518,10 +499,13 @@ class CartService {
           _log('Successfully cleared cart');
 
           // Show success message to user
-          Get.snackbar('Success', 'Cart cleared successfully!',
-              snackPosition: SnackPosition.BOTTOM,
-              backgroundColor: Colors.green.shade600,
-              colorText: Colors.white);
+          Get.snackbar(
+            'Success',
+            'Cart cleared successfully!',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.green.shade600,
+            colorText: Colors.white,
+          );
 
           return responseData;
         } catch (jsonError) {
@@ -542,10 +526,7 @@ class CartService {
         } catch (e) {
           _log('Failed to parse error response: $e');
         }
-        return {
-          'success': false,
-          'message': errorMessage,
-        };
+        return {'success': false, 'message': errorMessage};
       }
     } catch (e) {
       _log('Exception in clearCart: $e');
@@ -569,13 +550,17 @@ class CartService {
       }
 
       final url = Uri.parse('$baseUrl/cart/health'); // Assuming health endpoint
-      final response = await http.get(url, headers: headers).timeout(
-        const Duration(seconds: 10),
-        onTimeout: () => http.Response('Timeout', 408),
-      );
+      final response = await http
+          .get(url, headers: headers)
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: () => http.Response('Timeout', 408),
+          );
 
       final isHealthy = response.statusCode == 200;
-      _log('Service health check: ${isHealthy ? 'Healthy' : 'Unhealthy'} (Status: ${response.statusCode})');
+      _log(
+        'Service health check: ${isHealthy ? 'Healthy' : 'Unhealthy'} (Status: ${response.statusCode})',
+      );
       return isHealthy;
     } catch (e) {
       _log('Health check failed: $e');

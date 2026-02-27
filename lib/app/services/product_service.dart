@@ -29,8 +29,12 @@ class ProductService {
 
         return products;
       } else {
-        _log("Failed to fetch products: ${response.reasonPhrase} (Status: ${response.statusCode})");
-        throw Exception("Failed to fetch products: ${response.reasonPhrase} (Status: ${response.statusCode})");
+        _log(
+          "Failed to fetch products: ${response.reasonPhrase} (Status: ${response.statusCode})",
+        );
+        throw Exception(
+          "Failed to fetch products: ${response.reasonPhrase} (Status: ${response.statusCode})",
+        );
       }
     } catch (e) {
       _log("Error while fetching products: $e");
@@ -113,7 +117,9 @@ class ProductService {
         final List data = jsonData['data'];
         final products = data.map((e) => ProductModel.fromJson(e)).toList();
 
-        _log('Successfully searched products: found ${products.length} results for query: ${query.trim()}');
+        _log(
+          'Successfully searched products: found ${products.length} results for query: ${query.trim()}',
+        );
 
         return products;
       } else {
@@ -144,7 +150,9 @@ class ProductService {
         final List data = jsonData['data']['products'];
         final products = data.map((e) => ProductModel.fromJson(e)).toList();
 
-        _log('Successfully fetched all products: ${products.length} products (page $page, limit $limit)');
+        _log(
+          'Successfully fetched all products: ${products.length} products (page $page, limit $limit)',
+        );
 
         return products;
       } else {
@@ -158,8 +166,12 @@ class ProductService {
   }
 
   /// Get frequently bought together products
-  Future<List<ProductModel>> getFrequentlyBoughtTogether(String productId) async {
-    final url = Uri.parse('$baseUrl/products/frequently-bought-together/$productId');
+  Future<List<ProductModel>> getFrequentlyBoughtTogether(
+    String productId,
+  ) async {
+    final url = Uri.parse(
+      '$baseUrl/products/frequently-bought-together/$productId',
+    );
     _log('GET /products/frequently-bought-together/$productId');
 
     try {
@@ -171,16 +183,24 @@ class ProductService {
         final List data = jsonData['data'];
         final products = data.map((e) => ProductModel.fromJson(e)).toList();
 
-        _log('Successfully fetched ${products.length} frequently bought together products');
+        _log(
+          'Successfully fetched ${products.length} frequently bought together products',
+        );
 
         return products;
       } else {
-        _log("Failed to fetch frequently bought together products: ${response.reasonPhrase} (Status: ${response.statusCode})");
-        throw Exception("Failed to fetch frequently bought together products: ${response.reasonPhrase} (Status: ${response.statusCode})");
+        _log(
+          "Failed to fetch frequently bought together products: ${response.reasonPhrase} (Status: ${response.statusCode})",
+        );
+        throw Exception(
+          "Failed to fetch frequently bought together products: ${response.reasonPhrase} (Status: ${response.statusCode})",
+        );
       }
     } catch (e) {
       _log("Error while fetching frequently bought together products: $e");
-      throw Exception("Error while fetching frequently bought together products: $e");
+      throw Exception(
+        "Error while fetching frequently bought together products: $e",
+      );
     }
   }
 
@@ -199,11 +219,15 @@ class ProductService {
         final List data = jsonData['data'];
         final products = data.map((e) => ProductModel.fromJson(e)).toList();
 
-        _log('Successfully fetched ${products.length} related products for slug: $slug');
+        _log(
+          'Successfully fetched ${products.length} related products for slug: $slug',
+        );
 
         return products;
       } else {
-        _log("Failed to fetch related products: ${response.reasonPhrase} (Status: ${response.statusCode})");
+        _log(
+          "Failed to fetch related products: ${response.reasonPhrase} (Status: ${response.statusCode})",
+        );
         // Return an empty list on failure to prevent UI errors
         return [];
       }

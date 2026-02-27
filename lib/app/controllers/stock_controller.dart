@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import '../data/stock_model.dart';
 import '../services/stock_service.dart';
 
-
 class StockController extends GetxController {
   final StockService _stockService = StockService();
   var stockList = <StockModel>[].obs;

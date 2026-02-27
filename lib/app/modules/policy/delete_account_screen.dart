@@ -12,17 +12,11 @@ void showDeleteAccountDialog(BuildContext context) {
     barrierDismissible: false, // Prevent dismissing by tapping outside
     builder: (BuildContext context) {
       return AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         backgroundColor: AppColors.white,
         title: Row(
           children: [
-            Icon(
-              Icons.warning_rounded,
-              color: AppColors.danger,
-              size: 24,
-            ),
+            Icon(Icons.warning_rounded, color: AppColors.danger, size: 24),
             SizedBox(width: 8),
             Text(
               'Delete Account',
@@ -67,8 +61,14 @@ void showDeleteAccountDialog(BuildContext context) {
                   ),
                   SizedBox(height: 8),
                   _buildWarningItem('Delete all your personal data', textTheme),
-                  _buildWarningItem('Remove your account from all services', textTheme),
-                  _buildWarningItem('Cancel any active subscriptions', textTheme),
+                  _buildWarningItem(
+                    'Remove your account from all services',
+                    textTheme,
+                  ),
+                  _buildWarningItem(
+                    'Cancel any active subscriptions',
+                    textTheme,
+                  ),
                   SizedBox(height: 8),
                   Text(
                     'This action cannot be undone.',
@@ -104,65 +104,73 @@ void showDeleteAccountDialog(BuildContext context) {
           ),
 
           // Delete Button with loading state
-          Obx(() => ElevatedButton(
-            onPressed: loginController.isDeletingAccount.value
-                ? null
-                : () async {
-              // Show confirmation dialog first
-              final confirmed = await _showFinalConfirmationDialog(context);
-              if (confirmed == true) {
-                Navigator.of(context).pop(); // Close current dialog
+          Obx(
+            () => ElevatedButton(
+              onPressed: loginController.isDeletingAccount.value
+                  ? null
+                  : () async {
+                      // Show confirmation dialog first
+                      final confirmed = await _showFinalConfirmationDialog(
+                        context,
+                      );
+                      if (confirmed == true) {
+                        Navigator.of(context).pop(); // Close current dialog
 
-                // Call delete account method
-                final success = await loginController.deleteAccount();
+                        // Call delete account method
+                        final success = await loginController.deleteAccount();
 
-                if (!success) {
-                  // Error handling is done in the controller via snackbar
-                  // No additional action needed here
-                  print('Delete account failed - error shown via controller');
-                }
-                // Success case is handled in controller (navigation to login)
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.danger,
-              foregroundColor: AppColors.white,
-              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              elevation: 0,
-            ),
-            child: loginController.isDeletingAccount.value
-                ? Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.white),
-                  ),
+                        if (!success) {
+                          // Error handling is done in the controller via snackbar
+                          // No additional action needed here
+                          print(
+                            'Delete account failed - error shown via controller',
+                          );
+                        }
+                        // Success case is handled in controller (navigation to login)
+                      }
+                    },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.danger,
+                foregroundColor: AppColors.white,
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                SizedBox(width: 8),
-                Text(
-                  'Deleting...',
-                  style: textTheme.labelLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.white,
-                  ),
-                ),
-              ],
-            )
-                : Text(
-              'Delete Account',
-              style: textTheme.labelLarge?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: AppColors.white,
+                elevation: 0,
               ),
+              child: loginController.isDeletingAccount.value
+                  ? Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              AppColors.white,
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          'Deleting...',
+                          style: textTheme.labelLarge?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.white,
+                          ),
+                        ),
+                      ],
+                    )
+                  : Text(
+                      'Delete Account',
+                      style: textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.white,
+                      ),
+                    ),
             ),
-          )),
+          ),
         ],
         actionsPadding: EdgeInsets.fromLTRB(16, 0, 16, 16),
       );
@@ -190,9 +198,7 @@ Widget _buildWarningItem(String text, TextTheme textTheme) {
         Expanded(
           child: Text(
             text,
-            style: textTheme.bodySmall?.copyWith(
-              color: AppColors.danger,
-            ),
+            style: textTheme.bodySmall?.copyWith(color: AppColors.danger),
           ),
         ),
       ],
@@ -210,9 +216,7 @@ Future<bool?> _showFinalConfirmationDialog(BuildContext context) {
     barrierDismissible: false,
     builder: (BuildContext context) {
       return AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         backgroundColor: AppColors.white,
         title: Text(
           'Final Confirmation',
@@ -227,9 +231,7 @@ Future<bool?> _showFinalConfirmationDialog(BuildContext context) {
           children: [
             Text(
               'To confirm account deletion, please type DELETE in the field below:',
-              style: textTheme.bodyMedium?.copyWith(
-                color: AppColors.textLight,
-              ),
+              style: textTheme.bodyMedium?.copyWith(color: AppColors.textLight),
             ),
             SizedBox(height: 16),
             TextField(
@@ -246,13 +248,18 @@ Future<bool?> _showFinalConfirmationDialog(BuildContext context) {
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: AppColors.danger.withOpacity(0.5)),
+                  borderSide: BorderSide(
+                    color: AppColors.danger.withOpacity(0.5),
+                  ),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide: BorderSide(color: AppColors.danger, width: 2),
                 ),
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 16,
+                ),
               ),
               style: textTheme.bodyMedium?.copyWith(
                 color: AppColors.textDark,
@@ -282,7 +289,9 @@ Future<bool?> _showFinalConfirmationDialog(BuildContext context) {
           ),
           ElevatedButton(
             onPressed: () {
-              final confirmation = confirmationController.text.trim().toUpperCase();
+              final confirmation = confirmationController.text
+                  .trim()
+                  .toUpperCase();
               if (confirmation == 'DELETE') {
                 Navigator.of(context).pop(true);
               } else {

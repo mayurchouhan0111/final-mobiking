@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobiking/app/controllers/user_controller.dart';
@@ -76,7 +75,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      userName.isNotEmpty ? userName : (phoneNumber.isNotEmpty ? phoneNumber : 'Guest User'),
+                      userName.isNotEmpty
+                          ? userName
+                          : (phoneNumber.isNotEmpty
+                                ? phoneNumber
+                                : 'Guest User'),
                       style: textTheme.bodyMedium?.copyWith(
                         color: AppColors.textDark,
                         fontWeight: FontWeight.w700,
@@ -99,7 +102,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       title: 'Orders',
                       onPressed: () {
                         Get.to(
-                              () => const OrderHistoryScreen(),
+                          () => const OrderHistoryScreen(),
                           transition: Transition.rightToLeftWithFade,
                           duration: const Duration(milliseconds: 300),
                         );
@@ -113,7 +116,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       title: 'Address',
                       onPressed: () {
                         Get.to(
-                              () => AddressPage(),
+                          () => AddressPage(),
                           transition: Transition.rightToLeftWithFade,
                           duration: const Duration(milliseconds: 300),
                         );
@@ -188,14 +191,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 8),
 
-           /*   ProfileListTile(
+              /*   ProfileListTile(
                 icon: Icons.chat_bubble_outline,
                 title: 'WhatsApp',
                 onTap: () {
                   _launchWhatsApp();
                 },
               ),*/
-
               ProfileListTile(
                 icon: Icons.info_outline,
                 title: 'About Us',
@@ -286,7 +288,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return Icons.assignment_return_outlined;
     } else if (lowerName.contains('terms') || lowerName.contains('condition')) {
       return Icons.article_outlined;
-    } else if (lowerName.contains('shipping') || lowerName.contains('delivery')) {
+    } else if (lowerName.contains('shipping') ||
+        lowerName.contains('delivery')) {
       return Icons.local_shipping_outlined;
     } else {
       return Icons.description_outlined;
@@ -370,11 +373,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     const phoneNumber = "+1234567890"; // Replace with your WhatsApp number
     const message = "Hello! I need help with Mobiking app.";
 
-    final whatsappUrl = "https://wa.me/$phoneNumber?text=${Uri.encodeComponent(message)}";
+    final whatsappUrl =
+        "https://wa.me/$phoneNumber?text=${Uri.encodeComponent(message)}";
 
     try {
       if (await canLaunchUrl(Uri.parse(whatsappUrl))) {
-        await launchUrl(Uri.parse(whatsappUrl), mode: LaunchMode.externalApplication);
+        await launchUrl(
+          Uri.parse(whatsappUrl),
+          mode: LaunchMode.externalApplication,
+        );
       } else {
         /*
         Get.snackbar(

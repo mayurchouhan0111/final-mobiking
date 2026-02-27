@@ -33,14 +33,18 @@ class _BillSectionState extends State<BillSection> {
   }
 
   double get _gstAmount {
-    if (!_hasGstNumber || !_showGstInput || _gstController.text.isEmpty) return 0.0;
+    if (!_hasGstNumber || !_showGstInput || _gstController.text.isEmpty)
+      return 0.0;
     final customGst = double.tryParse(_gstController.text) ?? 0.0;
     return (widget.itemTotal * customGst) / 100;
   }
 
   double get _total {
     // ✅ Apply coupon discount to the final total
-    return widget.itemTotal + widget.deliveryCharge + _gstAmount - widget.couponDiscount;
+    return widget.itemTotal +
+        widget.deliveryCharge +
+        _gstAmount -
+        widget.couponDiscount;
   }
 
   void _showGstDialog() {
@@ -150,9 +154,7 @@ class _BillSectionState extends State<BillSection> {
                       TextFormField(
                         controller: widget.gstNumberController,
                         maxLength: 15,
-                        inputFormatters: [
-                          LengthLimitingTextInputFormatter(15),
-                        ],
+                        inputFormatters: [LengthLimitingTextInputFormatter(15)],
                         decoration: InputDecoration(
                           labelText: 'GST Number',
                           hintText: 'Enter your GST number',
@@ -234,7 +236,10 @@ class _BillSectionState extends State<BillSection> {
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.neutralBackground, width: 1), // REPLACED SHADOW WITH BORDER
+        border: Border.all(
+          color: AppColors.neutralBackground,
+          width: 1,
+        ), // REPLACED SHADOW WITH BORDER
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -255,7 +260,10 @@ class _BillSectionState extends State<BillSection> {
               GestureDetector(
                 onTap: _showGstDialog,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: _hasGstNumber
                         ? AppColors.primaryPurple.withOpacity(0.1)
@@ -301,7 +309,11 @@ class _BillSectionState extends State<BillSection> {
           const SizedBox(height: 4),
 
           _buildBillRow("Items total", widget.itemTotal.toDouble(), textTheme),
-          _buildBillRow("Delivery charge", widget.deliveryCharge.toDouble(), textTheme),
+          _buildBillRow(
+            "Delivery charge",
+            widget.deliveryCharge.toDouble(),
+            textTheme,
+          ),
 
           // ✅ Show coupon discount if applied
           if (widget.couponDiscount > 0)
@@ -314,8 +326,7 @@ class _BillSectionState extends State<BillSection> {
             ),
 
           // GST Section (only show if has GST)
-          if (_hasGstNumber && _showGstInput)
-            _buildGstSection(textTheme),
+          if (_hasGstNumber && _showGstInput) _buildGstSection(textTheme),
 
           const SizedBox(height: 4),
           Divider(color: AppColors.textMedium.withOpacity(0.5), thickness: 1.5),
@@ -336,9 +347,7 @@ class _BillSectionState extends State<BillSection> {
                   ],
                 ),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: AppColors.success.withOpacity(0.2),
-                ),
+                border: Border.all(color: AppColors.success.withOpacity(0.2)),
                 boxShadow: [
                   BoxShadow(
                     color: AppColors.success.withOpacity(0.1),
@@ -392,7 +401,10 @@ class _BillSectionState extends State<BillSection> {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
@@ -441,7 +453,10 @@ class _BillSectionState extends State<BillSection> {
               if (_gstController.text.isNotEmpty) ...[
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.primaryPurple.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(4),
@@ -472,26 +487,31 @@ class _BillSectionState extends State<BillSection> {
   }
 
   Widget _buildBillRow(
-      String label,
-      double value,
-      TextTheme textTheme, {
-        bool isBold = false,
-        bool isDiscount = false, // ✅ NEW: Add discount parameter
-        int? itemTotal,
-      }) {
-    final TextStyle labelStyle = textTheme.bodyLarge?.copyWith(
-      fontWeight: isBold ? FontWeight.w700 : FontWeight.w500,
-      color: isBold ? AppColors.textDark : AppColors.textMedium,
-      fontSize: isBold ? 16 : 14,
-    ) ?? const TextStyle();
+    String label,
+    double value,
+    TextTheme textTheme, {
+    bool isBold = false,
+    bool isDiscount = false, // ✅ NEW: Add discount parameter
+    int? itemTotal,
+  }) {
+    final TextStyle labelStyle =
+        textTheme.bodyLarge?.copyWith(
+          fontWeight: isBold ? FontWeight.w700 : FontWeight.w500,
+          color: isBold ? AppColors.textDark : AppColors.textMedium,
+          fontSize: isBold ? 16 : 14,
+        ) ??
+        const TextStyle();
 
-    final TextStyle valueStyle = textTheme.bodyLarge?.copyWith(
-      fontWeight: isBold ? FontWeight.w700 : FontWeight.w500,
-      color: isDiscount
-          ? AppColors.success // ✅ Green color for discount
-          : (isBold ? AppColors.textDark : AppColors.textMedium),
-      fontSize: isBold ? 16 : 14,
-    ) ?? const TextStyle();
+    final TextStyle valueStyle =
+        textTheme.bodyLarge?.copyWith(
+          fontWeight: isBold ? FontWeight.w700 : FontWeight.w500,
+          color: isDiscount
+              ? AppColors
+                    .success // ✅ Green color for discount
+              : (isBold ? AppColors.textDark : AppColors.textMedium),
+          fontSize: isBold ? 16 : 14,
+        ) ??
+        const TextStyle();
 
     String percentageSaved = '';
     if (isDiscount && itemTotal != null && itemTotal > 0) {
@@ -510,11 +530,7 @@ class _BillSectionState extends State<BillSection> {
               // ✅ Add discount icon for coupon discount
               if (isDiscount) ...[
                 const SizedBox(width: 6),
-                Icon(
-                  Icons.local_offer,
-                  color: AppColors.success,
-                  size: 14,
-                ),
+                Icon(Icons.local_offer, color: AppColors.success, size: 14),
               ],
             ],
           ),

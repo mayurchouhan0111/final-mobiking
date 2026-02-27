@@ -4,7 +4,8 @@ import 'package:mobiking/app/services/connectivity_service.dart';
 
 class ConnectivityController extends GetxController {
   // It's good practice to make the service private if only used within this class.
-  final ConnectivityService _connectivityService = Get.find<ConnectivityService>();
+  final ConnectivityService _connectivityService =
+      Get.find<ConnectivityService>();
 
   // These reactive variables will automatically update the UI when their values change.
   final RxBool isConnected = true.obs;
@@ -40,7 +41,9 @@ class ConnectivityController extends GetxController {
     } else {
       isConnected.value = true;
       // Use the corrected helper method from the service.
-      connectionType.value = _connectivityService.getConnectivityStatusString(result);
+      connectionType.value = _connectivityService.getConnectivityStatusString(
+        result,
+      );
     }
   }
 

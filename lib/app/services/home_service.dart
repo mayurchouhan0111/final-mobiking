@@ -12,7 +12,6 @@ class HomeService {
 
   HomeService(this._box); // Constructor to receive GetStorage
 
-
   void _log(String message) {
     print('[HomeService] $message');
   }
@@ -21,7 +20,9 @@ class HomeService {
   Future<HomeLayoutModel?> getHomeLayout({bool forceRefresh = false}) async {
     const String cacheKey = 'homeLayoutCache';
     const String timestampKey = 'homeLayoutTimestamp';
-    const Duration cacheDuration = Duration(minutes: 10); // Reduced to 10 minutes for better responsiveness
+    const Duration cacheDuration = Duration(
+      minutes: 10,
+    ); // Reduced to 10 minutes for better responsiveness
 
     // 1. Try to load from cache first (if not forcing refresh)
     if (!forceRefresh) {
@@ -42,7 +43,9 @@ class HomeService {
           _log('⏳ Cached home layout is stale. Fetching new data.');
         }
       } else {
-        _log('📦 No home layout in cache or timestamp missing. Fetching new data.');
+        _log(
+          '📦 No home layout in cache or timestamp missing. Fetching new data.',
+        );
       }
     } else {
       _log('🔄 Force refresh requested. Fetching new data from network.');
@@ -53,13 +56,15 @@ class HomeService {
       final url = Uri.parse('$_baseUrl/home/');
       _log('Fetching home layout from: $url');
 
-      final response = await http.get(url).timeout(
-        const Duration(seconds: 30),
-        onTimeout: () {
-          _log('Request timeout while fetching home layout');
-          return http.Response('Request timeout', 408);
-        },
-      );
+      final response = await http
+          .get(url)
+          .timeout(
+            const Duration(seconds: 30),
+            onTimeout: () {
+              _log('Request timeout while fetching home layout');
+              return http.Response('Request timeout', 408);
+            },
+          );
 
       _log('Raw API Response: ${response.body}');
 
@@ -90,11 +95,17 @@ class HomeService {
               dataField.forEach((key, value) {
                 try {
                   if (value is List) {
-                    _log('➡ $key: List with ${value.length} items (${value.runtimeType})');
+                    _log(
+                      '➡ $key: List with ${value.length} items (${value.runtimeType})',
+                    );
                   } else if (value is Map) {
-                    _log('➡ $key: Map with ${value.length} keys (${value.runtimeType})');
+                    _log(
+                      '➡ $key: Map with ${value.length} keys (${value.runtimeType})',
+                    );
                   } else {
-                    _log('➡ $key: ${value.runtimeType} - ${value.toString().length > 100 ? '${value.toString().substring(0, 100)}...' : value}');
+                    _log(
+                      '➡ $key: ${value.runtimeType} - ${value.toString().length > 100 ? '${value.toString().substring(0, 100)}...' : value}',
+                    );
                   }
                 } catch (e) {
                   _log('➡ $key: Error logging value - $e');
@@ -116,29 +127,40 @@ class HomeService {
                 return null;
               }
             } else {
-              _log('❌ Data field is not a Map<String, dynamic>: ${dataField.runtimeType}');
+              _log(
+                '❌ Data field is not a Map<String, dynamic>: ${dataField.runtimeType}',
+              );
               return null;
             }
           } else {
-            _log('❌ Unexpected JSON structure. Expected Map<String, dynamic>, got: ${jsonData.runtimeType}');
+            _log(
+              '❌ Unexpected JSON structure. Expected Map<String, dynamic>, got: ${jsonData.runtimeType}',
+            );
             return null;
           }
         } catch (jsonError) {
           _log('❌ JSON parsing error: $jsonError');
           if (response.body.isNotEmpty) {
-            _log('Response body preview: ${response.body.length > 200 ? response.body.substring(0, 200) + '...' : response.body}');
+            _log(
+              'Response body preview: ${response.body.length > 200 ? response.body.substring(0, 200) + '...' : response.body}',
+            );
           }
           return null;
         }
-      }
-      else {
-        _log('❌ Failed to load home layout. Status: ${response.statusCode} - ${response.reasonPhrase}');
+      } else {
+        _log(
+          '❌ Failed to load home layout. Status: ${response.statusCode} - ${response.reasonPhrase}',
+        );
         if (response.body.isNotEmpty) {
           try {
             final errorData = jsonDecode(response.body);
-            _log('Error details: ${errorData['message'] ?? errorData['error'] ?? 'Unknown error'}');
+            _log(
+              'Error details: ${errorData['message'] ?? errorData['error'] ?? 'Unknown error'}',
+            );
           } catch (e) {
-            _log('Response body: ${response.body.length > 200 ? response.body.substring(0, 200) + '...' : response.body}');
+            _log(
+              'Response body: ${response.body.length > 200 ? response.body.substring(0, 200) + '...' : response.body}',
+            );
           }
         }
         return null;
@@ -149,21 +171,23 @@ class HomeService {
     }
   }
 
-  
-
   // Health check method
   Future<bool> checkServiceHealth() async {
     try {
       _log('Performing health check...');
       final url = Uri.parse('$_baseUrl/home/');
 
-      final response = await http.get(url).timeout(
-        const Duration(seconds: 10),
-        onTimeout: () => http.Response('Timeout', 408),
-      );
+      final response = await http
+          .get(url)
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: () => http.Response('Timeout', 408),
+          );
 
       final isHealthy = response.statusCode == 200;
-      _log('Service health check: ${isHealthy ? 'Healthy' : 'Unhealthy'} (Status: ${response.statusCode})');
+      _log(
+        'Service health check: ${isHealthy ? 'Healthy' : 'Unhealthy'} (Status: ${response.statusCode})',
+      );
       return isHealthy;
     } catch (e) {
       _log('Health check failed: $e');
@@ -199,10 +223,10 @@ class HomeService {
     // Show success message for multiple categories fetch
     int totalGroups = result.values.fold(0, (sum, list) => sum + list.length);
     if (totalGroups > 0) {
-     *//* Get.snackbar('Success', 'Loaded $totalGroups products across ${result.length} categories!',
+     */ /* Get.snackbar('Success', 'Loaded $totalGroups products across ${result.length} categories!',
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Colors.green.shade600,
-          colorText: Colors.white);*//*
+          colorText: Colors.white);*/ /*
     }
 
     return result;
@@ -219,10 +243,12 @@ class HomeService {
       final url = Uri.parse('$_baseUrl/groups/${groupId.trim()}');
       _log('Fetching group by ID: $groupId');
 
-      final response = await http.get(url).timeout(
-        const Duration(seconds: 15),
-        onTimeout: () => http.Response('Request timeout', 408),
-      );
+      final response = await http
+          .get(url)
+          .timeout(
+            const Duration(seconds: 15),
+            onTimeout: () => http.Response('Request timeout', 408),
+          );
 
       if (response.statusCode == 200) {
         try {
@@ -234,7 +260,7 @@ class HomeService {
               final group = GroupModel.fromJson(dataField);
               _log('✅ Successfully fetched group: ${group.id}');
 
-        /*      // Show success message for successful group fetch
+              /*      // Show success message for successful group fetch
               Get.snackbar('Success', 'Product details loaded successfully!',
                   snackPosition: SnackPosition.BOTTOM,
                   backgroundColor: Colors.green.shade600,
@@ -251,7 +277,9 @@ class HomeService {
           return null;
         }
       } else {
-        _log('❌ Failed to fetch group ID $groupId. Status: ${response.statusCode}');
+        _log(
+          '❌ Failed to fetch group ID $groupId. Status: ${response.statusCode}',
+        );
         return null;
       }
     } catch (e) {
@@ -268,13 +296,17 @@ class HomeService {
     }
 
     try {
-      final url = Uri.parse('$_baseUrl/groups/search?q=${Uri.encodeComponent(query.trim())}');
+      final url = Uri.parse(
+        '$_baseUrl/groups/search?q=${Uri.encodeComponent(query.trim())}',
+      );
       _log('Searching groups with query: ${query.trim()}');
 
-      final response = await http.get(url).timeout(
-        const Duration(seconds: 30),
-        onTimeout: () => http.Response('Request timeout', 408),
-      );
+      final response = await http
+          .get(url)
+          .timeout(
+            const Duration(seconds: 30),
+            onTimeout: () => http.Response('Request timeout', 408),
+          );
 
       if (response.statusCode == 200) {
         try {
@@ -296,11 +328,13 @@ class HomeService {
                 }
               }
 
-              _log('✅ Found ${groups.length} groups matching query: ${query.trim()}');
+              _log(
+                '✅ Found ${groups.length} groups matching query: ${query.trim()}',
+              );
 
               // Show success message for successful search
               if (groups.isNotEmpty) {
-              /*  Get.snackbar('Success', 'Found ${groups.length} products matching "${query.trim()}"!',
+                /*  Get.snackbar('Success', 'Found ${groups.length} products matching "${query.trim()}"!',
                     snackPosition: SnackPosition.BOTTOM,
                     backgroundColor: Colors.green.shade600,
                     colorText: Colors.white);*/

@@ -30,11 +30,25 @@ class AppStarRating extends StatelessWidget {
 
     for (int i = 0; i < 5; i++) {
       if (i < fullStars) {
-        stars.add(Icon(Icons.star_rounded, color: AppColors.ratingGold, size: starSize));
+        stars.add(
+          Icon(Icons.star_rounded, color: AppColors.ratingGold, size: starSize),
+        );
       } else if (i == fullStars && hasHalfStar) {
-        stars.add(Icon(Icons.star_half_rounded, color: AppColors.ratingGold, size: starSize));
+        stars.add(
+          Icon(
+            Icons.star_half_rounded,
+            color: AppColors.ratingGold,
+            size: starSize,
+          ),
+        );
       } else {
-        stars.add(Icon(Icons.star_border_rounded, color: AppColors.ratingGold.withOpacity(0.5), size: starSize));
+        stars.add(
+          Icon(
+            Icons.star_border_rounded,
+            color: AppColors.ratingGold.withOpacity(0.5),
+            size: starSize,
+          ),
+        );
       }
     }
 

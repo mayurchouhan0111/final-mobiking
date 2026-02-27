@@ -68,7 +68,10 @@ class PhoneAuthScreen extends StatelessWidget {
       width: screenWidth,
       child: Stack(
         children: [
-          _buildRandomProductLayout(screenWidth, screenHeight * 0.5), // Pass restricted height
+          _buildRandomProductLayout(
+            screenWidth,
+            screenHeight * 0.5,
+          ), // Pass restricted height
           _buildFloatingParticles(screenWidth, screenHeight * 0.5),
         ],
       ),
@@ -82,25 +85,67 @@ class PhoneAuthScreen extends StatelessWidget {
       {'top': 50.0, 'left': 70.0, 'size': 60.0, 'rotation': -0.1, 'delay': 0},
 
       // Top center area
-      {'top': 90.0, 'left': screenWidth * 0.35, 'size': 65.0, 'rotation': 0.12, 'delay': 300},
+      {
+        'top': 90.0,
+        'left': screenWidth * 0.35,
+        'size': 65.0,
+        'rotation': 0.12,
+        'delay': 300,
+      },
 
       // Top right area
-      {'top': 200.0, 'left': screenWidth * 0.8, 'size': 58.0, 'rotation': -0.08, 'delay': 600},
+      {
+        'top': 200.0,
+        'left': screenWidth * 0.8,
+        'size': 58.0,
+        'rotation': -0.08,
+        'delay': 600,
+      },
 
       // Middle left area
-      {'top': 200.0, 'left': 100.0, 'size': 68.0, 'rotation': 0.15, 'delay': 200},
+      {
+        'top': 200.0,
+        'left': 100.0,
+        'size': 68.0,
+        'rotation': 0.15,
+        'delay': 200,
+      },
 
       // Middle right area
-      {'top': screenHeight * 0.18, 'left': screenWidth * 0.75, 'size': 62.0, 'rotation': -0.12, 'delay': 800},
+      {
+        'top': screenHeight * 0.18,
+        'left': screenWidth * 0.75,
+        'size': 62.0,
+        'rotation': -0.12,
+        'delay': 800,
+      },
 
       // Lower left area
-      {'top': screenHeight * 0.32, 'left': 20.0, 'size': 64.0, 'rotation': 0.08, 'delay': 400},
+      {
+        'top': screenHeight * 0.32,
+        'left': 20.0,
+        'size': 64.0,
+        'rotation': 0.08,
+        'delay': 400,
+      },
 
       // Lower center area
-      {'top': screenHeight * 0.35, 'left': screenWidth * 0.5, 'size': 66.0, 'rotation': -0.06, 'delay': 1000},
+      {
+        'top': screenHeight * 0.35,
+        'left': screenWidth * 0.5,
+        'size': 66.0,
+        'rotation': -0.06,
+        'delay': 1000,
+      },
 
       // Lower right area
-      {'top': screenHeight * 0.42, 'left': screenWidth * 0.90, 'size': 60.0, 'rotation': 0.1, 'delay': 1200},
+      {
+        'top': screenHeight * 0.42,
+        'left': screenWidth * 0.90,
+        'size': 60.0,
+        'rotation': 0.1,
+        'delay': 1200,
+      },
     ];
 
     return Stack(
@@ -121,7 +166,10 @@ class PhoneAuthScreen extends StatelessWidget {
                   scale: 0.6 + (0.4 * value),
                   child: Opacity(
                     opacity: (value * 0.4).clamp(0.0, 1.0),
-                    child: _buildProductCard(index % productImages.length, position['size'] as double),
+                    child: _buildProductCard(
+                      index % productImages.length,
+                      position['size'] as double,
+                    ),
                   ),
                 ),
               ),
@@ -132,7 +180,6 @@ class PhoneAuthScreen extends StatelessWidget {
     );
   }
 
-
   // Refined Product Card with minimal styling
   Widget _buildProductCard(int index, [double? size]) {
     final cardSize = size ?? 65.0;
@@ -142,10 +189,7 @@ class PhoneAuthScreen extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         color: Colors.white.withOpacity(0.6),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.4),
-          width: 1,
-        ),
+        border: Border.all(color: Colors.white.withOpacity(0.4), width: 1),
         boxShadow: [
           BoxShadow(
             color: _getProductColor(index).withOpacity(0.15),
@@ -182,7 +226,8 @@ class PhoneAuthScreen extends StatelessWidget {
   // Minimal floating particles
   Widget _buildFloatingParticles(double screenWidth, double screenHeight) {
     return Stack(
-      children: List.generate(4, (index) { // Reduced to 4 particles
+      children: List.generate(4, (index) {
+        // Reduced to 4 particles
         return TweenAnimationBuilder(
           duration: Duration(milliseconds: 3000 + (index * 400)),
           tween: Tween<double>(begin: 0, end: 1),
@@ -239,7 +284,11 @@ class PhoneAuthScreen extends StatelessWidget {
   }
 
   // Professional Login Form Overlay
-  Widget _buildGradientOverlay(BuildContext context, TextTheme textTheme, double screenHeight) {
+  Widget _buildGradientOverlay(
+    BuildContext context,
+    TextTheme textTheme,
+    double screenHeight,
+  ) {
     return Positioned(
       bottom: 0,
       left: 0,
@@ -266,10 +315,7 @@ class PhoneAuthScreen extends StatelessWidget {
           ],
         ),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.2),
-          width: 1,
-        ),
+        border: Border.all(color: Colors.white.withOpacity(0.2), width: 1),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
@@ -282,7 +328,10 @@ class PhoneAuthScreen extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10), // Professional blur level [web:2]
+          filter: ImageFilter.blur(
+            sigmaX: 10,
+            sigmaY: 10,
+          ), // Professional blur level [web:2]
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -405,7 +454,10 @@ class PhoneAuthScreen extends StatelessWidget {
           fontSize: 15,
           fontWeight: FontWeight.w400,
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(
@@ -415,10 +467,7 @@ class PhoneAuthScreen extends StatelessWidget {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(
-            color: AppColors.primaryPurple,
-            width: 2,
-          ),
+          borderSide: BorderSide(color: AppColors.primaryPurple, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
@@ -434,84 +483,86 @@ class PhoneAuthScreen extends StatelessWidget {
 
   // Professional OTP Button
   Widget _buildOtpButton(TextTheme textTheme) {
-    return Obx(() => Container(
-      width: double.infinity,
-      height: 56,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: loginController.isOtpLoading.value
-              ? [
-            AppColors.textLight.withOpacity(0.5),
-            AppColors.textLight.withOpacity(0.7),
-          ]
-              : [
-            AppColors.primaryPurple,
-            AppColors.darkPurple,
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: loginController.isOtpLoading.value
-            ? []
-            : [
-          BoxShadow(
-            color: AppColors.primaryPurple.withOpacity(0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
+    return Obx(
+      () => Container(
+        width: double.infinity,
+        height: 56,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: loginController.isOtpLoading.value
+                ? [
+                    AppColors.textLight.withOpacity(0.5),
+                    AppColors.textLight.withOpacity(0.7),
+                  ]
+                : [AppColors.primaryPurple, AppColors.darkPurple],
           ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
           borderRadius: BorderRadius.circular(16),
-          onTap: loginController.isOtpLoading.value
-              ? null
-              : () async {
-            final phone = loginController.phoneController.text.trim();
+          boxShadow: loginController.isOtpLoading.value
+              ? []
+              : [
+                  BoxShadow(
+                    color: AppColors.primaryPurple.withOpacity(0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: loginController.isOtpLoading.value
+                ? null
+                : () async {
+                    final phone = loginController.phoneController.text.trim();
 
-            // Validate phone number
-            if (phone.length != 10 || !GetUtils.isNumericOnly(phone)) {
-              Get.snackbar(
-                "Invalid Phone Number",
-                "Please enter a valid 10-digit mobile number.",
-                backgroundColor: AppColors.danger,
-                colorText: AppColors.white,
-                margin: const EdgeInsets.all(16),
-                borderRadius: 12,
-                icon: const Icon(Icons.error_outline, color: Colors.white),
-              );
-              return;
-            }
+                    // Validate phone number
+                    if (phone.length != 10 || !GetUtils.isNumericOnly(phone)) {
+                      Get.snackbar(
+                        "Invalid Phone Number",
+                        "Please enter a valid 10-digit mobile number.",
+                        backgroundColor: AppColors.danger,
+                        colorText: AppColors.white,
+                        margin: const EdgeInsets.all(16),
+                        borderRadius: 12,
+                        icon: const Icon(
+                          Icons.error_outline,
+                          color: Colors.white,
+                        ),
+                      );
+                      return;
+                    }
 
-            final otpSent = await loginController.sendOtp(phone);
+                    final otpSent = await loginController.sendOtp(phone);
 
-            if (otpSent) {
-              Get.to(() => OtpVerificationScreen(phoneNumber: phone));
-            }
-          },
-          child: Center(
-            child: loginController.isOtpLoading.value
-                ? SizedBox(
-              width: 24,
-              height: 24,
-              child: CircularProgressIndicator(
-                color: AppColors.white,
-                strokeWidth: 2.5,
-              ),
-            )
-                : Text(
-              'Continue',
-              style: textTheme.titleLarge?.copyWith(
-                color: AppColors.white,
-                fontWeight: FontWeight.w600,
-                fontSize: 16,
-                letterSpacing: 0.5,
-              ),
+                    if (otpSent) {
+                      Get.to(() => OtpVerificationScreen(phoneNumber: phone));
+                    }
+                  },
+            child: Center(
+              child: loginController.isOtpLoading.value
+                  ? SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        color: AppColors.white,
+                        strokeWidth: 2.5,
+                      ),
+                    )
+                  : Text(
+                      'Continue',
+                      style: textTheme.titleLarge?.copyWith(
+                        color: AppColors.white,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
             ),
           ),
         ),
       ),
-    ));
+    );
   }
 
   // Clean Footer

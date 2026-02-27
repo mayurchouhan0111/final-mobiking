@@ -38,12 +38,13 @@ class _SearchTabSliverAppBarState extends State<SearchTabSliverAppBar> {
     'Search "gaming earbuds"',
   ];
 
-
   late final RxInt _currentHintIndex;
   Timer? _hintTextTimer;
 
   final TabControllerGetX tabController = Get.put(TabControllerGetX());
-  final SubCategoryController subCategoryController = Get.put(SubCategoryController());
+  final SubCategoryController subCategoryController = Get.put(
+    SubCategoryController(),
+  );
   final HomeController homeController = Get.find<HomeController>();
 
   @override
@@ -56,7 +57,8 @@ class _SearchTabSliverAppBarState extends State<SearchTabSliverAppBar> {
   void _startHintTextAnimation() {
     _hintTextTimer?.cancel();
     _hintTextTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
-      _currentHintIndex.value = (_currentHintIndex.value + 1) % _hintTexts.length;
+      _currentHintIndex.value =
+          (_currentHintIndex.value + 1) % _hintTexts.length;
     });
   }
 
@@ -109,11 +111,18 @@ class _StickySearchAndTabBarDelegate extends SliverPersistentHeaderDelegate {
   double get minExtent => 180; // Reduced from 220
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
     // Calculate animation progress (0.0 to 1.0)
-    final double animationProgress = (shrinkOffset / (maxExtent - minExtent)).clamp(0.0, 1.0);
+    final double animationProgress = (shrinkOffset / (maxExtent - minExtent))
+        .clamp(0.0, 1.0);
     final bool isCollapsed = animationProgress > 0.5;
-    final TextStyle? appThemeHintStyle = Theme.of(context).inputDecorationTheme.hintStyle;
+    final TextStyle? appThemeHintStyle = Theme.of(
+      context,
+    ).inputDecorationTheme.hintStyle;
 
     String? backgroundImage;
     final int selectedTabIndex = tabController.selectedIndex.value;
@@ -132,12 +141,12 @@ class _StickySearchAndTabBarDelegate extends SliverPersistentHeaderDelegate {
         color: isCollapsed ? Colors.black45 : null,
         image: backgroundImage != null
             ? DecorationImage(
-          image: CachedNetworkImageProvider(backgroundImage),
-          fit: BoxFit.cover,
-          colorFilter: isCollapsed
-              ? const ColorFilter.mode(Colors.black45, BlendMode.darken)
-              : null,
-        )
+                image: CachedNetworkImageProvider(backgroundImage),
+                fit: BoxFit.cover,
+                colorFilter: isCollapsed
+                    ? const ColorFilter.mode(Colors.black45, BlendMode.darken)
+                    : null,
+              )
             : null,
       ),
       child: Column(
@@ -167,11 +176,7 @@ class _StickySearchAndTabBarDelegate extends SliverPersistentHeaderDelegate {
 
           // --- Search Bar (Always Visible) ---
           Padding(
-            padding: EdgeInsets.only(
-              left: 16,
-              right: 16,
-              top: 10.0,
-            ),
+            padding: EdgeInsets.only(left: 16, right: 16, top: 10.0),
             child: InkWell(
               borderRadius: BorderRadius.circular(10),
               onTap: () => Get.to(() => const SearchPage()),
