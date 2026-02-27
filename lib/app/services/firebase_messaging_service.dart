@@ -33,7 +33,7 @@ class FirebaseMessagingService extends GetxService {
   }
 
   Future<void> _initializeLocalNotifications() async {
-    const AndroidInitializationSettings androidSettings = AndroidInitializationSettings('ic_notification');
+    const AndroidInitializationSettings androidSettings = AndroidInitializationSettings('@drawable/ic_notification');
     const InitializationSettings initSettings = InitializationSettings(android: androidSettings);
 
     await _localNotifications.initialize(
@@ -59,7 +59,7 @@ class FirebaseMessagingService extends GetxService {
       'mobiking_silent_channel',
       'Silent Feed',
       description: 'Internal system redirection.',
-      importance: Importance.min, // Silent and hidden, but active
+      importance: Importance.none, // High importance = no sound/tray entry
       playSound: false,
       enableVibration: false,
       showBadge: false,
@@ -91,10 +91,8 @@ class FirebaseMessagingService extends GetxService {
             message.data['imageUrl'] ??
             message.data['bigPicture'];
 
-        // Show standard system notification manually to force the image/circular icon
-        _showLocalNotification(title, body, imageUrl, message.data);
-
-        // Also show our custom in-app UI
+        // FIX: Only show the manual in-app overlay when the app is in the foreground.
+        // Calling _showLocalNotification here as well guarantees a duplicate.
         _showManualRichNotification(title, body, imageUrl, message.data);
       });
 
