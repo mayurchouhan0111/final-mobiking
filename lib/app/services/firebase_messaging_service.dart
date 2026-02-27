@@ -18,8 +18,6 @@ import 'package:mobiking/app/controllers/login_controller.dart';
 class FirebaseMessagingService extends GetxService {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
-  // NEW: Local Notifications for forcing images
   final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
 
   void _log(String message) {
@@ -34,7 +32,6 @@ class FirebaseMessagingService extends GetxService {
     _log('Service Initialized');
   }
 
-  // --- INITIALIZE LOCAL NOTIFICATIONS ---
   Future<void> _initializeLocalNotifications() async {
     const AndroidInitializationSettings androidSettings = AndroidInitializationSettings('@drawable/ic_notification');
     const InitializationSettings initSettings = InitializationSettings(android: androidSettings);
@@ -48,7 +45,6 @@ class FirebaseMessagingService extends GetxService {
       },
     );
 
-    // Create High Importance Channel
     const AndroidNotificationChannel channel = AndroidNotificationChannel(
       'mobiking_high_importance_channel',
       'MobiKing Notifications',
@@ -75,24 +71,15 @@ class FirebaseMessagingService extends GetxService {
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
         _log('Foreground Message Received');
 
-        // IF THE MESSAGE HAS A NOTIFICATION OBJECT, ANDROID WILL SHOW IT AUTOMATICALLY
-        // If we also call _showLocalNotification, the user gets 2 notifications.
-        // We only trigger _showLocalNotification if the OS version is old or if we 
-        // need to force a BigPicture that the OS is failing to show.
-        
         final String title = message.notification?.title ?? message.data['title'] ?? "MobiKing";
         final String body = message.notification?.body ?? message.data['body'] ?? "New deals!";
-
         final String? imageUrl = message.notification?.android?.imageUrl ??
             message.data['image'] ??
             message.data['imageUrl'] ??
             message.data['bigPicture'];
 
-        // To fix double notifications: 
-        // If the 'notification' property is null, it's a 'data-only' message, we MUST show it.
-        // If 'notification' exists, the system shows it. We only 'overwrite' it if we want custom circular icons.
-        _showLocalNotification(title, body, imageUrl, message.data);
-
+        // FIX: Only show the manual in-app overlay when the app is in the foreground.
+        // Calling _showLocalNotification here as well guarantees a duplicate.
         _showManualRichNotification(title, body, imageUrl, message.data);
       });
 
@@ -104,16 +91,13 @@ class FirebaseMessagingService extends GetxService {
     }
   }
 
-  // --- SHOW FORCED IMAGE NOTIFICATION ---
   Future<void> _showLocalNotification(String title, String body, String? imageUrl, Map<String, dynamic> data) async {
     try {
       String? bigPicturePath;
       String? largeIconPath;
 
       if (imageUrl != null && imageUrl.isNotEmpty) {
-        // 1. Path for Big Image
         bigPicturePath = await _downloadAndSaveFile(imageUrl, 'notification_img');
-        // 2. Path for Circular Sidebar Image
         largeIconPath = await _getCircularImage(imageUrl);
       }
 
@@ -122,17 +106,17 @@ class FirebaseMessagingService extends GetxService {
         'MobiKing Notifications',
         channelDescription: 'Shop updates and deals',
         importance: Importance.max,
-        priority: Priority.max, // Increased to Max for tray popping
+        priority: Priority.max,
         showWhen: true,
         styleInformation: bigPicturePath != null ? BigPictureStyleInformation(FilePathAndroidBitmap(bigPicturePath)) : null,
         largeIcon: largeIconPath != null ? FilePathAndroidBitmap(largeIconPath) : null,
-        tag: title, // Using title as tag group
+        tag: 'mobiking_notify',
       );
 
       final NotificationDetails details = NotificationDetails(android: androidDetails);
 
       await _localNotifications.show(
-        0, // Fixed ID + Tag prevents duplicate stacking
+        0,
         title,
         body,
         details,
@@ -143,18 +127,15 @@ class FirebaseMessagingService extends GetxService {
     }
   }
 
-  // --- NEW: Helper for circular image ---
   Future<String?> _getCircularImage(String url) async {
     try {
       final response = await http.get(Uri.parse(url));
       final originalImage = img.decodeImage(response.bodyBytes);
       if (originalImage == null) return null;
 
-      // Make square first
       final size = originalImage.width < originalImage.height ? originalImage.width : originalImage.height;
       final squaredImage = img.copyCrop(originalImage, x: (originalImage.width - size) ~/ 2, y: (originalImage.height - size) ~/ 2, width: size, height: size);
 
-      // Create Circular Mask with Transparency (4 channels)
       final circularImage = img.Image(width: size, height: size, numChannels: 4);
       final center = size / 2;
       final radius = size / 2;
@@ -167,7 +148,6 @@ class FirebaseMessagingService extends GetxService {
             final pixel = squaredImage.getPixel(x, y);
             circularImage.setPixel(x, y, pixel);
           } else {
-            // Explicitly set transparency for corners
             circularImage.setPixelRgba(x, y, 0, 0, 0, 0);
           }
         }
@@ -184,7 +164,6 @@ class FirebaseMessagingService extends GetxService {
     }
   }
 
-  // Helper to download image
   Future<String?> _downloadAndSaveFile(String url, String fileName) async {
     try {
       final Directory directory = await getApplicationDocumentsDirectory();
@@ -242,6 +221,7 @@ class FirebaseMessagingService extends GetxService {
   }
 
   Future<String?> getFCMToken() async => await _firebaseMessaging.getToken();
+
   Future<AuthorizationStatus> getNotificationPermissionStatus() async {
     return (await _firebaseMessaging.getNotificationSettings()).authorizationStatus;
   }
@@ -257,7 +237,14 @@ class _ManualNotificationWidget extends StatelessWidget {
   final String? imageUrl;
   final VoidCallback onTap;
   final VoidCallback onDismiss;
-  const _ManualNotificationWidget({required this.title, required this.body, this.imageUrl, required this.onTap, required this.onDismiss});
+
+  const _ManualNotificationWidget({
+    required this.title,
+    required this.body,
+    this.imageUrl,
+    required this.onTap,
+    required this.onDismiss
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -273,9 +260,12 @@ class _ManualNotificationWidget extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.primaryPurple,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 15, offset: Offset(0, 10))],
+              color: const Color(0xFF18181B), // zinc-900 card background
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFF27272A), width: 1), // zinc-800 border
+              boxShadow: const [
+                BoxShadow(color: Colors.black54, blurRadius: 20, offset: Offset(0, 10))
+              ],
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -288,45 +278,63 @@ class _ManualNotificationWidget extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                          Text(
+                              title,
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 16
+                              )
+                          ),
                           const SizedBox(height: 4),
-                          Text(body, style: const TextStyle(color: Colors.white, fontSize: 13), maxLines: 2, overflow: TextOverflow.ellipsis),
+                          Text(
+                              body,
+                              style: const TextStyle(
+                                  color: Color(0xFFD4D4D8), // zinc-300 secondary text
+                                  fontSize: 13
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis
+                          ),
                         ],
                       ),
                     ),
                     if (imageUrl != null && imageUrl!.isNotEmpty) ...[
                       const SizedBox(width: 12),
                       Container(
-                        width: 50,
-                        height: 50,
+                        width: 48,
+                        height: 48,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white24, width: 2),
+                          border: Border.all(color: Colors.indigo, width: 2), // Indigo accent
                         ),
                         child: ClipOval(
                           child: CachedNetworkImage(
                             imageUrl: imageUrl!,
-                            width: 50,
-                            height: 50,
                             fit: BoxFit.cover,
-                            placeholder: (context, url) => Container(color: Colors.white12),
+                            placeholder: (context, url) => Container(color: const Color(0xFF27272A)),
                           ),
                         ),
                       ),
                     ],
-                    IconButton(icon: const Icon(Icons.close, color: Colors.white54, size: 20), onPressed: onDismiss, padding: EdgeInsets.zero, constraints: const BoxConstraints()),
+                    IconButton(
+                        icon: const Icon(Icons.close, color: Color(0xFFA1A1AA), size: 20), // zinc-400
+                        onPressed: onDismiss,
+                        padding: const EdgeInsets.only(left: 8),
+                        constraints: const BoxConstraints()
+                    ),
                   ],
                 ),
                 if (imageUrl != null && imageUrl!.isNotEmpty) ...[
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(8),
                     child: CachedNetworkImage(
                       imageUrl: imageUrl!,
                       width: double.infinity,
-                      height: 150,
+                      height: 140,
                       fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(height: 150, color: Colors.white10),
+                      placeholder: (context, url) => Container(height: 140, color: const Color(0xFF27272A)),
                     ),
                   ),
                 ],

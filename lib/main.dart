@@ -165,10 +165,11 @@ Future<void> _firebaseBackgroundMessagehandler(RemoteMessage message) async {
                 finalCircularPath != null
                     ? FilePathAndroidBitmap(finalCircularPath)
                     : null,
+            tag: 'mobiking_notify', // Added tag to match Main service
           );
 
       await localNotifications.show(
-        DateTime.now().millisecond,
+        0, // FIXED: Changed from millisecond to 0 to prevent stacking duplicates
         title,
         body,
         NotificationDetails(android: androidDetails),
