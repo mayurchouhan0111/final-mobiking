@@ -158,6 +158,7 @@ Future<void> _firebaseBackgroundMessagehandler(RemoteMessage message) async {
     channelDescription: 'Shop updates and deals',
     importance: Importance.max,
     priority: Priority.high,
+    color: const Color(0xFF5F13C5), // MobiKing Primary Purple
     styleInformation: bigFilePath != null
         ? BigPictureStyleInformation(FilePathAndroidBitmap(bigFilePath))
         : null,

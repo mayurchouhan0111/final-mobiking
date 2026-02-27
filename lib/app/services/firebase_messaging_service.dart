@@ -121,6 +121,7 @@ class FirebaseMessagingService extends GetxService {
         importance: Importance.max,
         priority: Priority.max,
         showWhen: true,
+        color: const Color(0xFF5F13C5), // MobiKing Primary Purple
         styleInformation: bigPicturePath != null ? BigPictureStyleInformation(FilePathAndroidBitmap(bigPicturePath)) : null,
         largeIcon: largeIconPath != null 
             ? FilePathAndroidBitmap(largeIconPath) 
