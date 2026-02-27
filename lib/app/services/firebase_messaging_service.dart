@@ -122,7 +122,9 @@ class FirebaseMessagingService extends GetxService {
         priority: Priority.max,
         showWhen: true,
         styleInformation: bigPicturePath != null ? BigPictureStyleInformation(FilePathAndroidBitmap(bigPicturePath)) : null,
-        largeIcon: largeIconPath != null ? FilePathAndroidBitmap(largeIconPath) : null,
+        largeIcon: largeIconPath != null 
+            ? FilePathAndroidBitmap(largeIconPath) 
+            : const DrawableResourceAndroidBitmap('ic_notification'),
         tag: 'mobiking_notify',
       );
 
@@ -287,6 +289,19 @@ class _ManualNotificationWidget extends StatelessWidget {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Brand Logo (Leading)
+                    Container(
+                      width: 24,
+                      height: 24,
+                      margin: const EdgeInsets.only(top: 2, right: 12),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(4),
+                        image: const DecorationImage(
+                          image: AssetImage('assets/images/logo.png'),
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    ),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,

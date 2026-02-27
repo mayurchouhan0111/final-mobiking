@@ -87,36 +87,33 @@ Future<void> _firebaseBackgroundMessagehandler(RemoteMessage message) async {
       message.data['imageUrl'] ??
       message.data['bigPicture'];
 
+  // Manual local notification to force the image/logo
+  final FlutterLocalNotificationsPlugin localNotifications =
+      FlutterLocalNotificationsPlugin();
+
+  // Initialize for background isolate
+  const AndroidInitializationSettings androidSettings =
+      AndroidInitializationSettings('@drawable/ic_notification');
+  await localNotifications.initialize(
+    const InitializationSettings(android: androidSettings),
+  );
+
+  String? bigFilePath;
+  String? circularPath;
+
   if (imageUrl != null) {
-    print("🔥 ATTEMPTING TO SHOW BACKGROUND IMAGE: $imageUrl");
-
-    // Manual local notification to force the image
-    final FlutterLocalNotificationsPlugin localNotifications =
-        FlutterLocalNotificationsPlugin();
-
-    // Initialize for background isolate
-    const AndroidInitializationSettings androidSettings =
-        AndroidInitializationSettings('@drawable/ic_notification');
-    await localNotifications.initialize(
-      const InitializationSettings(android: androidSettings),
-    );
-
-    // Download image
     try {
       final Directory directory = await getApplicationDocumentsDirectory();
-      final String filePath = '${directory.path}/bg_notification_img';
-      final String circularPath =
-          '${directory.path}/bg_circular_notification_icon.png';
+      bigFilePath = '${directory.path}/bg_notification_img';
+      circularPath = '${directory.path}/bg_circular_notification_icon.png';
 
       final http.Response response = await http.get(Uri.parse(imageUrl));
       final bytes = response.bodyBytes;
 
       // 1. Save Big Picture
-      final File file = File(filePath);
-      await file.writeAsBytes(bytes);
+      await File(bigFilePath).writeAsBytes(bytes);
 
       // 2. Generate Circular Icon
-      String? finalCircularPath;
       final originalImage = img.decodeImage(bytes);
       if (originalImage != null) {
         final size =
@@ -142,42 +139,40 @@ Future<void> _firebaseBackgroundMessagehandler(RemoteMessage message) async {
               final pixel = squaredImage.getPixel(x, y);
               circularImage.setPixel(x, y, pixel);
             } else {
-              // Set background to transparent
               circularImage.setPixelRgba(x, y, 0, 0, 0, 0);
             }
           }
         }
         await File(circularPath).writeAsBytes(img.encodePng(circularImage));
-        finalCircularPath = circularPath;
+      } else {
+        circularPath = null;
       }
-
-      final AndroidNotificationDetails androidDetails =
-          AndroidNotificationDetails(
-            'mobiking_high_importance_channel',
-            'MobiKing Notifications',
-            channelDescription: 'Shop updates and deals',
-            importance: Importance.max,
-            priority: Priority.high,
-            styleInformation: BigPictureStyleInformation(
-              FilePathAndroidBitmap(filePath),
-            ),
-            largeIcon:
-                finalCircularPath != null
-                    ? FilePathAndroidBitmap(finalCircularPath)
-                    : null,
-            tag: 'mobiking_notify', // Added tag to match Main service
-          );
-
-      await localNotifications.show(
-        0, // FIXED: Changed from millisecond to 0 to prevent stacking duplicates
-        title,
-        body,
-        NotificationDetails(android: androidDetails),
-      );
     } catch (e) {
       print("🔥 BACKGROUND IMAGE ERROR: $e");
     }
   }
+
+  final AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+    'mobiking_high_importance_channel',
+    'MobiKing Notifications',
+    channelDescription: 'Shop updates and deals',
+    importance: Importance.max,
+    priority: Priority.high,
+    styleInformation: bigFilePath != null
+        ? BigPictureStyleInformation(FilePathAndroidBitmap(bigFilePath))
+        : null,
+    largeIcon: circularPath != null
+        ? FilePathAndroidBitmap(circularPath)
+        : const DrawableResourceAndroidBitmap('ic_notification'),
+    tag: 'mobiking_notify',
+  );
+
+  await localNotifications.show(
+    0,
+    title,
+    body,
+    NotificationDetails(android: androidDetails),
+  );
 }
 
 Future<void> main() async {
