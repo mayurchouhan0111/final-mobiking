@@ -1131,6 +1131,10 @@ class InvoiceScreen extends StatelessWidget {
                       order.address ?? 'N/A',
                       textTheme,
                     ),
+                    if (order.gst != null && order.gst!.isNotEmpty && order.gst != "0") ...[
+                      const SizedBox(height: 8),
+                      _buildDetailRow('GST', order.gst!, textTheme),
+                    ],
                   ],
                 ),
               ),
@@ -1247,17 +1251,9 @@ class InvoiceScreen extends StatelessWidget {
                       textTheme,
                       false,
                     ),
-                    const SizedBox(height: 8),
                     _buildSummaryRow(
                       'Delivery Charge',
                       '₹${order.deliveryCharge.toStringAsFixed(0)}',
-                      textTheme,
-                      false,
-                    ),
-                    const SizedBox(height: 8),
-                    _buildSummaryRow(
-                      'GST',
-                      '₹${order.gst ?? 0}',
                       textTheme,
                       false,
                     ),
