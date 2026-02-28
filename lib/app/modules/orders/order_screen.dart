@@ -993,11 +993,16 @@ class _OrderCard extends StatelessWidget {
                             .myQueries
                             .any(
                               (query) =>
-                                  query.orderId != null &&
-                                  query.orderId == orderId,
+                                  query.orderId?.toString() == orderId?.toString(),
                             );
 
-                        if (hasQueryForThisOrder) {
+                        // Robust check: Is there any evidence of an existing query?
+                        final bool alreadyHasQuery = 
+                            hasQueryForThisOrder || 
+                            hasActiveOrResolvedQuery || 
+                            (order.query != null);
+
+                        if (alreadyHasQuery) {
                           return Padding(
                             padding: const EdgeInsets.symmetric(vertical: 6.0),
                             child: SizedBox(

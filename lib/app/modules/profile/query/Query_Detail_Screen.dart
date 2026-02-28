@@ -38,9 +38,13 @@ class _QueryDetailScreenState extends State<QueryDetailScreen> {
   @override
   void initState() {
     super.initState();
+    final controller = Get.find<QueryGetXController>();
     currentQuery = widget.order?.query;
+    
     if (currentQuery != null) {
-      Get.find<QueryGetXController>().setCurrentQuery(currentQuery!);
+      controller.setCurrentQuery(currentQuery!);
+    } else if (widget.order?.id != null) {
+      controller.fetchQueryByOrderId(widget.order!.id);
     }
 
     // 🔥 Listen to keyboard focus to scroll up smoothly like WhatsApp

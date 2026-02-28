@@ -96,10 +96,12 @@ class QueryModel {
 
     String? orderId;
     final rawOrderId = json['orderId'];
-    if (rawOrderId is String) {
-      orderId = rawOrderId;
-    } else if (rawOrderId is Map<String, dynamic>) {
-      orderId = rawOrderId['_id']?.toString() ?? rawOrderId['id']?.toString();
+    if (rawOrderId != null) {
+      if (rawOrderId is Map<String, dynamic>) {
+        orderId = rawOrderId['_id']?.toString() ?? rawOrderId['id']?.toString();
+      } else {
+        orderId = rawOrderId.toString();
+      }
     }
 
     final review = json['review']?.toString();

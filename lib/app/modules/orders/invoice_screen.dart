@@ -7,6 +7,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import '../../data/order_model.dart';
 import '../../themes/app_theme.dart';
+import 'gst_invoice_generator.dart';
 
 class InvoiceScreen extends StatelessWidget {
   final OrderModel order;
@@ -854,7 +855,7 @@ class InvoiceScreen extends StatelessWidget {
         iconTheme: const IconThemeData(color: AppColors.white),
         actions: [
           IconButton(
-            onPressed: _downloadInvoice,
+            onPressed: () => GstInvoiceGenerator.generateAndDownload(order),
             icon: const Icon(Icons.download_outlined),
             tooltip: 'Download Invoice',
           ),
@@ -1277,7 +1278,8 @@ class InvoiceScreen extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: _downloadInvoice,
+                  onPressed: () =>
+                      GstInvoiceGenerator.generateAndDownload(order),
                   icon: const Icon(Icons.download_outlined),
                   label: Text('Download Invoice', style: textTheme.labelLarge),
                   style: ElevatedButton.styleFrom(

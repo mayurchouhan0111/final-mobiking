@@ -125,7 +125,7 @@ class FirebaseMessagingService extends GetxService {
         styleInformation: bigPicturePath != null ? BigPictureStyleInformation(FilePathAndroidBitmap(bigPicturePath)) : null,
         largeIcon: largeIconPath != null 
             ? FilePathAndroidBitmap(largeIconPath) 
-            : const DrawableResourceAndroidBitmap('ic_notification'),
+            : const DrawableResourceAndroidBitmap('ic_notification_large'), // COLORFUL FALLBACK
         tag: 'mobiking_notify',
       );
 

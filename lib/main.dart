@@ -164,7 +164,7 @@ Future<void> _firebaseBackgroundMessagehandler(RemoteMessage message) async {
         : null,
     largeIcon: circularPath != null
         ? FilePathAndroidBitmap(circularPath)
-        : const DrawableResourceAndroidBitmap('ic_notification'),
+        : const DrawableResourceAndroidBitmap('ic_notification_large'), // COLORFUL FALLBACK
     tag: 'mobiking_notify',
   );
 
