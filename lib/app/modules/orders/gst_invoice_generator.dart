@@ -65,15 +65,7 @@ class GstInvoiceGenerator {
       );
       final double discountApplied = order.discount;
 
-      double discountRatio = 1.0;
-      if (discountApplied > 0 && totalTaxableValue > 0) {
-        discountRatio = 1.0 - (discountApplied / totalTaxableValue);
-        if (discountRatio < 0) discountRatio = 0.0;
-      }
-
-      final double discountedTaxableValue = totalTaxableValue * discountRatio;
-      final double discountedTaxAmount = totalTaxAmount * discountRatio;
-      final double totalAmount = discountedTaxableValue + discountedTaxAmount;
+      final double totalAmount = totalTaxableValue + totalTaxAmount - discountApplied;
 
       final amountInWords = _numberToWords(totalAmount);
       final String invoiceNo = order.orderId;
@@ -298,30 +290,6 @@ class GstInvoiceGenerator {
                       ],
                     );
                   }),
-                  if (discountApplied > 0)
-                    pw.TableRow(
-                      children: [
-                        _pdfTableCell('', textStyleRegular, isCenter: true),
-                        _pdfTableCell(
-                          'Discount',
-                          textStyleRegular,
-                          isCenter: false,
-                        ),
-                        _pdfTableCell('', textStyleRegular, isCenter: true),
-                        _pdfTableCell('', textStyleRegular, isCenter: true),
-                        _pdfTableCell('', textStyleRegular, isCenter: true),
-                        _pdfTableCell('', textStyleRegular, isCenter: true),
-                        _pdfTableCell(
-                          '-₹ ${discountApplied.toStringAsFixed(2)}',
-                          pw.TextStyle(
-                            font: font,
-                            fontSize: 9,
-                            color: PdfColors.red,
-                          ),
-                          isCenter: true,
-                        ),
-                      ],
-                    ),
                   pw.TableRow(
                     children: [
                       _pdfTableCell('', textStyleRegular, isCenter: true),
@@ -335,7 +303,7 @@ class GstInvoiceGenerator {
                       _pdfTableCell('', textStyleRegular, isCenter: true),
                       _pdfTableCell('', textStyleRegular, isCenter: true),
                       _pdfTableCell(
-                        discountedTaxableValue.toStringAsFixed(2),
+                        totalTaxableValue.toStringAsFixed(2),
                         textStyleBold,
                         isCenter: true,
                       ),
@@ -359,7 +327,7 @@ class GstInvoiceGenerator {
                         children: [
                           pw.Text('Sub Total', style: textStyleRegular),
                           pw.Text(
-                            '₹ ${discountedTaxableValue.toStringAsFixed(2)}',
+                            '₹ ${totalTaxableValue.toStringAsFixed(2)}',
                             style: textStyleRegular,
                           ),
                         ],
@@ -370,11 +338,28 @@ class GstInvoiceGenerator {
                         children: [
                           pw.Text('Tax Amount (+)', style: textStyleRegular),
                           pw.Text(
-                            '₹ ${discountedTaxAmount.toStringAsFixed(2)}',
+                            '₹ ${totalTaxAmount.toStringAsFixed(2)}',
                             style: textStyleRegular,
                           ),
                         ],
                       ),
+                      if (discountApplied > 0) ...[
+                        pw.SizedBox(height: 4),
+                        pw.Row(
+                          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                          children: [
+                            pw.Text('Discount (-)', style: textStyleRegular),
+                            pw.Text(
+                              '-₹ ${discountApplied.toStringAsFixed(2)}',
+                              style: pw.TextStyle(
+                                font: font,
+                                fontSize: 9,
+                                color: PdfColors.red,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -466,9 +451,9 @@ class GstInvoiceGenerator {
                   ),
                   ...allItems.map((item) {
                     final double adjustedTaxableValue =
-                        (item['taxableValue'] as double) * discountRatio;
+                        (item['taxableValue'] as double);
                     final double adjustedTaxAmount =
-                        (item['taxAmount'] as double) * discountRatio;
+                        (item['taxAmount'] as double);
                     return pw.TableRow(
                       children: [
                         _pdfTableCell(
@@ -503,18 +488,18 @@ class GstInvoiceGenerator {
                     children: [
                       _pdfTableCell('Total', textStyleBold, isCenter: true),
                       _pdfTableCell(
-                        '₹ ${discountedTaxableValue.toStringAsFixed(2)}',
+                        '₹ ${totalTaxableValue.toStringAsFixed(2)}',
                         textStyleBold,
                         isCenter: true,
                       ),
                       _pdfTableCell('-', textStyleRegular, isCenter: true),
                       _pdfTableCell(
-                        '₹ ${discountedTaxAmount.toStringAsFixed(2)}',
+                        '₹ ${totalTaxAmount.toStringAsFixed(2)}',
                         textStyleBold,
                         isCenter: true,
                       ),
                       _pdfTableCell(
-                        '₹ ${discountedTaxAmount.toStringAsFixed(2)}',
+                        '₹ ${totalTaxAmount.toStringAsFixed(2)}',
                         textStyleBold,
                         isCenter: true,
                       ),
