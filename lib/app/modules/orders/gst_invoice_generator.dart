@@ -190,7 +190,7 @@ class GstInvoiceGenerator {
                       style: pw.TextStyle(font: boldFont, fontSize: 9),
                     ),
                     pw.SizedBox(height: 4),
-                    pw.Text(order.name ?? '', style: textStyleRegular),
+                    pw.Text(order.name ?? '', style: textStyleBold),
                     pw.Text(order.address ?? '', style: textStyleRegular),
                     if (order.city != null ||
                         order.state != null ||
@@ -207,7 +207,7 @@ class GstInvoiceGenerator {
                     if (order.gst != null &&
                         order.gst != "0" &&
                         order.gst!.isNotEmpty)
-                      pw.Text('GST: ${order.gst}', style: textStyleRegular),
+                      pw.Text('GST: ${order.gst}', style: textStyleBold),
                   ],
                 ),
               ),

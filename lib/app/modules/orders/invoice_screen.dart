@@ -1122,7 +1122,7 @@ class InvoiceScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    _buildDetailRow('Name', order.name ?? 'N/A', textTheme),
+                    _buildDetailRow('Name', order.name ?? 'N/A', textTheme, isBold: true),
                     const SizedBox(height: 8),
                     _buildDetailRow('Phone', order.phoneNo ?? 'N/A', textTheme),
                     const SizedBox(height: 8),
@@ -1133,7 +1133,7 @@ class InvoiceScreen extends StatelessWidget {
                     ),
                     if (order.gst != null && order.gst!.isNotEmpty && order.gst != "0") ...[
                       const SizedBox(height: 8),
-                      _buildDetailRow('GST', order.gst!, textTheme),
+                      _buildDetailRow('GST', order.gst!, textTheme, isBold: true),
                     ],
                   ],
                 ),
@@ -1295,7 +1295,7 @@ class InvoiceScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDetailRow(String label, String value, TextTheme textTheme) {
+  Widget _buildDetailRow(String label, String value, TextTheme textTheme, {bool isBold = false}) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1312,7 +1312,7 @@ class InvoiceScreen extends StatelessWidget {
             value,
             style: textTheme.bodyMedium?.copyWith(
               color: AppColors.textDark,
-              fontWeight: FontWeight.w500,
+              fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
             ),
           ),
         ),

@@ -748,7 +748,13 @@ class _OrderCard extends StatelessWidget {
               'Delivery Charge',
               '₹${order.deliveryCharge.toStringAsFixed(0)}',
             ),
-            buildSummaryRow(context, 'GST', '₹${order.gst ?? '0'}'),
+            if (order.discount > 0)
+              buildSummaryRow(
+                context,
+                'Discount',
+                '-₹${order.discount.toStringAsFixed(0)}',
+              ),
+
             const SizedBox(height: 12),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 4.0),
