@@ -21,7 +21,7 @@ def flutter_root
   raise "FLUTTER_ROOT not found"
 end
 
-require File.expand_path('../Flutter/podhelper.rb', __dir__)
+require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelper'), flutter_root)
 
 flutter_ios_podfile_setup
 
