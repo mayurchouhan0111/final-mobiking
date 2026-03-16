@@ -8,16 +8,18 @@ project 'Runner', {
   'Release' => :release,
 }
 
-flutter_root = File.expand_path('..', File.dirname(__FILE__))
+flutter_root = ENV['FLUTTER_ROOT']
 
 require File.expand_path(
   File.join('packages', 'flutter_tools', 'bin', 'podhelper'),
   flutter_root
 )
+
 flutter_ios_podfile_setup
 
 target 'Runner' do
   use_modular_headers!
+
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
 end
 
