@@ -120,9 +120,12 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
             
             final categories = homeController.categories;
             
-            // ✅ Ensure TabController length matches categories length
-            if (categories.isNotEmpty) {
-              tabController.resetWithLength(categories.length);
+            // ✅ React to controller changes so TabBarView rebuilds with the new instance
+            // (We removed resetWithLength from here because it shouldn't be called during build)
+            final _ = tabController.resetCount.value;
+
+            if (categories.isEmpty) {
+               return const Center(child: Text("No categories found"));
             }
 
             return DefaultTabController(
