@@ -166,6 +166,8 @@ class _CustomTabBarSectionState extends State<CustomTabBarSection> {
     required VoidCallback onTap,
     required Color iconAndTextColor,
     required TextTheme textTheme,
+    required double iconSize,
+    required double fontSize,
   }) {
     return InkWell(
       key: key,
@@ -177,8 +179,8 @@ class _CustomTabBarSectionState extends State<CustomTabBarSection> {
           mainAxisSize: MainAxisSize.min,
           children: [
             SizedBox(
-              height: 22,
-              width: 22,
+              height: iconSize,
+              width: iconSize,
               child: Builder(
                 builder: (context) {
                   try {
@@ -203,7 +205,7 @@ class _CustomTabBarSectionState extends State<CustomTabBarSection> {
               maxLines: 2,
               textAlign: TextAlign.center,
               style: textTheme.labelSmall?.copyWith(
-                fontSize: 11,
+                fontSize: fontSize,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 color: iconAndTextColor,
                 letterSpacing: -0.2,
@@ -218,6 +220,10 @@ class _CustomTabBarSectionState extends State<CustomTabBarSection> {
   @override
   Widget build(BuildContext context) {
     final TextTheme textTheme = Theme.of(context).textTheme;
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final double scaleFactor = (screenWidth / 375.0).clamp(0.8, 1.25);
+    final double dynamicIconSize = 22.0 * scaleFactor;
+    final double dynamicFontSize = 11.0 * scaleFactor;
 
     return Obx(() {
       final List<CategoryModel> categories = homeController.categories;
@@ -289,6 +295,8 @@ class _CustomTabBarSectionState extends State<CustomTabBarSection> {
                     onTap: () => tabControllerGetX.updateIndex(index),
                     iconAndTextColor: tabColor,
                     textTheme: textTheme,
+                    iconSize: dynamicIconSize,
+                    fontSize: dynamicFontSize,
                   );
                 }),
               ),
@@ -297,7 +305,7 @@ class _CustomTabBarSectionState extends State<CustomTabBarSection> {
               duration: const Duration(milliseconds: 300),
               curve: Curves.easeOutCubic,
               left: _indicatorPosition,
-              bottom: 0,
+              bottom: -6, // Shifted downwards from 0 to -6 to prevent bumping into text
               width: _indicatorWidth,
               height: 3,
               child: Container(

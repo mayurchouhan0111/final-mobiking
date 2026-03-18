@@ -73,6 +73,7 @@ class _SearchTabSliverAppBarState extends State<SearchTabSliverAppBar> {
 
   @override
   Widget build(BuildContext context) {
+    final double topPadding = MediaQuery.of(context).padding.top;
     return SliverPersistentHeader(
       pinned: true,
       delegate: _StickySearchAndTabBarDelegate(
@@ -83,6 +84,8 @@ class _SearchTabSliverAppBarState extends State<SearchTabSliverAppBar> {
         tabController: tabController,
         subCategoryController: subCategoryController,
         homeController: homeController,
+        safeAreaTop: topPadding,
+        scaleFactor: (MediaQuery.of(context).size.width / 375.0).clamp(0.8, 1.25),
       ),
     );
   }
@@ -96,6 +99,8 @@ class _StickySearchAndTabBarDelegate extends SliverPersistentHeaderDelegate {
   final TabControllerGetX tabController;
   final SubCategoryController subCategoryController;
   final HomeController homeController;
+  final double safeAreaTop;
+  final double scaleFactor;
   _StickySearchAndTabBarDelegate({
     required this.searchController,
     required this.onSearchChanged,
@@ -104,13 +109,15 @@ class _StickySearchAndTabBarDelegate extends SliverPersistentHeaderDelegate {
     required this.tabController,
     required this.subCategoryController,
     required this.homeController,
+    required this.safeAreaTop,
+    required this.scaleFactor,
   });
 
   @override
-  double get maxExtent => 230; // Reduced from 240
+  double get maxExtent => 206 + safeAreaTop + (25 * (scaleFactor - 1.0)); // Accounts for dynamic status bar and resizing fonts/icons
 
   @override
-  double get minExtent => 180; // Reduced from 220
+  double get minExtent => 156 + safeAreaTop + (25 * (scaleFactor - 1.0)); // Accounts for dynamic status bar and resizing fonts/icons
 
   @override
   Widget build(
@@ -227,7 +234,12 @@ class _StickySearchAndTabBarDelegate extends SliverPersistentHeaderDelegate {
             ),
             const SizedBox(height: 7),
             // --- Category Tab Section (Always Visible) ---
-            CustomTabBarSection(),
+            Expanded(
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: CustomTabBarSection(),
+              ),
+            ),
           ],
         ),
       );
