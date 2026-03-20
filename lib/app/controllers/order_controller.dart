@@ -2061,15 +2061,15 @@ class OrderController extends GetxController with WidgetsBindingObserver {
     }
   }
 
-  var selectedReasonForRequest = ''.obs;
-
-  Future sendOrderRequest(String orderId, String requestType) async {
-    selectedReasonForRequest.value = '';
+  Future<void> sendOrderRequest(String orderId, String requestType) async {
+    final RxString localSelectedReason = ''.obs;
     final TextEditingController reasonController = TextEditingController();
 
     final List<String> reasons = requestType == 'Cancel'
         ? Reasons.cancelReasons
         : Reasons.returnReasons;
+
+    final String displayAction = requestType == 'Cancel' ? 'cancellation' : 'return';
 
     final bool? dialogResult = await Get.dialog(
       GestureDetector(
@@ -2112,7 +2112,7 @@ class OrderController extends GetxController with WidgetsBindingObserver {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 10.0),
                     child: Text(
-                      'Select a reason for your ${requestType.toLowerCase()}:',
+                      'Select a reason for your $displayAction request:',
                       style: Get.textTheme.bodyMedium?.copyWith(
                         color: AppColors.textMedium,
                         fontSize: 14,
@@ -2130,9 +2130,9 @@ class OrderController extends GetxController with WidgetsBindingObserver {
                         ),
                       ),
                       value: reasonOption,
-                      groupValue: selectedReasonForRequest.value,
+                      groupValue: localSelectedReason.value,
                       onChanged: (String? value) {
-                        selectedReasonForRequest.value = value!;
+                        localSelectedReason.value = value!;
                       },
                       activeColor: AppColors.primaryPurple,
                       contentPadding: const EdgeInsets.symmetric(
@@ -2141,7 +2141,7 @@ class OrderController extends GetxController with WidgetsBindingObserver {
                       visualDensity: VisualDensity.compact,
                     );
                   }).toList(),
-                  if (selectedReasonForRequest.value == 'Other')
+                  if (localSelectedReason.value == 'Other')
                     Padding(
                       padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
                       child: TextField(
@@ -2197,7 +2197,7 @@ class OrderController extends GetxController with WidgetsBindingObserver {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    String currentReason = selectedReasonForRequest.value;
+                    String currentReason = localSelectedReason.value;
                     if (currentReason.isEmpty) {
                       _showModernSnackbar(
                         'Reason Required',
@@ -2244,19 +2244,20 @@ class OrderController extends GetxController with WidgetsBindingObserver {
           actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
         ),
       ),
+      barrierDismissible: false,
     );
 
     if (dialogResult == null || !dialogResult) {
+      debugPrint('$requestType request cancelled by user.');
       reasonController.dispose();
-      print('$requestType request cancelled by user or no reason provided.');
       return;
     }
 
     String finalReasonToSend;
-    if (selectedReasonForRequest.value == 'Other') {
+    if (localSelectedReason.value == 'Other') {
       finalReasonToSend = reasonController.text.trim();
     } else {
-      finalReasonToSend = selectedReasonForRequest.value;
+      finalReasonToSend = localSelectedReason.value;
     }
 
     // Dispose after fetching values

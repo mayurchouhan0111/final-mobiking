@@ -13,9 +13,13 @@ class GstInvoiceGenerator {
       final pdf = pw.Document();
       
       // Use Helvetica as a fallback or if network is slow, though roboto is nicer
-      // Pre-fetching fonts to ensure they are available
-      final font = await PdfGoogleFonts.robotoRegular().catchError((_) => pw.Font.helvetica());
-      final boldFont = await PdfGoogleFonts.robotoBold().catchError((_) => pw.Font.helveticaBold());
+      // Pre-fetching fonts with timeout to ensure we don't hang if network is slow
+      final font = await PdfGoogleFonts.robotoRegular()
+          .timeout(const Duration(seconds: 5))
+          .catchError((_) => pw.Font.helvetica());
+      final boldFont = await PdfGoogleFonts.robotoBold()
+          .timeout(const Duration(seconds: 5))
+          .catchError((_) => pw.Font.helveticaBold());
 
       final invoiceDate = DateFormat(
         'dd/MM/yyyy',
@@ -568,25 +572,39 @@ class GstInvoiceGenerator {
         ),
       );
 
+      // Inform the user generation has started
+      Get.snackbar(
+        "Generating Invoice",
+        "Please wait while we prepare your document...",
+        backgroundColor: AppColors.primaryPurple.withOpacity(0.9),
+        colorText: Colors.white,
+        duration: const Duration(seconds: 2),
+        snackPosition: SnackPosition.BOTTOM,
+        showProgressIndicator: true,
+      );
+
       final pdfBytes = await pdf.save();
 
-      final String sanitizedInvoiceNo = order.orderId.replaceAll(RegExp(r'[^\w-]'), '_');
+      // Better sanitization for iOS/Android filesystem
+      final String safeOrderId = (order.orderId.isNotEmpty ? order.orderId : "Order").replaceAll(RegExp(r'[^\w-]'), '_');
+      final String sanitizedInvoiceNo = "GST_$safeOrderId";
 
-      await Printing.layoutPdf(
-        name: "GST_$sanitizedInvoiceNo",
-        onLayout: (PdfPageFormat format) async => pdfBytes,
+      // BEST APPROACH for iOS: Use Printing.sharePdf which directly invokes the native Share Sheet.
+      // This is far more robust than Printing.layoutPdf which often hangs on Loading Preview.
+      await Printing.sharePdf(
+        bytes: pdfBytes,
+        filename: "$sanitizedInvoiceNo.pdf",
       );
-    } catch (e) {
-      debugPrint("Invoice Generation Error: $e");
-      try {
-        Get.snackbar(
-          "Generation Failed",
-          "Could not create invoice PDF. Please try again or check your internet connection.",
-          backgroundColor: AppColors.danger,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.BOTTOM,
-        );
-      } catch (_) {}
+
+    } catch (e, stackTrace) {
+      debugPrint("Invoice Generation Error: $e\n$stackTrace");
+      Get.snackbar(
+        "Generation Failed",
+        "Could not create invoice. Please check your internet and try again.",
+        backgroundColor: Colors.red.shade600,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+      );
     }
   }
 

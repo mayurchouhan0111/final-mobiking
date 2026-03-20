@@ -1,19 +1,19 @@
 class Reasons {
   static const List<String> cancelReasons = [
-    "Got same quality in Better price somewhare",
-    "Change your mind",
+    "Found a better price elsewhere",
+    "Changed my mind",
     "No longer needed",
-    "Order by mistake",
-    "Change delevery date",
+    "Ordered by mistake",
+    "Change delivery date",
     "Other",
   ];
 
   static const List<String> returnReasons = [
-    "Product Not working Propperly",
-    "Recicved Daimage Product",
-    "Cable & Accessories Missing",
-    "Quality is not like as you want",
-    "Notepad to express their problem deeply with words limit",
+    "Product not working properly",
+    "Received damaged product",
+    "Cables or accessories missing",
+    "Quality not as expected",
+    "Defective or faulty product",
     "Other",
   ];
 }
