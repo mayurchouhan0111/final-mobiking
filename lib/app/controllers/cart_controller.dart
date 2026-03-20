@@ -10,6 +10,7 @@ import '../data/product_model.dart';
 import '../services/cart_service.dart';
 import 'connectivity_controller.dart';
 import '../services/analytics_service.dart';
+import '../modules/login/login_screen.dart'; // ✅ For guest redirection
 
 class CartController extends GetxController {
   RxMap<String, dynamic> cartData = <String, dynamic>{}.obs;
@@ -339,8 +340,11 @@ class CartController extends GetxController {
     }
     final cartId = box.read('cartId');
     if (cartId == null) {
+      // ✅ APP STORE COMPLIANCE: Redirect to login for account-based actions
+      Get.to(() => PhoneAuthScreen());
+
       _showSnackbar(
-        'Not Logged In',
+        'Login Required',
         'Please log in to add items to your cart.',
         Colors.orange,
         Icons.login,

@@ -1,19 +1,25 @@
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:intl/intl.dart';
 import '../../data/order_model.dart';
+import '../../themes/app_theme.dart';
 
 class GstInvoiceGenerator {
   static Future<void> generateAndDownload(OrderModel order) async {
     try {
       final pdf = pw.Document();
-      final font = await PdfGoogleFonts.robotoRegular();
-      final boldFont = await PdfGoogleFonts.robotoBold();
+      
+      // Use Helvetica as a fallback or if network is slow, though roboto is nicer
+      // Pre-fetching fonts to ensure they are available
+      final font = await PdfGoogleFonts.robotoRegular().catchError((_) => pw.Font.helvetica());
+      final boldFont = await PdfGoogleFonts.robotoBold().catchError((_) => pw.Font.helveticaBold());
 
       final invoiceDate = DateFormat(
         'dd/MM/yyyy',
-      ).format(order.createdAt.toLocal());
+      ).format(order.createdAt?.toLocal() ?? DateTime.now());
 
       // Processing items
       final processedItems = order.items.map<Map<String, dynamic>>((item) {
@@ -562,12 +568,25 @@ class GstInvoiceGenerator {
         ),
       );
 
+      final pdfBytes = await pdf.save();
+
+      final String sanitizedInvoiceNo = order.orderId.replaceAll(RegExp(r'[^\w-]'), '_');
+
       await Printing.layoutPdf(
-        name: "GST_$invoiceNo",
-        onLayout: (PdfPageFormat format) async => pdf.save(),
+        name: "GST_$sanitizedInvoiceNo",
+        onLayout: (PdfPageFormat format) async => pdfBytes,
       );
     } catch (e) {
-      rethrow;
+      debugPrint("Invoice Generation Error: $e");
+      try {
+        Get.snackbar(
+          "Generation Failed",
+          "Could not create invoice PDF. Please try again or check your internet connection.",
+          backgroundColor: AppColors.danger,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      } catch (_) {}
     }
   }
 

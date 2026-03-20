@@ -7,6 +7,8 @@ import 'package:mobiking/app/controllers/connectivity_controller.dart';
 import 'package:mobiking/app/themes/app_theme.dart';
 import 'package:mobiking/app/modules/profile/wishlist/Wish_list_screen.dart';
 import 'package:collection/collection.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:mobiking/app/modules/login/login_screen.dart';
 
 class WishlistController extends GetxController {
   final WishlistService _service = WishlistService();
@@ -80,6 +82,19 @@ class WishlistController extends GetxController {
   }
 
   Future<void> addToWishlist(String productId) async {
+    final box = GetStorage();
+    final cartId = box.read('cartId');
+    if (cartId == null) {
+      Get.to(() => PhoneAuthScreen());
+      Get.snackbar(
+        'Login Required',
+        'Please log in to add items to your wishlist.',
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
     if (isProcessingItem.value == productId) return;
     
     isProcessingItem.value = productId;

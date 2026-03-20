@@ -12,6 +12,7 @@ import '../../controllers/login_controller.dart';
 import '../../data/AddressModel.dart';
 import 'address_card_painter.dart';
 import 'package:mobiking/app/modules/checkout/CheckoutScreen.dart';
+import 'package:mobiking/app/modules/login/login_screen.dart'; // ✅ Added for redirection
 
 class AddressPage extends StatefulWidget {
   final Map<String, dynamic>? initialUser;
@@ -65,6 +66,14 @@ class _AddressPageState extends State<AddressPage> {
   @override
   void initState() {
     super.initState();
+    // ✅ GUEST CHECK: Redirect if no user data
+    if (_storage.read('user') == null) {
+      debugPrint('🛡️ AddressPage: Guest detected, redirecting to login.');
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Get.off(() => PhoneAuthScreen());
+      });
+      return;
+    }
     _showUserSection.value = widget.initialShowUserSection;
     _initializeUserControllers();
     _setupUserChangeListener();

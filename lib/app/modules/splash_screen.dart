@@ -38,20 +38,13 @@ class _SplashScreenState extends State<SplashScreen> {
     // Increased delay to 2500ms so the logo animation can play fully
     await Future.delayed(const Duration(milliseconds: 2500));
     
-    final LoginController loginController = Get.find<LoginController>();
-    if (loginController.currentUser.value != null) {
-      Get.off(
-        () => MainContainerScreen(),
-        transition: Transition.fade,
-        duration: const Duration(milliseconds: 400),
-      );
-    } else {
-      Get.off(
-        () => PhoneAuthScreen(),
-        transition: Transition.fade,
-        duration: const Duration(milliseconds: 400),
-      );
-    }
+    // ✅ APP STORE COMPLIANCE: Always allow users to enter the app to browse.
+    // We only require login for account-based features (Adding to Cart, Checkout).
+    Get.off(
+      () => MainContainerScreen(),
+      transition: Transition.fade,
+      duration: const Duration(milliseconds: 400),
+    );
   }
 
   @override

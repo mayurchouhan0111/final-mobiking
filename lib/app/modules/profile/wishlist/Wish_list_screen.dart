@@ -6,14 +6,26 @@ import 'package:mobiking/app/themes/app_theme.dart'; // Your AppColors and AppTh
 import '../../../controllers/cart_controller.dart';
 import '../../../controllers/wishlist_controller.dart';
 import 'Wish_list_card.dart'; // Ensure this path is correct and it's the updated version
-import '../../../data/product_model.dart'; // Added missing import
+import '../../../data/product_model.dart';
 import '../../checkout/CheckoutScreen.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:mobiking/app/modules/login/login_screen.dart'; // ✅ Added for redirection
 
 class WishlistScreen extends StatelessWidget {
   const WishlistScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // ✅ GUEST CHECK: Explicitly redirect if user is not logged in
+    final box = GetStorage();
+    if (box.read('cartId') == null && box.read('user') == null) {
+      debugPrint('🛡️ WishlistScreen: Guest detected, redirecting to login.');
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Get.off(() => PhoneAuthScreen());
+      });
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
     final controller = Get.find<WishlistController>();
     final cartController = Get.find<CartController>();
     

@@ -17,6 +17,7 @@ import '../policy/delete_account_screen.dart';
 import 'package:mobiking/app/controllers/login_controller.dart';
 import 'faq_screen.dart';
 import 'contact_us_screen.dart';
+import 'package:mobiking/app/modules/login/login_screen.dart'; // ✅ For guest redirection
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -109,11 +110,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       icon: Icons.shopping_bag_outlined,
                       title: 'Orders',
                       onPressed: () {
-                        Get.to(
-                          () => const OrderHistoryScreen(),
-                          transition: Transition.rightToLeftWithFade,
-                          duration: const Duration(milliseconds: 300),
-                        );
+                        if (loginController.currentUser.value != null) {
+                          Get.to(
+                            () => const OrderHistoryScreen(),
+                            transition: Transition.rightToLeftWithFade,
+                            duration: const Duration(milliseconds: 300),
+                          );
+                        } else {
+                          Get.to(() => PhoneAuthScreen());
+                        }
                       },
                     ),
                   ),
@@ -123,11 +128,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       icon: Icons.location_on_outlined,
                       title: 'Address',
                       onPressed: () {
-                        Get.to(
-                          () => AddressPage(),
-                          transition: Transition.rightToLeftWithFade,
-                          duration: const Duration(milliseconds: 300),
-                        );
+                        if (loginController.currentUser.value != null) {
+                          Get.to(
+                            () => AddressPage(),
+                            transition: Transition.rightToLeftWithFade,
+                            duration: const Duration(milliseconds: 300),
+                          );
+                        } else {
+                          Get.to(() => PhoneAuthScreen());
+                        }
                       },
                     ),
                   ),
@@ -137,11 +146,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       icon: Icons.person_outline,
                       title: 'User',
                       onPressed: () {
-                        Get.to(
-                          () => AddressPage(initialShowUserSection: true),
-                          transition: Transition.rightToLeftWithFade,
-                          duration: const Duration(milliseconds: 300),
-                        );
+                        if (loginController.currentUser.value != null) {
+                          Get.to(
+                            () => AddressPage(initialShowUserSection: true),
+                            transition: Transition.rightToLeftWithFade,
+                            duration: const Duration(milliseconds: 300),
+                          );
+                        } else {
+                          Get.to(() => PhoneAuthScreen());
+                        }
                       },
                     ),
                   ),
@@ -151,11 +164,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       icon: Icons.favorite_border_outlined,
                       title: 'Wishlist',
                       onPressed: () {
-                        Get.to(
-                          WishlistScreen(),
-                          transition: Transition.rightToLeftWithFade,
-                          duration: const Duration(milliseconds: 300),
-                        );
+                        if (loginController.currentUser.value != null) {
+                          Get.to(
+                            WishlistScreen(),
+                            transition: Transition.rightToLeftWithFade,
+                            duration: const Duration(milliseconds: 300),
+                          );
+                        } else {
+                          Get.to(() => PhoneAuthScreen());
+                        }
                       },
                     ),
                   ),
@@ -275,29 +292,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 32),
 
               // Logout Button (Full Width)
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    showLogoutDialog(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.danger,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+              // ✅ COMPLIANCE: Login/Logout button for guest support
+              Obx(() {
+                final isLoggedIn = loginController.currentUser.value != null;
+                return SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      if (isLoggedIn) {
+                        showLogoutDialog(context);
+                      } else {
+                        Get.to(() => PhoneAuthScreen());
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isLoggedIn ? AppColors.danger : AppColors.primaryPurple,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 2,
                     ),
-                    elevation: 2,
-                  ),
-                  child: Text(
-                    'Logout',
-                    style: textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.white,
+                    child: Text(
+                      isLoggedIn ? 'Logout' : 'Login / Sign Up',
+                      style: textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.white,
+                      ),
                     ),
                   ),
-                ),
-              ),
+                );
+              }),
               const SizedBox(height: 20),
             ],
           ),

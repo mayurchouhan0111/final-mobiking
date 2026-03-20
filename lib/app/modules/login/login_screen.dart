@@ -7,6 +7,7 @@ import 'package:mobiking/app/controllers/login_controller.dart';
 import 'package:mobiking/app/modules/opt/Otp_screen.dart';
 import 'package:mobiking/app/themes/app_theme.dart';
 import 'package:mobiking/app/controllers/system_ui_controller.dart';
+import 'package:mobiking/app/modules/bottombar/Bottom_bar.dart'; // ✅ For skip button navigation
 
 class PhoneAuthScreen extends StatelessWidget {
   PhoneAuthScreen({Key? key}) : super(key: key);
@@ -54,6 +55,8 @@ class PhoneAuthScreen extends StatelessWidget {
               _buildProductShowcase(screenHeight, screenWidth),
               // Professional Login Form
               _buildGradientOverlay(context, textTheme, screenHeight),
+              
+
             ],
           ),
         ),
@@ -283,7 +286,6 @@ class PhoneAuthScreen extends StatelessWidget {
     return icons[index % icons.length];
   }
 
-  // Professional Login Form Overlay
   Widget _buildGradientOverlay(
     BuildContext context,
     TextTheme textTheme,
@@ -294,7 +296,9 @@ class PhoneAuthScreen extends StatelessWidget {
       left: 0,
       right: 0,
       child: Container(
-        height: screenHeight * 0.62,
+        constraints: BoxConstraints(
+          maxHeight: screenHeight * 0.75,
+        ),
         child: _buildLoginForm(context, textTheme),
       ),
     );
@@ -304,7 +308,7 @@ class PhoneAuthScreen extends StatelessWidget {
   Widget _buildLoginForm(BuildContext context, TextTheme textTheme) {
     return Container(
       margin: const EdgeInsets.all(12),
-      padding: const EdgeInsets.fromLTRB(32, 40, 32, 32),
+      padding: const EdgeInsets.fromLTRB(32, 40, 32, 12), // Reduced bottom padding here as footer adds it
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -332,17 +336,22 @@ class PhoneAuthScreen extends StatelessWidget {
             sigmaX: 10,
             sigmaY: 10,
           ), // Professional blur level [web:2]
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildFormHeader(textTheme),
-              const SizedBox(height: 36),
-              _buildPhoneInput(context, textTheme),
-              const SizedBox(height: 28),
-              _buildOtpButton(textTheme),
-              const SizedBox(height: 10),
-              _buildSimpleFooter(textTheme),
-            ],
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildFormHeader(textTheme),
+                const SizedBox(height: 32),
+                _buildPhoneInput(context, textTheme),
+                const SizedBox(height: 24),
+                _buildOtpButton(textTheme),
+                const SizedBox(height: 12),
+                _buildSkipButton(textTheme), // ✅ Skip & Browse as Guest
+                const SizedBox(height: 8),
+                _buildSimpleFooter(textTheme, context),
+              ],
+            ),
           ),
         ),
       ),
@@ -566,9 +575,9 @@ class PhoneAuthScreen extends StatelessWidget {
   }
 
   // Clean Footer
-  Widget _buildSimpleFooter(TextTheme textTheme) {
+  Widget _buildSimpleFooter(TextTheme textTheme, BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: EdgeInsets.only(bottom: 8 + MediaQuery.of(context).padding.bottom),
       child: RichText(
         textAlign: TextAlign.center,
         text: TextSpan(
@@ -595,6 +604,21 @@ class PhoneAuthScreen extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  // ✅ Skip Button Widget
+  Widget _buildSkipButton(TextTheme textTheme) {
+    return TextButton(
+      onPressed: () => Get.offAll(() => const MainContainerScreen()),
+      child: Text(
+        "Skip & Browse as Guest",
+        style: textTheme.bodyMedium?.copyWith(
+          color: AppColors.primaryPurple,
+          fontWeight: FontWeight.w600,
+          decoration: TextDecoration.underline,
         ),
       ),
     );

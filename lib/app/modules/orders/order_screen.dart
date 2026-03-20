@@ -13,6 +13,8 @@ import '../profile/query/Query_Detail_Screen.dart';
 import 'package:mobiking/app/modules/orders/add_review_screen.dart';
 import 'shipping_details_screen.dart';
 import 'package:mobiking/app/modules/profile/query/Raise_query.dart';
+import 'package:mobiking/app/modules/login/login_screen.dart'; // ✅ Added for redirection
+import 'package:get_storage/get_storage.dart';
 
 import 'invoice_screen.dart';
 
@@ -34,6 +36,15 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   @override
   void initState() {
     super.initState();
+    // ✅ GUEST CHECK: Redirect if no user data
+    final box = GetStorage();
+    if (box.read('cartId') == null && box.read('user') == null) {
+      debugPrint('🛡️ OrderHistory: Guest detected, redirecting to login.');
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Get.off(() => PhoneAuthScreen());
+      });
+      return;
+    }
     controller.fetchOrderHistory();
     _startPolling();
   }

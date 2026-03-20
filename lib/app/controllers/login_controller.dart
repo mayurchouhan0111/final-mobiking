@@ -392,10 +392,17 @@ class LoginController extends GetxController {
   }
 
   void _clearLoginData() {
+    print('LoginController: Performing standard login data clear...');
     _otpResendTimer?.cancel();
     _clearOtpData();
     loginService.clearAllTokenData();
+    
+    // ✅ Clear persistent storage to prevent guest users from seeing old session data
+    box.remove('user');
+    box.remove('cartId');
+    
     currentUser.value = null;
+    print('LoginController: Standard login data cleared.');
   }
 
   dynamic getUserData(String key) {
@@ -425,7 +432,8 @@ class LoginController extends GetxController {
       dio.Response response = await loginService.logout();
 
       if (response.statusCode == 200 && response.data['success'] == true) {
-        _clearLoginData();
+        // ✅ Use the comprehensive clear method
+        await _clearAllUserData();
         Get.offAll(() => PhoneAuthScreen());
       } else {
         // Handle logout error
